@@ -38,33 +38,9 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 
-const TESTIMONIALS = [
-    { name: "William Ashford", role: "Product Manager, Google", text: "Switching to Credenza was a game-changer for us. Their platform streamlined our financial processes, saving us countless hours each month." },
-    { name: "Scarlett Palmer", role: "Marketing Director, Adobe", text: "The security features offered give us peace of mind knowing that our customer data is protected." },
-    { name: "Marlon Wright", role: "Product Manager, Slack", text: "We've seen a significant improvement in our compliance management since the switch." },
-    { name: "Samuel Kingsley", role: "Financial Analyst, Squarespace", text: "I can't recommend Credenza enough! Their lending solutions made it easier for us to manage applications." }
-]
 
-const items = [
-    {
-        value: "plans",
-        trigger: "What subscription plans do you offer?",
-        content:
-            "We offer three subscription tiers: Starter ($9/month), Professional ($29/month), and Enterprise ($99/month). Each plan includes increasing storage limits, API access, priority support, and team collaboration features.",
-    },
-    {
-        value: "billing",
-        trigger: "How does billing work?",
-        content:
-            "Billing occurs automatically at the start of each billing cycle. We accept all major credit cards, PayPal, and ACH transfers for enterprise customers. You'll receive an invoice via email after each payment.",
-    },
-    {
-        value: "cancel",
-        trigger: "How do I cancel my subscription?",
-        content:
-            "You can cancel your subscription anytime from your account settings. There are no cancellation fees or penalties. Your access will continue until the end of your current billing period.",
-    },
-]
+
+
 
 
 function FadeInSection({ children }) {
@@ -97,7 +73,7 @@ function FadeInSection({ children }) {
 
 
 
-export default function HomeClient({ products, programs }) {
+export default function HomeClient({ products, programs, testimonials }) {
     const searchParams = useSearchParams()
     const error = searchParams.get('error')
 
@@ -241,14 +217,14 @@ export default function HomeClient({ products, programs }) {
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {TESTIMONIALS.map((t, i) => (
+                            {testimonials?.map((testimonials, i) => (
                                 <Card key={i} className="border-none shadow-sm rounded-2xl p-6 text-left flex flex-col justify-between">
-                                    <p className="text-slate-700 leading-relaxed mb-8 italic">"{t.text}"</p>
+                                    <p className="text-slate-700 leading-relaxed mb-8 italic">"{testimonials.desc}"</p>
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden" />
                                         <div>
-                                            <p className="font-bold text-sm">{t.name}</p>
-                                            <p className="text-xs text-slate-500">{t.role}</p>
+                                            <p className="font-bold text-sm">{testimonials.name}</p>
+                                            <p className="text-xs text-slate-500">{testimonials.role}</p>
                                         </div>
                                     </div>
                                 </Card>

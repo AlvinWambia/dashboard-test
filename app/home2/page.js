@@ -22,6 +22,11 @@ async function getData() {
                 question,
                 answer
             }
+        },
+        "testimonials": *[_type == "testimonials"]{
+            name,
+            role,
+            desc
         }
     }`;
     console.log("Attempting to fetch data from Sanity...");
@@ -31,11 +36,11 @@ async function getData() {
         return data;
     } catch (error) {
         console.error("Error fetching data from Sanity:", error);
-        return { products: [], programs: [] };
+        return { products: [], programs: [], testimonials: [] };
     }
 }
 
 export default async function MyFitLandingPage() {
-    const { products, programs } = await getData();
-    return <HomeClient products={products} programs={programs} />;
+    const { products, programs, testimonials } = await getData();
+    return <HomeClient products={products} programs={programs} testimonials={testimonials} />;
 }

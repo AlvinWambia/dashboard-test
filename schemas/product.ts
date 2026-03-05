@@ -4,18 +4,6 @@ export default defineType({
     name: 'product',
     type: 'document',
     title: 'Products',
-    actions: (prev, { currentUser }) => {
-        const isAdmin = currentUser.roles.some(
-            (role) => role.name === 'administrator'
-        );
-
-        if (isAdmin) {
-            return prev; // Admins can do everything
-        }
-
-        // For non-admins, remove the ability to delete or unpublish
-        return prev.filter(action => !['delete', 'unpublish'].includes(action.action));
-    },
     fields: [
         defineField({ name: 'name', type: 'string', title: 'Product Name', validation: Rule => Rule.required() }),
         defineField({ name: 'price', type: 'number', title: 'Price', validation: Rule => Rule.required() }),
