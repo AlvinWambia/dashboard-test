@@ -1,7 +1,7 @@
 "use client"; // Required for interactivity (State)
 
 
-
+import "@/app/globals.css";
 import {
   Item,
   ItemActions,
@@ -10,10 +10,14 @@ import {
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item"
+import { Input } from "@/components/ui/input"
+import { Field } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
-import { ArrowUpIcon } from "lucide-react"
+import { ArrowUpIcon, AlertCircleIcon } from "lucide-react"
 import * as React from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -26,6 +30,9 @@ import {
 } from "@/components/ui/card"
 
 import communicationImage from "@/components/images/communication.png"
+import sdImage from "@/components/images/sd.png"
+import uxImage from "@/components/images/ux.png"
+import daImage from "@/components/images/da.png"
 
 
 function FadeInSection({ children }) {
@@ -49,18 +56,32 @@ function FadeInSection({ children }) {
       className={`transition-all duration-1000 ease-out transform ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
         }`}
     >
+
       {children}
     </div>
   )
 }
 
 export default function AuthPage() {
+  const searchParams = useSearchParams()
+  const error = searchParams.get('error')
 
   return (
     //NAVBAR
-    <div className="bg-white h-screen text-black mt-5 ">
+    <div className="bg-white h-screen text-black mt-5 my-20 py-10 ">
+      {error === 'unauthorized' && (
+        <div className="fixed top-5 right-5 z-50 w-full max-w-md animate-in fade-in slide-in-from-top-5">
+          <Alert variant="destructive" className="bg-white shadow-lg">
+            <AlertCircleIcon className="h-4 w-4" />
+            <AlertTitle>Access Denied</AlertTitle>
+            <AlertDescription>
+              Your account is not registered as an admin.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
       <FadeInSection>
-        <div className="flex flex-row px-10 pt-15 pb-30 ">
+        <div className="flex flex-row px-10 pt-10 pb-30 ">
           <div className="flex flex-col w-220">
             <div className="flex flex-wrap items-center gap-2 md:flex-row py-5">
               <Button variant="outline">Learn More</Button>
@@ -104,14 +125,13 @@ export default function AuthPage() {
         <div>
           <p className="text-3xl font-bold text-center items-center justify-center">
             Our Offerings</p>
-          <p className="text-sm font-medium pt-2 text-center items-center justify-center"> We provide a range of services to meet your needs.</p>
-          <div className="py-10 bg-gray flex flex-row ">
+          <p className="text-sm font-medium py-3 text-center items-center justify-center"> We provide a range of services to meet your needs.</p>
+          <div className="py-10 bg-gray-50 flex flex-row ">
             <Card className="relative mx-auto w-full max-w-sm pt-0">
-              <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
               <img
-                src={communicationImage.src}
+                src={sdImage.src}
                 alt="Event cover"
-                className="relative z-20 aspect-video w-full object-cover"
+                className="w-60 h-60 rounded-2xl object-cover mx-auto my-6"
               />
               <CardHeader>
                 <CardAction>
@@ -123,19 +143,18 @@ export default function AuthPage() {
                 </CardDescription>
               </CardHeader>
               <CardFooter>
-                <Button className="w-full">View Event</Button>
+                <Button className="w-full rounded-2xl bg-white text-black border-2 border-black hover:bg-black hover:text-white">View CV</Button>
               </CardFooter>
             </Card>
             <Card className="relative mx-auto w-full max-w-sm pt-0">
-              <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
               <img
-                src={communicationImage.src}
+                src={uxImage.src}
                 alt="Event cover"
-                className="relative z-20 aspect-video w-full object-cover "
+                className="w-60 h-60 rounded-3xl object-cover mx-auto my-6"
               />
               <CardHeader>
                 <CardAction>
-                  <Badge variant="outline" >
+                  <Badge className="bg-green-50 text-green-600" >
                     Self taught
                   </Badge>
                 </CardAction>
@@ -145,19 +164,19 @@ export default function AuthPage() {
                 </CardDescription>
               </CardHeader>
               <CardFooter>
-                <Button className="w-full">View Event</Button>
+                <Button className="w-full rounded-2xl bg-white text-black border border-black hover:bg-black hover:text-white">View CV</Button>
               </CardFooter>
             </Card>
             <Card className="relative mx-auto w-full max-w-sm pt-0">
-              <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
               <img
-                src={communicationImage.src}
+                src={daImage.src}
                 alt="Event cover"
-                className="relative z-20 aspect-video w-full object-cover"
+                className="w-60 h-60 rounded-2xl object-cover mx-auto  my-6"
               />
+
               <CardHeader>
                 <CardAction>
-                  <Badge variant="outline">
+                  <Badge className="bg-yellow-50 text-yellow-600">
                     Ameture
                   </Badge>
                 </CardAction>
@@ -167,7 +186,7 @@ export default function AuthPage() {
                 </CardDescription>
               </CardHeader>
               <CardFooter>
-                <Button className="w-full">View Event</Button>
+                <Button className="w-full rounded-2xl bg-white text-black border-2 border-black hover:bg-black hover:text-white">View CV</Button>
               </CardFooter>
             </Card>
           </div>
@@ -177,7 +196,7 @@ export default function AuthPage() {
       <FadeInSection>
         <div>
           <div>
-            <p className="text-3xl font-bold text-center items-center justify-center">
+            <p className="text-3xl font-bold text-center items-center justify-center pt-5">
               My Projects
             </p>
             <p className="text-sm font-medium pt-2 text-center items-center justify-center">
@@ -194,50 +213,56 @@ export default function AuthPage() {
 
 
       <FadeInSection>
-        <footer className="flex fex-row px-20 py-20 ">
-          <div className="flex flex-col py-5">
-            <p>FitWithP</p>
-            <p>© copyright FitWithP 2026. All rights reserved.</p>
+
+        <div className="flex flex-row px-20 py-10 mx-10 mt-20 mb-10 bg-white text-xs rounded-3xl shadow-2xl">
+          <div className="flex flex-col py-5 ">
+            <p className="text-sm font-bold">⠿FitWithP</p>
+            <p className="text-xs mt-2">© copyright FitWithP 2026. All rights reserved.</p>
+            <Button className="w-50 rounded-2xl text-white bg-black border-2 border-black hover:bg-black hover:text-white mt-3">Become a member</Button>
           </div>
 
           <div className="flex flex-col px-20 py-5">
-            <p>Pages</p>
+            <p className="px-20 py-3 font-bold">Pages</p>
+            <div className="flex flex-col px-20 text-black">
+              <p className="py-1">Home</p>
+              <p className="py-1">About</p>
+              <p className="py-1">Projects</p>
+              <p className="py-1">Contact</p>
+            </div>
+
 
           </div>
 
-          <div className="flex flex-col py-5">
-            <p>Socials</p>
-            <div className="flex flex-col pt-5">
-              <Item variant="outline" size="sm" className="mb-5">
-                <ItemMedia variant="icon">
+          <div className="flex flex-col py-5 ml-15">
+            <p className="py-3 font-bold">Socials</p>
+            <div className="flex flex-col text-black">
+              <p className="py-1">Instagram</p>
+              <p className="py-1">Facebook</p>
+              <p className="py-1">Twitter</p>
+              <p className="py-1">TikTok</p>
+            </div>
+          </div>
 
-                </ItemMedia>
-                <ItemContent>
-                  <ItemTitle className="text-sm font-medium pl-3">GitHubsss</ItemTitle>
-                  <ItemDescription className="text-sm font-medium pl-3">Follow me on my GitHub.</ItemDescription>
-                </ItemContent>
-                <ItemActions>
-                  <Badge variant="outline">GitHub</Badge>
-                </ItemActions>
-              </Item>
-              <Item variant="outline" size="sm">
-                <ItemMedia variant="icon">
-
-                </ItemMedia>
-                <ItemContent>
-                  <ItemTitle>Dribbble</ItemTitle>
-                  <ItemDescription>View my UX/UI designs.</ItemDescription>
-                </ItemContent>
-                <ItemActions>
-                  <Badge variant="outline"></Badge>
-                </ItemActions>
-              </Item>
+          <div className="ml-15">
+            <p className="px-20  pt-8 pb-3 text-xs font-bold">Newsletter</p>
+            <p className="text-xs px-20 w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
+            <div className="px-20">
+              <Field orientation="horizontal" className="text-xs">
+                <Input type="search" placeholder="Enter email..." className="rounded-2xl text-xs" />
+                <Button className="rounded-2xl text-xs">Send</Button>
+              </Field>
             </div>
           </div>
 
 
-        </footer>
+        </div>
+
+        <div>
+          <p className="text-lg font-bold mx-auto items-center justify-center">Welcome</p>
+        </div>
+
       </FadeInSection>
+
     </div>
 
 

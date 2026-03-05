@@ -1,0 +1,619 @@
+"use client";
+
+
+import "@/app/globals.css";
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
+import { Separator } from "@/components/ui/separator"
+import { ArrowUpRight, Heart, Activity, MousePointer2, Plus, AlertCircleIcon, Plane, Tag, MessageSquare, Star } from "lucide-react";
+import Image from 'next/image';
+import daImage from "@/components/images/da.png"
+import communicationImage from "@/components/images/communication.png"
+import dmbImage from "@/components/images/dmb.png"
+import trcImage from "@/components/images/trc.png"
+import { useSearchParams } from "next/navigation"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion"
+import Link from "next/link"
+
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+
+} from "@/components/ui/carousel"
+
+import { Badge } from "@/components/ui/badge"
+
+const TESTIMONIALS = [
+    { name: "William Ashford", role: "Product Manager, Google", text: "Switching to Credenza was a game-changer for us. Their platform streamlined our financial processes, saving us countless hours each month." },
+    { name: "Scarlett Palmer", role: "Marketing Director, Adobe", text: "The security features offered give us peace of mind knowing that our customer data is protected." },
+    { name: "Marlon Wright", role: "Product Manager, Slack", text: "We've seen a significant improvement in our compliance management since the switch." },
+    { name: "Samuel Kingsley", role: "Financial Analyst, Squarespace", text: "I can't recommend Credenza enough! Their lending solutions made it easier for us to manage applications." }
+]
+
+const PRODUCTS = [
+    { id: 1, name: "Weekly Plan Diet", price: "59.00", desc: "Planned out diet, based on nutrition for self.", rating: 5, reviews: 121 },
+    { id: 2, name: "Training Program", price: "109.00", desc: "Training face to face based on desired results.", rating: 4, reviews: 121 },
+    { id: 3, name: "Mental Wellness", price: "89.75", desc: "Weekly mental therapy sessions to improve personal mental health", rating: 5, reviews: 121 },
+    { id: 4, name: "Mental Wellness", price: "89.75", desc: "Weekly mental therapy sessions to improve personal mental health", rating: 5, reviews: 121 },
+]
+
+const items = [
+    {
+        value: "plans",
+        trigger: "What subscription plans do you offer?",
+        content:
+            "We offer three subscription tiers: Starter ($9/month), Professional ($29/month), and Enterprise ($99/month). Each plan includes increasing storage limits, API access, priority support, and team collaboration features.",
+    },
+    {
+        value: "billing",
+        trigger: "How does billing work?",
+        content:
+            "Billing occurs automatically at the start of each billing cycle. We accept all major credit cards, PayPal, and ACH transfers for enterprise customers. You'll receive an invoice via email after each payment.",
+    },
+    {
+        value: "cancel",
+        trigger: "How do I cancel my subscription?",
+        content:
+            "You can cancel your subscription anytime from your account settings. There are no cancellation fees or penalties. Your access will continue until the end of your current billing period.",
+    },
+]
+
+
+function FadeInSection({ children }) {
+    const [isVisible, setIsVisible] = React.useState(false)
+    const domRef = React.useRef()
+
+    React.useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                setIsVisible(entry.isIntersecting)
+            })
+        })
+        const { current } = domRef
+        if (current) observer.observe(current)
+        return () => observer.disconnect()
+    }, [])
+
+    return (
+        <div
+            ref={domRef}
+            className={`transition-all duration-1000 ease-out transform ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
+                }`}
+        >
+
+            {children}
+        </div>
+    )
+}
+
+
+
+
+export default function MyFitLanding() {
+    const searchParams = useSearchParams()
+    const error = searchParams.get('error')
+
+    const [api, setApi] = React.useState()
+    const [current, setCurrent] = React.useState(0)
+    const [count, setCount] = React.useState(0)
+
+    React.useEffect(() => {
+        if (!api) {
+            return
+        }
+
+        setCount(api.scrollSnapList().length)
+        setCurrent(api.selectedScrollSnap() + 1)
+
+        api.on("select", () => {
+            setCurrent(api.selectedScrollSnap() + 1)
+        })
+    }, [api])
+
+
+    return (
+        <div className="min-h-screen bg-white p-4 md:p-8 text-slate-900">
+            {error === 'unauthorized' && (
+                <div className="fixed top-5 right-5 z-50 w-full max-w-md animate-in fade-in slide-in-from-top-5">
+                    <Alert variant="destructive" className="bg-white shadow-lg">
+                        <AlertCircleIcon className="h-4 w-4" />
+                        <AlertTitle>Access Denied</AlertTitle>
+                        <AlertDescription>
+                            Your account is not registered as an admin.
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            )}
+            {/* --- Navigation --- */}
+
+            <FadeInSection>
+                <nav className="flex items-center justify-between mb-12">
+                    <div className="flex items-center gap-2 font-bold text-xl">
+                        ⠿myFit
+                    </div>
+
+                    <div className="hidden md:flex bg-slate-100 rounded-full p-1 px-2 gap-1 mx-auto">
+                        {['Home', 'Testimonials', 'About', 'Programs', 'Contacts'].map((item) => (
+                            <Button key={item} variant="ghost" className="rounded-full px-6 hover:bg-white hover:shadow-sm">
+                                {item}
+                            </Button>
+                        ))}
+                    </div>
+
+                    <Link href="/auth/login">
+                        <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm">
+                            Join Now!
+                        </Button>
+                    </Link>
+                </nav>
+            </FadeInSection>
+
+            {/* --- Main Content Grid --- */}
+            <FadeInSection>
+                <div className="grid grid-cols-12 gap-6 max-w-7xl mx-auto my-5">
+
+                    {/* Left Column: Headline & Small Cards */}
+                    <div className="col-span-12 lg:col-span-6 space-y-8">
+                        <h1 className="text-6xl md:text-5xl font-semibold leading-[1.1] tracking-tight">
+                            Join the Fitness Revolution, Your Body, Your Rules!
+                        </h1>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <Card className="bg-blue-100 border-none p-6 rounded-[2rem] relative flex flex-col justify-between aspect-square">
+                                <Button size="icon" variant="secondary" className="absolute top-4 right-4 rounded-full w-8 h-8">
+                                    <ArrowUpRight className="w-4 h-4" />
+                                </Button>
+                                <p className="font-medium text-lg mt-auto">Workout Program</p>
+                            </Card>
+                            <Card className="bg-slate-100 border-none p-6 rounded-[2rem] relative flex flex-col justify-between aspect-square">
+                                <Button size="icon" variant="secondary" className="absolute top-4 right-4 rounded-full w-8 h-8">
+                                    <ArrowUpRight className="w-4 h-4" />
+                                </Button>
+                                <p className="font-medium text-lg mt-auto">Wellness</p>
+                            </Card>
+                            <Card className="bg-blue-200 border-none p-6 rounded-[2rem] relative flex flex-col justify-between aspect-square">
+                                <Button size="icon" variant="secondary" className="absolute top-4 right-4 rounded-full w-8 h-8">
+                                    <ArrowUpRight className="w-4 h-4" />
+                                </Button>
+                                <p className="font-medium text-lg mt-auto">Nutrition</p>
+                            </Card>
+                        </div>
+
+                        {/* Bottom Left: Stretching Image Card */}
+                        <div className="relative rounded-[3rem] overflow-hidden h-[300px] bg-gray-200">
+                            <img
+                                src="/api/source/40"
+                                alt=""
+                                className="object-cover w-full h-full"
+                            />
+                            {/* Heart Rate Overlay */}
+                            <div className="absolute top-6 left-6 bg-white/80 backdrop-blur-md p-2 rounded-2xl w-32 ">
+                                <p className="text-sm text-black mx-auto pl-2">Train With Me</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Hero Image & Stats */}
+                    <div className="col-span-12 lg:col-span-6 relative">
+                        <div className="bg-gray-200 rounded-[4rem] h-full relative overflow-hidden flex flex-col items-center pt-20">
+                            {/* Floating Tags */}
+
+
+                            {/* Central Jump Image Placeholder */}
+                            <div className="relative z-10 mt-10">
+                                <img src={trcImage.png} alt="Athlete Jumping" className="h-full object-contain transition-transform duration-500 hover:-translate-y-4" />
+
+                                {/* Feature Callouts */}
+
+                            </div>
+
+                            {/* Bottom Right White Card */}
+                            <div className="absolute bottom-6 right-6 bg-white p-3 rounded-[3rem] w-45 shadow-sm z-20 border border-white/20 my-5 mx-5">
+                                <p className="text-black text-sm mx-auto my-auto pl-2">MyFit Training Program</p>
+                            </div>
+                        </div>
+
+                        {/* Scroll Down Indicator */}
+
+                    </div>
+
+                </div>
+            </FadeInSection>
+
+
+            <FadeInSection>
+                <section className="py-24">
+                    <div className="max-w-6xl mx-auto px-6 text-center">
+                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+                            <MessageSquare className="w-3 h-3 mr-2" /> Testimonials
+                        </Badge>
+                        <h2 className="text-5xl font-bold tracking-tight mb-6">What Our Clients Are Saying</h2>
+                        <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16">
+                            We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {TESTIMONIALS.map((t, i) => (
+                                <Card key={i} className="border-none shadow-sm rounded-2xl p-6 text-left flex flex-col justify-between">
+                                    <p className="text-slate-700 leading-relaxed mb-8 italic">"{t.text}"</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden" />
+                                        <div>
+                                            <p className="font-bold text-sm">{t.name}</p>
+                                            <p className="text-xs text-slate-500">{t.role}</p>
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                        <Button variant="outline" className="mt-12 rounded-full px-8 py-6">See all Reviews &gt;</Button>
+                    </div>
+                </section>
+            </FadeInSection>
+
+
+
+            <FadeInSection>
+                <div className="text-center">
+                    <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+                        <MessageSquare className="w-3 h-3 mr-2" /> About
+                    </Badge>
+                    <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">About MyFit</p>
+                    <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
+                        We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
+                    </p>
+                </div>
+                <div className=" flex flex-row my-10 mx-20">
+                    <div>
+                        <Tabs defaultValue="account" className="w-[600px]">
+                            <TabsList>
+                                <TabsTrigger value="account">MyFit</TabsTrigger>
+                                <TabsTrigger value="password">Pelesia Wambia</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="account" className="py-10">
+                                <h1 className="font-bold text-4xl py-3">About MyFit Training</h1>
+                                <p>MyFit Training founded by Pelesia Wambia in 2025. Its core function is to help people grow physically and also mentally. Its not just about lifting weights but also mental wellness</p>
+                                <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm my-3">
+                                    Be A Member
+                                </Button>
+
+
+                            </TabsContent>
+                            <TabsContent value="password" className="py-10">
+                                <h1 className="font-bold text-4xl py-3 ">About Pelesia</h1>
+                                <p>MyFit Training founded by Pelesia Wambia in 2025. Its core function is to help people grow physically and also mentally. Its not just about lifting weights but also mental wellness</p>
+                                <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm my-3">
+                                    View Socials
+                                </Button>
+
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+
+                    <div className="mx-20 my-5 bg-gray-100 w-200 h-150">
+
+                        <div className="bg-gray-100">
+
+
+                        </div>
+                    </div>
+
+                </div>
+            </FadeInSection>
+
+
+
+            <FadeInSection className="my-10">
+                <div className="text-center">
+
+
+                    <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+                        <MessageSquare className="w-3 h-3 mr-2" /> Programs
+                    </Badge>
+                    <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Programs</p>
+                    <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
+                        We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
+                    </p>
+                </div>
+
+                <div className="flex flex-row my-10 mx-20 ">
+                    <div className="flex flex-col py-5">
+                        <p className="text-lg font-semibold">Personal Training</p>
+                        <p>Description of personal training. Face to face training of planned worouts.</p>
+                        <Card className="w-full max-w-sm my-5">
+                            <CardHeader>
+                                <CardTitle>Subscription & Billing</CardTitle>
+                                <CardDescription>
+                                    Common questions about your account, plans, payments and
+                                    cancellations.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Accordion type="single" collapsible defaultValue="plans">
+                                    {items.map((item) => (
+                                        <AccordionItem key={item.value} value={item.value}>
+                                            <AccordionTrigger>{item.trigger}</AccordionTrigger>
+                                            <AccordionContent>{item.content}</AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="mx-10 my-5 bg-gray-100 w-170 h-120">
+
+                        <div className="bg-gray-100">
+
+
+                        </div>
+                    </div>
+
+
+
+                </div>
+
+                <div className="flex flex-row my-10 mx-20 ">
+
+                    <div className="mx-10 my-5 bg-gray-100 w-170 h-120">
+
+                        <div className="bg-gray-100">
+
+
+                        </div>
+                    </div>
+
+
+                    <div className="flex flex-col py-2">
+                        <p className="text-lg font-semibold text-right">Mental Wellness</p>
+                        <p className="text-right">Description of mental wellness. Mental care with therapy sessions.</p>
+                        <Card className="w-full max-w-sm my-5 justify-right">
+                            <CardHeader>
+                                <CardTitle>Subscription & Billing</CardTitle>
+                                <CardDescription>
+                                    Common questions about your account, plans, payments and
+                                    cancellations.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Accordion type="single" collapsible defaultValue="plans">
+                                    {items.map((item) => (
+                                        <AccordionItem key={item.value} value={item.value}>
+                                            <AccordionTrigger>{item.trigger}</AccordionTrigger>
+                                            <AccordionContent>{item.content}</AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+
+
+
+
+                </div>
+
+
+                <div className="flex flex-row my-10 mx-20 ">
+                    <div className="flex flex-col py-5">
+                        <p className="text-lg font-semibold">Personal Training</p>
+                        <p>Description of personal training. Face to face training of planned worouts.</p>
+                        <Card className="w-full max-w-sm my-5">
+                            <CardHeader>
+                                <CardTitle>Subscription & Billing</CardTitle>
+                                <CardDescription>
+                                    Common questions about your account, plans, payments and
+                                    cancellations.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Accordion type="single" collapsible defaultValue="plans">
+                                    {items.map((item) => (
+                                        <AccordionItem key={item.value} value={item.value}>
+                                            <AccordionTrigger>{item.trigger}</AccordionTrigger>
+                                            <AccordionContent>{item.content}</AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="mx-10 my-5 bg-gray-100 w-170 h-120">
+
+                        <div className="bg-gray-100">
+
+
+                        </div>
+                    </div>
+
+
+
+                </div>
+
+
+            </FadeInSection>
+
+            <FadeInSection>
+                <section className="py-20 px-6 max-w-7xl mx-auto">
+                    <div className="text-center">
+                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+                            <MessageSquare className="w-3 h-3 mr-2" /> Products
+                        </Badge>
+                        <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Products</p>
+                        <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
+                            We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {PRODUCTS.map((product) => (
+                            <div key={product.id} className="group">
+                                <Card className="bg-slate-50 border-none rounded-3xl overflow-hidden relative mb-4 aspect-square flex items-center justify-center p-8">
+                                    <Button size="icon" variant="ghost" className="absolute top-4 right-4 bg-white rounded-full  opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Heart className="w-4 h-4" />
+                                    </Button>
+                                    <img src="/api/placeholder/300/300" alt={product.name} className="object-contain w-full h-full mix-blend-multiply" />
+                                </Card>
+                                <div className="flex justify-between items-start mb-1">
+                                    <h3 className="font-bold text-sm uppercase">{product.name}</h3>
+                                    <span className="font-bold text-xs">${product.price}</span>
+                                </div>
+                                <p className="text-slate-500 text-sm mb-3">{product.desc}</p>
+                                <div className="flex items-center gap-1 mb-4">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star key={i} className="w-4 h-4 fill-green-500 text-green-500" />
+                                    ))}
+                                    <span className="text-xs text-slate-400 font-medium ml-1">({product.reviews})</span>
+                                </div>
+                                <Button variant="outline" className="rounded-full border-slate-900 px-6 font-bold hover:bg-slate-900 hover:text-white transition-all">
+                                    Add to Cart
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            </FadeInSection>
+
+
+            <FadeInSection>
+                <div className="text-center">
+                    <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200 text-center items-center justify-center mx-auto">
+                        <MessageSquare className="w-3 h-3 mr-2" /> Contacts
+                    </Badge>
+                    <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Contacts</p>
+                    <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
+                        We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
+                    </p>
+                </div>
+                <div className="flex flex-row mx-20 my-10">
+                    <div className="py-5">
+                        <p className="text-3xl font-bold">Get in touch with Me</p>
+                        <p className="text-sm w-150">Reach out to us and I'll answer any of your questions.Or fill in the newsletter form for direct access and new information regularly about the site.</p>
+                        <div className="">
+                            <p className="  pt-8 pb-3 text-sm font-bold">Newsletter</p>
+                            <p className="text-xs  w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
+                            <div className="">
+                                <Field orientation="horizontal" className="text-xs">
+                                    <Input type="search" placeholder="Enter email..." className="rounded-2xl text-xs w-80" />
+                                    <Button className="rounded-2xl text-xs">Send</Button>
+                                </Field>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-42 gap-y-40 max-w-4xl mx-auto py-5">
+                        <div>
+                            <p className="text-xs">general inquiries</p>
+                            <p className="text-sm font-bold">myfit@gmail.com</p>
+                        </div>
+
+                        <div>
+                            <p className="text-xs">instagram</p>
+                            <p className="text-sm font-bold">myfit_training</p>
+                        </div>
+
+                        <div>
+                            <p className="text-xs">facebook</p>
+                            <p className="text-sm font-bold">myfit_training</p>
+                        </div>
+
+                        <div>
+                            <p className="text-xs">x</p>
+                            <p className="text-sm font-bold">myfit_training</p>
+                        </div>
+
+                    </div>
+                </div>
+            </FadeInSection>
+
+            <div className="flex flex-row px-20 py-10 mx-10 mt-20 mb-10 bg-white text-xs rounded-3xl shadow-2xl">
+                <div className="flex flex-col py-5 ">
+                    <p className="text-sm font-bold">⠿myFit</p>
+                    <p className="text-xs mt-2 text-slate-500">© copyright FitWithP 2026. All rights reserved.</p>
+                    <Button className="w-50 rounded-2xl text-white bg-black border-2 border-black hover:bg-black hover:text-white mt-3">Become a member</Button>
+                </div>
+
+
+                <div className="flex flex-col gap-10 my-5 ml-15">
+
+
+                    <div className="flex items-center gap-2 text-sm md:gap-4">
+                        <div className="flex flex-col gap-1">
+                            <span className="font-medium">Testimonials</span>
+                            <span className="text-xs text-muted-foreground">
+                                We take pride in delivering.
+                            </span>
+                        </div>
+                        <Separator orientation="vertical" />
+                        <div className="flex flex-col gap-1">
+                            <span className="font-medium">About</span>
+                            <span className="text-xs text-muted-foreground">
+                                We take pride in delivering.
+                            </span>
+                        </div>
+                        <Separator orientation="vertical" className="hidden md:block" />
+                        <div className="hidden flex-col gap-1 md:flex">
+                            <span className="font-medium">Programs</span>
+                            <span className="text-xs text-muted-foreground">We take pride.</span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm md:gap-4">
+                        <div className="flex flex-col gap-1">
+                            <span className="font-medium">Instagram</span>
+                            <span className="text-xs text-muted-foreground">
+                                @myfit_training
+                            </span>
+                        </div>
+                        <Separator orientation="vertical" />
+                        <div className="flex flex-col gap-1">
+                            <span className="font-medium">Facebook</span>
+                            <span className="text-xs text-muted-foreground">
+                                @myfit_training
+                            </span>
+                        </div>
+                        <Separator orientation="vertical" className="hidden md:block" />
+                        <div className="hidden flex-col gap-1 md:flex">
+                            <span className="font-medium">Tiktok</span>
+                            <span className="text-xs text-muted-foreground">@myfit_training</span>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div className="ml-15">
+                    <p className="px-20  pt-8 pb-3 text-xs font-bold">Newsletter</p>
+                    <p className="text-xs px-20 w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
+                    <div className="px-20">
+                        <Field orientation="horizontal" className="text-xs">
+                            <Input type="search" placeholder="Enter email..." className="rounded-2xl text-xs" />
+                            <Button className="rounded-2xl text-xs">Send</Button>
+                        </Field>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+
+
+
+        </div>
+    );
+}
