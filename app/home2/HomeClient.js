@@ -73,10 +73,11 @@ function FadeInSection({ children }) {
 
 
 
-export default function HomeClient({ products, programs, testimonials }) {
+export default function HomeClient({ products, programs, testimonials, about }) {
     const searchParams = useSearchParams()
     const error = searchParams.get('error')
 
+    const [activeTab, setActiveTab] = React.useState(about?.[0]?.name)
     const [api, setApi] = React.useState()
     const [current, setCurrent] = React.useState(0)
     const [count, setCount] = React.useState(0)
@@ -249,37 +250,36 @@ export default function HomeClient({ products, programs, testimonials }) {
                 </div>
                 <div className=" flex flex-row my-10 mx-20">
                     <div>
-                        <Tabs defaultValue="account" className="w-[600px]">
+                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[600px]">
                             <TabsList>
-                                <TabsTrigger value="account">MyFit</TabsTrigger>
-                                <TabsTrigger value="password">Pelesia Wambia</TabsTrigger>
+                                {about?.map((item) => (
+                                    <TabsTrigger key={item.name} value={item.name}>{item.name}</TabsTrigger>
+                                ))}
                             </TabsList>
-                            <TabsContent value="account" className="py-10">
-                                <h1 className="font-bold text-4xl py-3">About MyFit Training</h1>
-                                <p>MyFit Training founded by Pelesia Wambia in 2025. Its core function is to help people grow physically and also mentally. Its not just about lifting weights but also mental wellness</p>
-                                <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm my-3">
-                                    Be A Member
-                                </Button>
-
-
-                            </TabsContent>
-                            <TabsContent value="password" className="py-10">
-                                <h1 className="font-bold text-4xl py-3 ">About Pelesia</h1>
-                                <p>MyFit Training founded by Pelesia Wambia in 2025. Its core function is to help people grow physically and also mentally. Its not just about lifting weights but also mental wellness</p>
-                                <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm my-3">
-                                    View Socials
-                                </Button>
-
-                            </TabsContent>
+                            {about?.map((item) => (
+                                <TabsContent key={item.name} value={item.name} className="py-10">
+                                    <h1 className="font-bold text-4xl py-3">About {item.name}</h1>
+                                    <p>{item.desc}</p>
+                                    <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm my-3">
+                                        {/* This logic is based on the hardcoded example, you might want a more robust solution */}
+                                        {item.name === 'MyFit' ? 'Be A Member' : 'View Socials'}
+                                    </Button>
+                                </TabsContent>
+                            ))}
                         </Tabs>
                     </div>
 
-                    <div className="mx-20 my-5 bg-gray-100 w-200 h-150">
-
-                        <div className="bg-gray-100">
-
-
-                        </div>
+                    <div className="mx-20 my-5 bg-gray-100 w-[500px] h-[400px] relative overflow-hidden rounded-3xl">
+                        {about?.map((item) => (
+                            item.name === activeTab && item.image && (
+                                <img
+                                    key={item.name}
+                                    src={urlFor(item.image).url()}
+                                    alt={item.name}
+                                    className="object-cover w-full h-full animate-in fade-in duration-500"
+                                />
+                            )
+                        ))}
                     </div>
 
                 </div>
