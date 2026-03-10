@@ -62,7 +62,7 @@ function FadeInSection({ children }) {
   )
 }
 
-export default function AuthPage() {
+function AuthPageContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
 
@@ -268,5 +268,13 @@ export default function AuthPage() {
 
 
 
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <AuthPageContent />
+    </React.Suspense>
   )
 }

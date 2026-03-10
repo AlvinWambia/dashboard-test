@@ -1,5 +1,6 @@
 import { client } from "@/lib/sanity";
-import HomeClient from "./HomeClient"; // We'll create this next
+import HomeClient from "./HomeClient";
+import { Suspense } from "react";
 
 async function getData() {
     // Fetch products and programs in one go
@@ -47,5 +48,9 @@ async function getData() {
 
 export default async function MyFitLandingPage() {
     const { products, programs, testimonials, about } = await getData();
-    return <HomeClient products={products} programs={programs} testimonials={testimonials} about={about} />;
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <HomeClient products={products} programs={programs} testimonials={testimonials} about={about} />
+        </Suspense>
+    );
 }
