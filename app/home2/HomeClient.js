@@ -143,7 +143,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                             Join the Fitness Revolution, Your Body, Your Rules!
                         </h1>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <Card className="bg-blue-100 border-none p-6 rounded-[2rem] relative flex flex-col justify-between aspect-square">
                                 <Button size="icon" variant="secondary" className="absolute top-4 right-4 rounded-full w-8 h-8">
                                     <ArrowUpRight className="w-4 h-4" />
@@ -208,7 +208,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
             <FadeInSection>
                 <section className="py-24">
-                    <div className="max-w-6xl mx-auto px-6 text-center">
+                    <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
                         <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
                             <MessageSquare className="w-3 h-3 mr-2" /> Testimonials
                         </Badge>
@@ -248,38 +248,20 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
                     </p>
                 </div>
-                <div className=" flex flex-row my-10 mx-20">
-                    <div>
-                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[600px]">
-                            <TabsList>
-                                {about?.map((item) => (
-                                    <TabsTrigger key={item.name} value={item.name}>{item.name}</TabsTrigger>
-                                ))}
+                <div className="flex flex-col lg:flex-row my-10 mx-4 lg:mx-20 gap-10 lg:gap-20 items-center">
+                    <div className="w-full lg:w-auto">
+                        <Tabs defaultValue="myfit" className="w-full lg:w-140">
+                            <TabsList variant="line">
+                                <TabsTrigger value="myfit">MyFit</TabsTrigger>
+                                <TabsTrigger value="pelesia">Pelesia </TabsTrigger>
                             </TabsList>
-                            {about?.map((item) => (
-                                <TabsContent key={item.name} value={item.name} className="py-10">
-                                    <h1 className="font-bold text-4xl py-3">About {item.name}</h1>
-                                    <p>{item.desc}</p>
-                                    <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm my-3">
-                                        {/* This logic is based on the hardcoded example, you might want a more robust solution */}
-                                        {item.name === 'MyFit' ? 'Be A Member' : 'View Socials'}
-                                    </Button>
-                                </TabsContent>
-                            ))}
+                            <TabsContent value="myfit" className="text-lg">A little bit about the company. Learning about the coming up of my fit and everything else about it.</TabsContent>
+                            <TabsContent value="pelesia" className="text-lg">A little bit about the trainer, instructor and the dietor. How she does her things and many more.</TabsContent>
                         </Tabs>
                     </div>
 
-                    <div className="mx-20 my-5 bg-gray-100 w-[500px] h-[400px] relative overflow-hidden rounded-3xl">
-                        {about?.map((item) => (
-                            item.name === activeTab && item.image && (
-                                <img
-                                    key={item.name}
-                                    src={urlFor(item.image).url()}
-                                    alt={item.name}
-                                    className="object-cover w-full h-full animate-in fade-in duration-500"
-                                />
-                            )
-                        ))}
+                    <div className="mx-0 lg:mx-20 my-5 bg-gray-100 w-full max-w-[500px] aspect-square relative overflow-hidden rounded-3xl">
+
                     </div>
 
                 </div>
@@ -303,7 +285,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                 {programs?.map((program, index) => {
                     const isEven = index % 2 === 0;
                     return (
-                        <div key={program._id} className={`flex flex-col md:flex-row${!isEven ? '-reverse' : ''} my-10 mx-20 gap-10 items-start`}>
+                        <div key={program._id} className={`flex flex-col md:flex-row${!isEven ? '-reverse' : ''} my-10 mx-4 md:mx-20 gap-10 items-start`}>
                             <div className="flex flex-col py-5 flex-1">
                                 <p className="text-lg font-semibold">{program.title}</p>
                                 <p>{program.description}</p>
@@ -399,23 +381,23 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
                     </p>
                 </div>
-                <div className="flex flex-row mx-20 my-10">
-                    <div className="py-5">
+                <div className="flex flex-col lg:flex-row mx-4 lg:mx-20 my-10 gap-10">
+                    <div className="py-5 w-full lg:w-auto">
                         <p className="text-3xl font-bold">Get in touch with Me</p>
-                        <p className="text-sm w-150">Reach out to us and I'll answer any of your questions.Or fill in the newsletter form for direct access and new information regularly about the site.</p>
+                        <p className="text-sm w-full lg:w-150">Reach out to us and I'll answer any of your questions.Or fill in the newsletter form for direct access and new information regularly about the site.</p>
                         <div className="">
                             <p className="  pt-8 pb-3 text-sm font-bold">Newsletter</p>
-                            <p className="text-xs  w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
+                            <p className="text-xs w-full lg:w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
                             <div className="">
                                 <Field orientation="horizontal" className="text-xs">
-                                    <Input type="search" placeholder="Enter email..." className="rounded-2xl text-xs w-80" />
+                                    <Input type="search" placeholder="Enter email..." className="rounded-2xl text-xs w-full sm:w-80" />
                                     <Button className="rounded-2xl text-xs">Send</Button>
                                 </Field>
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-42 gap-y-40 max-w-4xl mx-auto py-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 lg:gap-x-42 gap-y-10 lg:gap-y-40 max-w-4xl mx-auto py-5 w-full">
                         <div>
                             <p className="text-xs">general inquiries</p>
                             <p className="text-sm font-bold">myfit@gmail.com</p>
@@ -440,7 +422,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                 </div>
             </FadeInSection>
 
-            <div className="flex flex-row px-20 py-10 mx-10 mt-20 mb-10 bg-white text-xs rounded-3xl shadow-2xl">
+            <div className="flex flex-col lg:flex-row px-6 lg:px-20 py-10 mx-4 lg:mx-10 mt-20 mb-10 bg-white text-xs rounded-3xl shadow-2xl">
                 <div className="flex flex-col py-5 ">
                     <p className="text-sm font-bold">⠿myFit</p>
                     <p className="text-xs mt-2 text-slate-500">© copyright FitWithP 2026. All rights reserved.</p>
@@ -448,7 +430,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                 </div>
 
 
-                <div className="flex flex-col gap-10 my-5 ml-15">
+                <div className="flex flex-col gap-10 my-5 ml-0 lg:ml-15">
 
 
                     <div className="flex items-center gap-2 text-sm md:gap-4">
@@ -495,10 +477,10 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                 </div>
 
 
-                <div className="ml-15">
-                    <p className="px-20  pt-8 pb-3 text-xs font-bold">Newsletter</p>
-                    <p className="text-xs px-20 w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
-                    <div className="px-20">
+                <div className="ml-0 lg:ml-15 mt-10 lg:mt-0">
+                    <p className="px-0 lg:px-20 pt-8 pb-3 text-xs font-bold">Newsletter</p>
+                    <p className="text-xs px-0 lg:px-20 w-full lg:w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
+                    <div className="px-0 lg:px-20">
                         <Field orientation="horizontal" className="text-xs">
                             <Input type="search" placeholder="Enter email..." className="rounded-2xl text-xs" />
                             <Button className="rounded-2xl text-xs">Send</Button>

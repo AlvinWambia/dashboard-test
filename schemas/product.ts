@@ -6,6 +6,7 @@ export default defineType({
     title: 'Products',
     fields: [
         defineField({ name: 'name', type: 'string', title: 'Product Name', validation: Rule => Rule.required() }),
+        defineField({ name: 'productId', type: 'string', title: 'Product ID', validation: Rule => Rule.required() }),
         defineField({ name: 'price', type: 'number', title: 'Price', validation: Rule => Rule.required() }),
         defineField({
             name: 'image', type: 'image', title: 'Product Image', options: { hotspot: true }, validation: Rule => Rule.required()
