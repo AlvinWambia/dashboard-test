@@ -7,6 +7,7 @@ async function getData() {
     const query = `{
         "products": *[_type == "product"]{
             _id,
+            productId,
             name,
             price,
             desc,

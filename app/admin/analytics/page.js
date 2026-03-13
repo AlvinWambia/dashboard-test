@@ -66,6 +66,66 @@ export default async function DashboardPage() {
         redirect("/home?error=unauthorized");
     }
 
+    // --- REAL ANALYTICS FETCHING ---
+    
+    // 1. Fetch Total Revenue & Total Orders
+    const { data: payments } = await supabase
+        .from('payments')
+        .select('amount, created_at')
+        .eq('status', 'success');
+    
+    const { data: orders } = await supabase
+        .from('orders')
+        .select('program_name, price, created_at')
+        .eq('status', 'paid');
+
+    const totalRevenue = payments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0;
+    const totalOrders = orders?.length || 0;
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    // 2. Program Performance (Sales per Program)
+    const programStatsMap = {};
+    orders?.forEach(order => {
+        const name = order.program_name || 'Unknown';
+        if (!programStatsMap[name]) {
+            programStatsMap[name] = { name, revenue: 0, count: 0 };
+        }
+        programStatsMap[name].revenue += (order.price || 0);
+        programStatsMap[name].count += 1;
+    });
+    const programStats = Object.values(programStatsMap).sort((a, b) => b.revenue - a.revenue);
+
+    // 3. Weekly Revenue Trend (Last 7 days)
+    const last7Days = [...Array(7)].map((_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        d.setHours(0, 0, 0, 0);
+        return d;
+    });
+
+    const revenueTrend = last7Days.map(day => {
+        const dayEnd = new Date(day);
+        dayEnd.setHours(23, 59, 59, 999);
+        
+        const dayRevenue = payments?.filter(p => {
+            const pDate = new Date(p.created_at);
+            return pDate >= day && pDate <= dayEnd;
+        }).reduce((acc, p) => acc + (p.amount || 0), 0) || 0;
+
+        return {
+            date: day.toLocaleDateString('en-US', { weekday: 'short' }),
+            revenue: dayRevenue
+        };
+    });
+
+    const analyticsData = {
+        totalRevenue,
+        totalOrders,
+        avgOrderValue,
+        programStats,
+        revenueTrend
+    };
+
 
 
     return (
@@ -141,10 +201,7 @@ export default async function DashboardPage() {
 
                 {/* Grid Content */}
                 <div className="">
-                    <Dashboard />
-
-
-
+                    <Dashboard data={analyticsData} />
                 </div>
 
             </div>

@@ -33,86 +33,98 @@ ChartJS.register(
     LineElement, Title, Tooltip, Filler
 );
 
-const Dashboard = () => {
+const Dashboard = ({ data }) => {
+    const { 
+        totalRevenue = 0, 
+        totalOrders = 0, 
+        avgOrderValue = 0, 
+        programStats = [], 
+        revenueTrend = [] 
+    } = data || {};
+
+    // Prepare chart data from revenueTrend
+    const chartData = {
+        labels: revenueTrend.map(t => t.date),
+        datasets: [{
+            data: revenueTrend.map(t => t.revenue),
+            borderColor: '#000000',
+            borderWidth: 3,
+            fill: true,
+            backgroundColor: 'rgba(0, 0, 0, 0.05)',
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#000000',
+        }]
+    };
+
     return (
-        <div className="p-8 bg-gray-50 min-h-screen text-slate-900">
+        <div className="p-0 bg-transparent min-h-screen text-slate-900">
             {/* Top Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <StatCard title="Total visitors" value="4,582" change="+ 9.8%" trend="up" icon={<Users size={20} />} />
-                <StatCard title="Pageviews" value="15,743" change="+ 5.9%" trend="up" icon={<Eye size={20} />} />
-                <StatCard title="Bounce rate" value="47.8%" change="- 2.1%" trend="down" icon={<LogOut size={20} />} />
-                <StatCard title="Conversion Rate" value="5.2%" change="- 1.4%" trend="down" icon={<Percent size={20} />} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <StatCard 
+                    title="Total Revenue" 
+                    value={`KES ${totalRevenue.toLocaleString()}`} 
+                    change="+12.5%" 
+                    trend="up" 
+                    icon={<TrendingUp size={20} />} 
+                />
+                <StatCard 
+                    title="Total Orders" 
+                    value={totalOrders.toString()} 
+                    change="+8.2%" 
+                    trend="up" 
+                    icon={<Users size={20} />} 
+                />
+                <StatCard 
+                    title="Avg Order Value" 
+                    value={`KES ${avgOrderValue.toLocaleString()}`} 
+                    change="+3.1%" 
+                    trend="up" 
+                    icon={<Percent size={20} />} 
+                />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Traffic Overview */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 ">
-                    <div className="flex justify-between items-center mb-6">
+                {/* Main Revenue Overview */}
+                <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex justify-between items-center mb-8">
                         <div>
-                            <h3 className="text-gray-500 font-medium">Traffic overview</h3>
+                            <h3 className="text-gray-500 font-medium">Revenue overview</h3>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className="text-3xl font-bold">25,821</span>
-                                <span className="text-green-500 text-sm font-medium flex items-center">
-                                    <TrendingUp size={14} className="mr-1" /> 15%
-                                </span>
+                                <span className="text-3xl font-bold">KES {totalRevenue.toLocaleString()}</span>
                             </div>
                         </div>
-                        <Select>
-                            <SelectTrigger className="w-full max-w-48">
-                                <SelectValue placeholder="Select period" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Period</SelectLabel>
-                                    <SelectItem value="Last 7 days">Apple</SelectItem>
-                                    <SelectItem value="Last 2 weeks">Last 2 weeks</SelectItem>
-                                    <SelectItem value="Last 1 month">Last 1 month</SelectItem>
-                                </SelectGroup>
-                                <SelectSeparator />
-                                <SelectGroup>
-                                    <SelectLabel>Months</SelectLabel>
-                                    <SelectItem value="Last 3 months">Last 3 months</SelectItem>
-                                    <SelectItem value="Last 6 months">Last 6 months</SelectItem>
-                                    <SelectItem value="Last 12 months">Last 12 months</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+                        <div className="text-sm font-medium text-gray-400">Last 7 Days</div>
                     </div>
                     <div className="h-[300px]">
-                        <Line data={lineData} options={lineOptions} />
+                        <Line data={chartData} options={lineOptions} />
                     </div>
                 </div>
 
-                {/* Peak Hours Heatmap */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 ">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-gray-500 font-medium">Peak hours</h3>
-                        <Select>
-                            <SelectTrigger className="w-full max-w-48">
-                                <SelectValue placeholder="Select period" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Period</SelectLabel>
-                                    <SelectItem value="Last 7 days">Apple</SelectItem>
-                                    <SelectItem value="Last 2 weeks">Last 2 weeks</SelectItem>
-                                    <SelectItem value="Last 1 month">Last 1 month</SelectItem>
-                                </SelectGroup>
-                                <SelectSeparator />
-                                <SelectGroup>
-                                    <SelectLabel>Months</SelectLabel>
-                                    <SelectItem value="Last 3 months">Last 3 months</SelectItem>
-                                    <SelectItem value="Last 6 months">Last 6 months</SelectItem>
-                                    <SelectItem value="Last 12 months">Last 12 months</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+                {/* Program Leaderboard */}
+                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                    <h3 className="text-gray-500 font-medium mb-6">Program Performance</h3>
+                    <div className="space-y-6">
+                        {programStats.length > 0 ? programStats.slice(0, 5).map((program, idx) => (
+                            <div key={idx} className="flex flex-col gap-2">
+                                <div className="flex justify-between text-sm font-bold text-gray-800 uppercase tracking-tight">
+                                    <span>{program.name}</span>
+                                    <span>{program.count} sales</span>
+                                </div>
+                                <div className="w-full bg-gray-100 rounded-full h-2">
+                                    <div 
+                                        className="bg-black h-2 rounded-full" 
+                                        style={{ width: `${(program.revenue / totalRevenue) * 100}%` }}
+                                    ></div>
+                                </div>
+                                <div className="text-[10px] text-gray-400 font-semibold">
+                                    KES {program.revenue.toLocaleString()} REVENUE
+                                </div>
+                            </div>
+                        )) : (
+                            <p className="text-gray-400 text-sm">No sales data yet.</p>
+                        )}
                     </div>
-                    <div className="mb-6">
-                        <span className="text-3xl font-bold">4,231</span>
-                        <p className="text-gray-400 text-sm">visitors in peak hour</p>
-                    </div>
-                    <Heatmap />
                 </div>
             </div>
         </div>
@@ -176,8 +188,10 @@ const lineOptions = {
     scales: {
         x: { grid: { display: false }, border: { display: false } },
         y: {
-            min: 0, max: 8000,
-            ticks: { stepSize: 2000, callback: (v) => v === 0 ? 0 : v / 1000 + 'k' },
+            min: 0,
+            ticks: { 
+                callback: (v) => v === 0 ? '0' : (v >= 1000 ? (v / 1000 + 'k') : v) 
+            },
             border: { display: false }
         }
     },

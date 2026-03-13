@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/accordion"
 import Link from "next/link"
 import { urlFor } from "@/lib/sanity";
+import { BuyNowButton } from "@/components/BuyNowButton";
 
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -166,11 +167,9 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
                         {/* Bottom Left: Stretching Image Card */}
                         <div className="relative rounded-[3rem] overflow-hidden h-[300px] bg-gray-200">
-                            <img
-                                src="/api/source/40"
-                                alt=""
-                                className="object-cover w-full h-full"
-                            />
+                            <div className="w-full h-full bg-slate-300 flex items-center justify-center text-slate-400">
+                                <Activity className="w-12 h-12" />
+                            </div>
                             {/* Heart Rate Overlay */}
                             <div className="absolute top-6 left-6 bg-white/80 backdrop-blur-md p-2 rounded-2xl w-32 ">
                                 <p className="text-sm text-black mx-auto pl-2">Train With Me</p>
@@ -328,7 +327,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                 <section className="py-20 px-6 max-w-7xl mx-auto">
                     <div className="text-center">
                         <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
-                            <MessageSquare className="w-3 h-3 mr-2" /> Products
+                            <MessageSquare className="w-3 h-3 mr-2" /> Pro
                         </Badge>
                         <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Products</p>
                         <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
@@ -361,9 +360,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                     ))}
                                     <span className="text-xs text-slate-400 font-medium ml-1">({product.reviews})</span>
                                 </div>
-                                <Button variant="outline" className="rounded-full border-slate-900 px-6 font-bold hover:bg-slate-900 hover:text-white transition-all">
-                                    Add to Cart
-                                </Button>
+                                <BuyNowButton product={product} />
                             </div>
                         ))}
                     </div>

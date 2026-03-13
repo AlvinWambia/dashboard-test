@@ -15,6 +15,7 @@ import googleImage from "@/components/images/google1.jpg"
 import { useState, useEffect } from "react";
 import { createClient } from "@/supabase/client";
 import { useRouter } from "next/navigation";
+import { getURL } from "@/lib/getURL";
 import zxcvbn from "zxcvbn"
 import { z } from "zod";
 
@@ -124,7 +125,7 @@ export default function SignupPage() {
                 data: {
                     full_name: name,
                 },
-                emailRedirectTo: `${location.origin}/auth/callback?next=/auth/login`,
+                emailRedirectTo: getURL('/auth/callback?next=/auth/login'),
             },
         });
 
@@ -142,9 +143,9 @@ export default function SignupPage() {
                 .single();
 
             if (profile?.role === 'admin') {
-                router.push("/admin");
+                router.push("/admin/dashboard");
             } else {
-                router.push("/home");
+                router.push("/home2");
             }
         }
         setLoading(false);
@@ -156,7 +157,7 @@ export default function SignupPage() {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${location.origin}/auth/callback?next=/admin`,
+                redirectTo: getURL('/auth/callback?next=/home2'),
             },
         });
 
@@ -168,10 +169,10 @@ export default function SignupPage() {
 
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="grid h-160 w-250 mx-auto lg:grid-cols-2 rounded-3xl shadow-2xl bg-white overflow-hidden">
+        <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
+            <div className="w-full max-w-4xl grid lg:grid-cols-2 rounded-3xl shadow-2xl bg-white overflow-hidden">
                 {/* LEFT SIDE: Image & Testimonial */}
-                <div className="relative h-full hidden bg-muted lg:block">
+                <div className="relative hidden bg-muted lg:block">
                     <Image
                         src={daImage.src}
                         alt="Testimonial background"
@@ -198,7 +199,7 @@ export default function SignupPage() {
                 </div>
 
                 {/* RIGHT SIDE: Login Form */}
-                <div className="flex flex-col items-center justify-center p-8 lg:p-12">
+                <div className="flex flex-col items-center justify-center p-8 lg:p-12 mx-auto">
                     <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
 
                         {/* Logo & Header */}
@@ -213,10 +214,10 @@ export default function SignupPage() {
                         </div>
 
                         {/* Form Fields */}
-                        <form onSubmit={handleSignUp} className="grid gap-2 ">
+                        <form onSubmit={handleSignUp} className="grid gap-2 lg:mr-5">
                             <div className="grid gap-2">
-                                <div className="grid max-w-sm grid-cols-2 gap-2">
-                                    <div className="grid gap-2">
+                                <div className="grid w-full grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid gap-1.5">
                                         <Label htmlFor="name">Name</Label>
                                         <Input
                                             id="name"
@@ -236,7 +237,7 @@ export default function SignupPage() {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="grid gap-2">
+                                    <div className="grid gap-1.5">
                                         <Label htmlFor="email">Email</Label>
                                         <Input
                                             id="email"
@@ -258,8 +259,8 @@ export default function SignupPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="grid gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid gap-1.5">
                                         <Label htmlFor="password" className="">Password</Label>
                                         <div className="relative">
                                             <Input
@@ -301,7 +302,7 @@ export default function SignupPage() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="grid gap-2">
+                                    <div className="grid gap-1.5">
                                         <Label htmlFor="confirm-password" className="">Confirm Password</Label>
                                         <div className="relative">
                                             <Input
@@ -370,7 +371,7 @@ export default function SignupPage() {
                         </form>
 
                         {/* Divider */}
-                        <div className="relative">
+                        <div className="relative lg:mr-5">
                             <div className="absolute inset-0 flex items-center">
                                 <span className="w-full border-t" />
                             </div>
@@ -379,23 +380,22 @@ export default function SignupPage() {
                             </div>
                         </div>
 
-                        <div className="flex flex-row">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:mr-5">
 
-                            <Button variant="outline" className="w-30 mx-2 py-6 px-6 " onClick={handleGoogleSignIn}>
-                                <Image src={googleImage.src} alt="Google" width={25} height={25} className="mr-2" />
+                            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+                                <Image src={googleImage.src} alt="Google" width={20} height={20} className="mr-2" />
                                 Google
                             </Button>
 
-                            <Button variant="outline" className="w-30 mx-2 py-6 px-6 ">
-                                <Image src={githubImage.src} alt="Google" width={25} height={25} className="mr-2" />
+                            <Button variant="outline" className="w-full">
+                                <Image src={githubImage.src} alt="GitHub" width={20} height={20} className="mr-2" />
                                 GitHub
                             </Button>
 
-                            <Button variant="outline" className="w-30 mx-2 py-6 px-6 ">
-                                <Image src={appleImage.src} alt="Google" width={25} height={25} className="mr-2" />
+                            <Button variant="outline" className="w-full">
+                                <Image src={appleImage.src} alt="Apple" width={20} height={20} className="mr-2" />
                                 Apple
                             </Button>
-
                         </div>
                         {/* Social Login */}
 

@@ -15,6 +15,7 @@ import { ArrowUpIcon } from "lucide-react"
 import { useState } from "react";
 import { createClient } from "@/supabase/client";
 import { useRouter } from "next/navigation";
+import { getURL } from "@/lib/getURL";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -51,8 +52,8 @@ export default function LoginPage() {
 
         if (profileError) {
             console.error("Error fetching profile:", profileError);
-            // Fallback to home if profile lookup fails
-            router.replace('/home');
+            // Fallback to home2 if profile lookup fails
+            router.replace('/home2');
             setLoading(false);
             return;
         }
@@ -61,7 +62,7 @@ export default function LoginPage() {
         if (profile?.role === 'admin') {
             router.replace('/admin/dashboard');
         } else {
-            router.replace('/home');
+            router.replace('/home2');
         }
 
         setLoading(false);
@@ -71,14 +72,14 @@ export default function LoginPage() {
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${location.origin}/auth/callback`,
+                redirectTo: getURL('/auth/callback'),
             },
         });
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="grid h-160 w-250 mx-auto lg:grid-cols-2 rounded-3xl shadow-2xl bg-white overflow-hidden">
+        <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
+            <div className="w-full max-w-md lg:max-w-6xl grid lg:grid-cols-2 lg:h-[40rem] rounded-3xl shadow-2xl bg-white overflow-hidden">
                 {/* LEFT SIDE: Image & Testimonial */}
                 <div className="relative h-full hidden bg-muted lg:block">
                     <Image
@@ -88,10 +89,10 @@ export default function LoginPage() {
                         className="object-cover brightness-[0.7]"
                     />
 
-                    <div className="absolute top-10 left-10 right-10 text-black text-sm">
+                    <div className="absolute top-4 left-4 sm:top-10 sm:left-10 flex items-center gap-4">
                         <Button variant="outline">Homepage</Button>
-                        <Button variant="outline" size="icon" aria-label="Submit" className="text-black ml-5 mt-2">
-                            <ArrowUpIcon />
+                        <Button variant="outline" size="icon" aria-label="Back to top">
+                            <ArrowUpIcon className="h-4 w-4" />
                         </Button>
                     </div>
                     <div className="absolute bottom-10 left-10 right-10 text-white">
@@ -109,7 +110,7 @@ export default function LoginPage() {
 
                 {/* RIGHT SIDE: Login Form */}
                 <div className="flex flex-col items-center justify-center p-8 lg:p-12">
-                    <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
+                    <div className="mx-auto flex w-full flex-col justify-center space-y-6 max-w-sm">
 
                         {/* Logo & Header */}
                         <div className="flex flex-col space-y-2 text-center">
@@ -184,20 +185,20 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        <div className="flex flex-row">
+                        <div className="grid sm:grid-cols-3 gap-2">
 
-                            <Button variant="outline" className="w-30 mx-2 py-6 px-6 " onClick={handleGoogleSignIn}>
-                                <Image src={googleImage.src} alt="Google" width={25} height={25} className="mr-2" />
+                            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+                                <Image src={googleImage.src} alt="Google" width={20} height={20} className="mr-2" />
                                 Google
                             </Button>
 
-                            <Button variant="outline" className="w-30 mx-2 py-6 px-6 ">
-                                <Image src={githubImage.src} alt="Google" width={25} height={25} className="mr-2" />
+                            <Button variant="outline" className="w-full">
+                                <Image src={githubImage.src} alt="GitHub" width={20} height={20} className="mr-2" />
                                 GitHub
                             </Button>
 
-                            <Button variant="outline" className="w-30 mx-2 py-6 px-6 ">
-                                <Image src={appleImage.src} alt="Google" width={25} height={25} className="mr-2" />
+                            <Button variant="outline" className="w-full">
+                                <Image src={appleImage.src} alt="Apple" width={20} height={20} className="mr-2" />
                                 Apple
                             </Button>
 

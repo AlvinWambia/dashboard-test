@@ -1,11 +1,10 @@
 
-
 import { Search, Bell, Mail, Plus, Import, Eye, Users, Percent, TrendingUp, TrendingDown, LogOut, X, Link as LinkIcon, MoreVertical, AlertCircle, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/supabase/server"; // Ensure this helper handles server-side cookies
+import { createClient, createAdminClient } from "@/supabase/server"; // Ensure this helper handles server-side cookies
 import { redirect } from "next/navigation";
 import {
     Card,
@@ -55,6 +54,7 @@ import CommentsSection from "@/components/admin/commentsSection";
 
 export default async function MembersPage() {
     const supabase = await createClient();
+    const adminSupabase = createAdminClient();
 
     // 1. Get the authenticated user from the session
     const { data: { user } } = await supabase.auth.getUser();
@@ -64,54 +64,62 @@ export default async function MembersPage() {
         redirect("/auth/login");
     }
 
-    // Inside your async DashboardPage()
-    const { data: users } = await supabase.from('profiles').select('created_at').eq('role', 'user');
-    // Fetch all user profiles for the members modal. We query the `profiles` table
-    // directly, as querying `auth.users` is restricted by database permissions for security.
-    const { data: allProfilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, role, avatar_url');
-
-    if (profilesError) {
-        console.error('Error fetching user profiles:', profilesError);
-    }
-
-    // Fetch comments for the current user (admin notes)
-    // We join with profiles to get author details
-    const { data: comments, error: commentsError } = await supabase
-        .from('user_comments')
-        .select('*, author:profiles!author_id(full_name, avatar_url)')
-        .eq('user_id', user.id) // Fetching comments where the target is the current admin
-        .order('created_at', { ascending: false });
-
-    if (commentsError) console.error("Error fetching comments:", commentsError);
-
-    // The email is not available from the `profiles` table. We'll pass a placeholder.
-    const allProfiles = allProfilesData?.map(profile => ({ ...profile, email: 'Email not available' })) || [];
-
-    // Simple logic to count users per day of the week
-    const counts = new Array(7).fill(0);
-    users?.forEach((u) => {
-        const day = new Date(u.created_at).getDay();
-        counts[day] += 1;
-    });
-
-
-    // 3. Fetch the role from the 'profiles' table (the source of truth)
+    // 3. Fetch the admin's own profile to check role
     const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-
-    console.log("Fetched Profile Data:", profile); // Check your terminal (not browser console)
-
-
-    // 4. Redirect if they are NOT an admin
     if (!profile || profile.role !== 'admin') {
         redirect("/home?error=unauthorized");
     }
+
+    // 4. Fetch all profiles AND all auth users to get emails
+    // We use the adminSupabase (service role) to list auth users
+    const [
+        { data: allProfilesData, error: profilesError },
+        { data: { users: authUsers }, error: authError }
+    ] = await Promise.all([
+        adminSupabase.from('profiles').select('id, full_name, role, avatar_url'),
+        adminSupabase.auth.admin.listUsers()
+    ]);
+
+    if (profilesError || authError) {
+        console.error('Error fetching data:', profilesError || authError);
+    }
+
+    // Merge email from Auth into Profiles
+    const allProfiles = allProfilesData?.map(p => {
+        const authUser = authUsers?.find(au => au.id === p.id);
+        return {
+            ...p,
+            email: authUser?.email || 'N/A'
+        };
+    }) || [];
+
+    // Fetch analytics data (users per day)
+    const { data: usersCountData } = await adminSupabase.from('profiles').select('created_at').eq('role', 'user');
+
+    // Fetch admin notes (comments)
+    const { data: comments, error: commentsError } = await adminSupabase
+        .from('user_comments')
+        .select('*, author:profiles!author_id(full_name, avatar_url)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+    if (commentsError) console.error("Error fetching comments:", commentsError);
+
+    // Simple logic to count users per day of the week
+    const counts = new Array(7).fill(0);
+    usersCountData?.forEach((u) => {
+        const day = new Date(u.created_at).getDay();
+        counts[day] += 1;
+    });
+
+
+    // Analytics log
+    console.log("Admin Profile Accessed:", profile.full_name);
 
 
 

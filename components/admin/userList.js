@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link as LinkIcon, MoreVertical, Search, Pencil, Trash2, MessageSquare } from 'lucide-react';
+import { Link as LinkIcon, MoreVertical, Search, Pencil, Trash2, Mail } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -24,6 +24,7 @@ import { createClient } from "@/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { deleteUser } from '@/app/actions/members';
 import { toast } from "sonner";
+import EmailModal from "./EmailModal";
 
 
 const MembersModal = ({ initialUsers = [] }) => {
@@ -31,6 +32,8 @@ const MembersModal = ({ initialUsers = [] }) => {
     const [loading, setLoading] = useState(false); // Data is pre-fetched, so no initial loading state
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
 
 
@@ -173,9 +176,13 @@ const MembersModal = ({ initialUsers = [] }) => {
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
                                                 className="text-black  focus:text-black-600"
+                                                onSelect={() => {
+                                                    setSelectedUser(person);
+                                                    setIsEmailModalOpen(true);
+                                                }}
                                             >
-                                                <MessageSquare className="mr-2 h-4 w-4" />
-                                                Chat
+                                                <Mail className="mr-2 h-4 w-4" />
+                                                Send Email
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -187,6 +194,12 @@ const MembersModal = ({ initialUsers = [] }) => {
                     )}
                 </div>
             </div>
+
+            <EmailModal 
+                isOpen={isEmailModalOpen} 
+                onClose={() => setIsEmailModalOpen(false)} 
+                recipient={selectedUser} 
+            />
         </div>
     );
 };
