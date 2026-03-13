@@ -29,6 +29,7 @@ import {
 import { SignOutButton } from "@/components/signOutButton";
 import { UserChart } from "@/components/admin/userChart";
 import { ProfileForm } from "@/components/admin/profileForm";
+import { AdminHeader } from "@/components/admin/AdminHeader";
 
 const notifications = [
     {
@@ -95,136 +96,81 @@ export default async function DashboardPage() {
 
 
     return (
-        <div className="p-4 md:p-8 bg-white">
-            {/* Search and Profile Header */}
-            <header className="flex flex-col md:flex-row justify-between items-center mb-8 bg-gray-100 px-5 py-5 rounded-2xl gap-4">
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black " size={18} />
-                    <Input className="pl-10 bg-white border-none shadow-sm text-sm rounded-2xl w-full" placeholder="Search task" />
-                </div>
-
-                <div className="flex items-center flex-wrap justify-center md:justify-end gap-4">
-                    <HoverCard>
-                        <HoverCardTrigger asChild>
-                            <Button variant="ghost" size="icon" className="bg-white rounded-full shadow-sm text-sm"><Mail size={20} /></Button>
-                        </HoverCardTrigger>
-                        <HoverCardContent>
-                            <p>Messages</p>
-                        </HoverCardContent>
-                    </HoverCard>
-
-                    <div className="flex items-center gap-4">
-                        <SignOutButton />
-                        {/* ... other profile details ... */}
-                    </div>
-
-
-
-                    <HoverCard>
-                        <HoverCardTrigger asChild>
-                            <Button variant="ghost" size="icon" className="bg-white rounded-full shadow-sm text-sm"><Bell size={20} /></Button>
-                        </HoverCardTrigger>
-                        <HoverCardContent>
-                            <p>Notifications</p>
-                        </HoverCardContent>
-                    </HoverCard>
-
-                    <div className="flex items-center gap-3 ">
-                        <Avatar>
-                            <AvatarImage
-                                src={profile.avatar_url}
-                                alt="@shadcn"
-                                className=""
-                            />
-                            <AvatarFallback>{profile.full_name?.charAt(0) || 'U'}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col">
-                            <p className="text-sm font-bold ">{profile.full_name}</p>
-                            <p className="text-sm  ">{user.email}</p>
-
-                        </div>
-                    </div>
-
-                </div>
-            </header>
+        <div className="p-4 md:p-8 bg-white min-h-screen">
+            <AdminHeader title="Profile" profile={profile} user={user} />
 
             {/* Hero Section */}
-            <div className="bg-gray-100 rounded-xl p-5">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+            <div className="bg-gray-50 rounded-3xl p-5 border border-gray-100 mb-8">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
                         <h1 className="text-2xl font-bold">Profile</h1>
-                        <p className="text-gray-500 text-sm">Welcome back, Admin! Here is what's happening today.</p>
+                        <p className="text-gray-500 text-sm">Update your administrative profile and view notifications.</p>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                        <Button className="bg-black text-white hover:bg-white hover:text-black hover:border hover:border-black">
+                    <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+                        <Button className="bg-black text-white hover:bg-white hover:text-black hover:border hover:border-black rounded-xl h-10">
                             <Plus className="mr-2" size={18} /> Create Content
                         </Button>
-                        <Button variant="outline" className="bg-white">
+                        <Button variant="outline" className="bg-white rounded-xl h-10">
                             <Import className="mr-2" size={18} /> Import Data
                         </Button>
                     </div>
                 </div>
 
                 {/* Grid Content */}
-                <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Profile Form (Large item) */}
+                    <div className="lg:col-span-1">
+                        <ProfileForm profile={profile} user={user} />
+                    </div>
 
-                    {/* Large Feature Item */}
-                    <ProfileForm profile={profile} user={user} />
-
-                    {/* Wide Item */}
-                    <Card className="md:col-span-2 bg-slate-50 bg-white">
-                        <CardHeader className="flex justify-between items-center">
-                            <CardTitle>User Registrations</CardTitle>
-                            <Button variant="outline" size="sm">
-                                <Eye /> View Users
+                    {/* Registrations Chart (Wide) */}
+                    <Card className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                        <CardHeader className="flex flex-row justify-between items-center p-6 pb-0">
+                            <CardTitle className="text-lg">User Registrations</CardTitle>
+                            <Button variant="outline" size="sm" className="rounded-xl h-9">
+                                <Eye className="h-4 w-4 mr-2" /> View Users
                             </Button>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-6">
                             <UserChart chartData={counts} />
                         </CardContent>
                     </Card>
 
-                    {/* Small Items */}
-                    <Card className="bg-slate-50 bg-white">
-                        <CardHeader>
-                            <CardTitle>Notifications</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {notifications.map((item) => (
-                                <Card
-                                    key={item.id}
-                                    className={`flex flex-row w-50 h-20  border-none shadow-none cursor-pointer hover:bg-slate-50 relative ${item.unread ? 'bg-blue-50/50' : 'bg-white'}`}
-                                >
-                                    {/* Circular Icon Container */}
-                                    <div className={`flex h-12 w-12 items-center justify-center rounded-full mr-2 ${item.bgColor}`}>
-                                        {item.icon}
+                    {/* Side Cards Stacking */}
+                    <div className="flex flex-col gap-6">
+                        {/* Notifications */}
+                        <Card className="bg-white rounded-3xl border border-gray-100 shadow-sm grow overflow-hidden">
+                            <CardHeader className="p-6 pb-4">
+                                <CardTitle className="text-lg">Recent Alerts</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6 pt-0 space-y-4">
+                                {notifications.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className={`flex items-center gap-3 p-3 rounded-2xl transition-colors cursor-pointer hover:bg-gray-50 ${item.unread ? 'bg-blue-50/50' : ''}`}
+                                    >
+                                        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${item.bgColor}`}>
+                                            {React.cloneElement(item.icon, { size: 18 })}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-bold text-slate-900 truncate">
+                                                {item.title}
+                                            </p>
+                                            <p className="text-[10px] text-slate-500 truncate">{item.time}</p>
+                                        </div>
                                     </div>
+                                ))}
+                            </CardContent>
+                        </Card>
 
-                                    {/* Text Content */}
-                                    <div className="flex flex-col w-35 overflow-hidden">
-                                        <h4 className="text-xs font-bold text-slate-900 truncate">
-                                            {item.title} <span className="font-normal text-slate-500">for</span> {item.target}
-                                        </h4>
-                                        <p className="text-xs text-slate-400 mt-1">{item.time}</p>
-                                    </div>
-
-                                </Card>
-                            ))}
-
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-slate-50 bg-white">
-                        <CardHeader>
-                            <CardTitle>Settings</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p>Standard 1x1 block.</p>
-                        </CardContent>
-                    </Card>
-
+                        {/* Settings placeholder */}
+                        <Card className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 overflow-hidden">
+                            <CardTitle className="text-lg mb-2">Settings</CardTitle>
+                            <p className="text-xs text-gray-400">Manage your system preferences and security levels here.</p>
+                            <Button variant="link" className="p-0 text-xs text-black font-bold h-auto mt-4">Go to Settings →</Button>
+                        </Card>
+                    </div>
                 </div>
-
             </div>
         </div>
     );

@@ -79,7 +79,7 @@ const MembersModal = ({ initialUsers = [] }) => {
     };
 
     return (
-        <div className="max-w-xl w-full bg-white rounded-[32px] border border-gray-100 overflow-hidden">
+        <div className="w-full bg-white rounded-[32px] border border-gray-100 overflow-hidden">
             {/* Header */}
             <div className="flex justify-between items-center p-8 pb-4">
                 <h2 className="text-lg text-slate-900 font-semibold">Members</h2>

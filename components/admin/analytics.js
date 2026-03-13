@@ -50,7 +50,7 @@ const Dashboard = ({ data }) => {
             borderColor: '#000000',
             borderWidth: 3,
             fill: true,
-            backgroundColor: 'rgba(0, 0, 0, 0.05)',
+            backgroundColor: 'rgba(0, 0, 0, 0.02)',
             tension: 0.4,
             pointRadius: 4,
             pointBackgroundColor: '#000000',
@@ -60,7 +60,7 @@ const Dashboard = ({ data }) => {
     return (
         <div className="p-0 bg-transparent min-h-screen text-slate-900">
             {/* Top Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
                 <StatCard 
                     title="Total Revenue" 
                     value={`KES ${totalRevenue.toLocaleString()}`} 
@@ -86,38 +86,38 @@ const Dashboard = ({ data }) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Revenue Overview */}
-                <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-                    <div className="flex justify-between items-center mb-8">
+                <div className="lg:col-span-2 bg-white p-5 lg:p-8 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                         <div>
-                            <h3 className="text-gray-500 font-medium">Revenue overview</h3>
+                            <h3 className="text-gray-500 font-medium text-sm lg:text-base">Revenue overview</h3>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className="text-3xl font-bold">KES {totalRevenue.toLocaleString()}</span>
+                                <span className="text-2xl lg:text-3xl font-bold">KES {totalRevenue.toLocaleString()}</span>
                             </div>
                         </div>
-                        <div className="text-sm font-medium text-gray-400">Last 7 Days</div>
+                        <div className="text-xs font-semibold text-gray-400 bg-gray-50 px-3 py-1 rounded-full uppercase tracking-wider">Last 7 Days</div>
                     </div>
-                    <div className="h-[300px]">
+                    <div className="h-[250px] lg:h-[300px]">
                         <Line data={chartData} options={lineOptions} />
                     </div>
                 </div>
 
                 {/* Program Leaderboard */}
-                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-                    <h3 className="text-gray-500 font-medium mb-6">Program Performance</h3>
+                <div className="bg-white p-5 lg:p-8 rounded-3xl border border-gray-100 shadow-sm">
+                    <h3 className="text-gray-500 font-medium mb-6 text-sm lg:text-base">Program Performance</h3>
                     <div className="space-y-6">
                         {programStats.length > 0 ? programStats.slice(0, 5).map((program, idx) => (
                             <div key={idx} className="flex flex-col gap-2">
-                                <div className="flex justify-between text-sm font-bold text-gray-800 uppercase tracking-tight">
-                                    <span>{program.name}</span>
+                                <div className="flex justify-between text-[11px] lg:text-xs font-bold text-gray-800 uppercase tracking-tight">
+                                    <span className="truncate max-w-[150px]">{program.name}</span>
                                     <span>{program.count} sales</span>
                                 </div>
-                                <div className="w-full bg-gray-100 rounded-full h-2">
+                                <div className="w-full bg-gray-50 rounded-full h-1.5 lg:h-2">
                                     <div 
-                                        className="bg-black h-2 rounded-full" 
+                                        className="bg-black h-full rounded-full transition-all duration-500" 
                                         style={{ width: `${(program.revenue / totalRevenue) * 100}%` }}
                                     ></div>
                                 </div>
-                                <div className="text-[10px] text-gray-400 font-semibold">
+                                <div className="text-[9px] lg:text-[10px] text-gray-400 font-semibold">
                                     KES {program.revenue.toLocaleString()} REVENUE
                                 </div>
                             </div>
@@ -134,13 +134,13 @@ const Dashboard = ({ data }) => {
 // --- Subcomponents ---
 
 const StatCard = ({ title, value, change, trend, icon }) => (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 ">
-        <div className="bg-white w-10 h-10 rounded-lg flex items-center justify-center text-black mb-4">
+    <div className="bg-white p-5 lg:p-6 rounded-3xl border border-gray-100 shadow-sm transition-transform hover:scale-[1.02]">
+        <div className="bg-gray-50 w-10 h-10 rounded-xl flex items-center justify-center text-black mb-4">
             {icon}
         </div>
-        <p className="text-gray-500 text-sm mb-1">{title}</p>
-        <h2 className="text-2xl font-bold mb-2">{value}</h2>
-        <p className={`text-xs font-semibold ${trend === 'up' ? 'text-green-500' : 'text-red-400'}`}>
+        <p className="text-gray-500 text-xs lg:text-sm mb-1 font-medium">{title}</p>
+        <h2 className="text-xl lg:text-2xl font-bold mb-2">{value}</h2>
+        <p className={`text-[10px] lg:text-xs font-bold ${trend === 'up' ? 'text-green-500' : 'text-red-400'}`}>
             {trend === 'up' ? '↑' : '↓'} {change} <span className="text-gray-400 font-normal">from last month</span>
         </p>
     </div>

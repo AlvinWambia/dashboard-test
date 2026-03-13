@@ -43,6 +43,7 @@ import { AddTaskButton } from "@/components/admin/addTask";
 import { TaskCard } from "@/components/admin/TaskCard";
 import { updateTaskStatus, updateTaskOrder } from "@/app/actions/tasks";
 import { toast } from "sonner";
+import { AdminHeader } from "@/components/admin/AdminHeader";
 
 function TaskColumn({ column, tasks, isExpanded, toggleShowMore, allProfiles }) {
     const { setNodeRef } = useDroppable({
@@ -271,54 +272,18 @@ export default function TasksPage() {
     }
 
     return (
-        <div className="p-8 bg-white min-h-screen">
-            {/* Header */}
-            <header className="flex justify-between items-center mb-8 bg-gray-50 px-5 py-4 rounded-2xl border">
-                <div className="relative w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <Input className="pl-10 bg-white border-gray-200 shadow-sm text-sm rounded-xl" placeholder="Search task" />
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <HoverCard>
-                        <HoverCardTrigger asChild>
-                            <Button variant="ghost" size="icon" className="bg-white rounded-full shadow-sm border"><Mail size={18} /></Button>
-                        </HoverCardTrigger>
-                        <HoverCardContent>Messages</HoverCardContent>
-                    </HoverCard>
-
-                    <HoverCard>
-                        <HoverCardTrigger asChild>
-                            <Button variant="ghost" size="icon" className="bg-white rounded-full shadow-sm border"><Bell size={18} /></Button>
-                        </HoverCardTrigger>
-                        <HoverCardContent>Notifications</HoverCardContent>
-                    </HoverCard>
-
-                    <div className="h-8 w-[1px] bg-gray-200 mx-2" />
-
-                    <div className="flex items-center gap-3">
-                        <div className="flex flex-col text-right">
-                            <p className="text-sm font-bold leading-none">{profile.full_name}</p>
-                            <p className="text-xs text-gray-500">{user.email}</p>
-                        </div>
-                        <Avatar className="h-9 w-9 border">
-                            <AvatarImage src={profile.avatar_url} />
-                            <AvatarFallback>{profile.full_name?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <SignOutButton />
-                    </div>
-                </div>
-            </header>
+        <div className="p-4 md:p-8 bg-white min-h-screen">
+            <AdminHeader title="Task Manager" profile={profile} user={user} />
 
             {/* Hero Section */}
-            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                <div className="flex justify-between items-center mb-4">
+            <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Task Manager</h1>
-                        <p className="text-gray-500 text-sm">Welcome back, Admin! Here is your to-do list for today.</p>
+                        <p className="text-gray-500 text-sm">Organize and track your team's administrative tasks.</p>
                     </div>
-                    <div className="flex gap-3">
-                        <Button variant="outline" className="bg-white shadow-sm">
+                    <div className="flex flex-wrap gap-3">
+                        <Button variant="outline" className="bg-white shadow-sm rounded-xl h-10">
                             <Import className="mr-2" size={16} /> Import
                         </Button>
                         <AddTaskButton profiles={allProfiles} />
@@ -326,12 +291,12 @@ export default function TasksPage() {
                 </div>
 
                 {/* Filter Controls */}
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="flex items-center gap-2">
-                        <Label htmlFor="sort-by" className="text-sm font-medium text-gray-600">Sort by</Label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Label htmlFor="sort-by" className="text-sm font-medium text-gray-600 min-w-fit">Sort by</Label>
                         <Select value={sortBy} onValueChange={setSortBy}>
-                            <SelectTrigger id="sort-by" className="w-[180px] bg-white shadow-sm border-gray-200">
-                                <SelectValue placeholder="Select sort order" />
+                            <SelectTrigger id="sort-by" className="w-full sm:w-[150px] bg-white shadow-sm border-gray-200 rounded-xl">
+                                <SelectValue placeholder="Sort order" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="recent">Most Recent</SelectItem>
@@ -339,11 +304,11 @@ export default function TasksPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Label htmlFor="filter-priority" className="text-sm font-medium text-gray-600">Priority</Label>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Label htmlFor="filter-priority" className="text-sm font-medium text-gray-600 min-w-fit">Priority</Label>
                         <Select value={filterPriority} onValueChange={setFilterPriority}>
-                            <SelectTrigger id="filter-priority" className="w-[180px] bg-white shadow-sm border-gray-200">
-                                <SelectValue placeholder="Filter by priority" />
+                            <SelectTrigger id="filter-priority" className="w-full sm:w-[150px] bg-white shadow-sm border-gray-200 rounded-xl">
+                                <SelectValue placeholder="Priority" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All</SelectItem>
