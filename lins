@@ -8,6 +8,12 @@ https://dashboard-test-3i3q.vercel.app/auth/callback?next=/home2
 https://dashboard-test-3i3q.vercel.app/*
 https://dashboard-test-3i3q.vercel.app/**
 
+http://localhost:3000/auth/callback
+http://localhost:3000/auth/callback?next=/auth/login
+http://localhost:3000/auth/callback?next=/home2
+http://localhost:3000/*
+http://localhost:3000/**
+
 Ngrok URL
 http://localhost:3000
 https://inquisitional-shaun-nonanatomical.ngrok-free.dev/auth/callback
