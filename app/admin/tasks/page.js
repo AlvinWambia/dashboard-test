@@ -11,9 +11,7 @@ import {
     useDroppable,
 } from '@dnd-kit/core';
 import { arrayMove, SortableContext } from '@dnd-kit/sortable';
-import { Search, Bell, Mail, Plus, Import, MoreHorizontal, Paperclip, MessageSquare, Settings } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
+import { Import, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/supabase/client";
@@ -26,24 +24,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-
-import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { SignOutButton } from "@/components/signOutButton";
 import { AddTaskButton } from "@/components/admin/addTask";
 import { TaskCard } from "@/components/admin/TaskCard";
 import { updateTaskStatus, updateTaskOrder } from "@/app/actions/tasks";
 import { toast } from "sonner";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+
 
 function TaskColumn({ column, tasks, isExpanded, toggleShowMore, allProfiles }) {
     const { setNodeRef } = useDroppable({

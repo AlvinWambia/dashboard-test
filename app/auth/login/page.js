@@ -79,9 +79,9 @@ export default function LoginPage() {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-            <div className="w-full max-w-md lg:max-w-6xl grid lg:grid-cols-2 lg:h-[40rem] rounded-3xl shadow-2xl bg-white overflow-hidden">
+            <div className="w-full max-w-md lg:max-w-4xl xl:max-w-5xl grid lg:grid-cols-2 lg:min-h-[40rem] rounded-3xl shadow-2xl bg-white overflow-hidden">
                 {/* LEFT SIDE: Image & Testimonial */}
-                <div className="relative h-full hidden bg-muted lg:block">
+                <div className="relative h-full w-full hidden bg-muted lg:block">
                     <Image
                         src={daImage.src}
                         alt="Testimonial background"
@@ -109,7 +109,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* RIGHT SIDE: Login Form */}
-                <div className="flex flex-col items-center justify-center p-8 lg:p-12">
+                <div className="flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 w-full">
                     <div className="mx-auto flex w-full flex-col justify-center space-y-6 max-w-sm">
 
                         {/* Logo & Header */}
@@ -185,7 +185,7 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        <div className="grid sm:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
 
                             <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
                                 <Image src={googleImage.src} alt="Google" width={20} height={20} className="mr-2" />

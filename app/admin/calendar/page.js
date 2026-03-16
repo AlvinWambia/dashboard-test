@@ -1,33 +1,19 @@
 "use client";
 
-import { Search, Bell, Mail, Plus, Import, ChevronLeft, ChevronRight, Eye, Trash } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
+import { Plus, Import, ChevronLeft, ChevronRight, Trash } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/supabase/client";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from 'react';
 import {
     Card,
-    CardAction,
     CardContent,
-    CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-
-import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { SignOutButton } from "@/components/signOutButton";
-import { UserChart } from "@/components/admin/userChart";
-import { ProfileForm } from "@/components/admin/profileForm";
 import { AddScheduleButton } from "@/components/admin/addSchedule";
 import { AddWeeklyPinButton } from "@/components/admin/addWeeklyPin";
 import { EditWeeklyPinButton } from "@/components/admin/editWeeklyPin";

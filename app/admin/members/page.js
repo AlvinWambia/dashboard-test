@@ -1,50 +1,9 @@
 
-import { Search, Bell, Mail, Plus, Import, Eye, Users, Percent, TrendingUp, TrendingDown, LogOut, X, Link as LinkIcon, MoreVertical, AlertCircle, MessageSquare } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
+import { Plus, Import, MessageSquare } from 'lucide-react';
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { createClient, createAdminClient } from "@/supabase/server"; // Ensure this helper handles server-side cookies
+import { createClient, createAdminClient } from "@/supabase/server";
 import { redirect } from "next/navigation";
-import {
-    Card,
-    CardAction,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area"
-import Dashboard from "@/components/admin/analytics";
-import {
-    Combobox,
-    ComboboxChip,
-    ComboboxChips,
-    ComboboxChipsInput,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxItem,
-    ComboboxList,
-    ComboboxValue,
-    useComboboxAnchor,
-} from "@/components/ui/combobox"
-const frameworks = [
-    "Next.js",
-    "SvelteKit",
-    "Nuxt.js",
-    "Remix",
-    "Astro",
-];
-
-import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { SignOutButton } from "@/components/signOutButton";
-import { UserChart } from "@/components/admin/userChart";
-import { ProfileForm } from "@/components/admin/profileForm";
 import React from 'react';
 import MembersModal from "@/components/admin/userList.js";
 import CommentsSection from "@/components/admin/commentsSection";

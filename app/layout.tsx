@@ -1,35 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Poppins, Figtree, Manrope } from "next/font/google";
 import Navbar from "@/components/Navbar"
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['400', '600', '700'], // Choose exactly what you need (Regular, Semi-bold, Bold)
-  variable: '--font-poppins',    // This creates a CSS variable we can use later
-});
-
-const figtree = Figtree({
-  subsets: ['latin'],
-  weight: ['400', '600', '700'], // Choose exactly what you need (Regular, Semi-bold, Bold)
-  variable: '--font-figtree',    // This creates a CSS variable we can use later
-});
-
-const manrope = Manrope({
-  subsets: ['latin'],
-  weight: ['400', '600', '700'], // Choose exactly what you need (Regular, Semi-bold, Bold)
-  variable: '--font-manrope',    // This creates a CSS variable we can use later
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -44,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${figtree.className} antialiased`}
+        className="font-figtree antialiased"
       >
         <Navbar />
 

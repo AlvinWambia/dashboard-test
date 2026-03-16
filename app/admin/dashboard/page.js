@@ -1,35 +1,21 @@
 
 import {
-    Search, Bell, Mail, Plus, Import, Eye, MessageSquare, ReceiptText,
-    CircleDollarSign,
-    ChefHat,
-    CheckCircle2,
-    Tag
+    Plus, Import, Eye, ReceiptText,
+    CircleDollarSign
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { createClient } from "@/supabase/server"; // Ensure this helper handles server-side cookies
+import { createClient } from "@/supabase/server";
 import { redirect } from "next/navigation";
 import {
     Card,
-    CardAction,
     CardContent,
-    CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-
-import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { SignOutButton } from "@/components/signOutButton";
+import { Button } from "@/components/ui/button";
 import { UserChart } from "@/components/admin/userChart";
 import { ProfileForm } from "@/components/admin/profileForm";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import React from 'react';
 
 const notifications = [
     {

@@ -1,0 +1,18 @@
+https://dashboard-test-3i3q.vercel.app - Site URL 
+localhost:3000 - Local URL
+
+Redirect URL's 
+https://dashboard-test-3i3q.vercel.app/auth/callback
+https://dashboard-test-3i3q.vercel.app/auth/callback?next=/auth/login
+https://dashboard-test-3i3q.vercel.app/auth/callback?next=/home2
+https://dashboard-test-3i3q.vercel.app/*
+https://dashboard-test-3i3q.vercel.app/**
+
+Ngrok URL
+http://localhost:3000
+https://inquisitional-shaun-nonanatomical.ngrok-free.dev/auth/callback
+https://inquisitional-shaun-nonanatomical.ngrok-free.dev/*
+
+Paystack URL
+https://dashboard-test-3i3q.vercel.app/api/webhooks/paystack
+https://inquisitional-shaun-nonanatomical.ngrok-free.dev/api/webhooks/paystack

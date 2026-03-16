@@ -170,9 +170,9 @@ export default function SignupPage() {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-            <div className="w-full max-w-4xl grid lg:grid-cols-2 rounded-3xl shadow-2xl bg-white overflow-hidden">
+            <div className="w-full max-w-md lg:max-w-4xl xl:max-w-5xl grid lg:grid-cols-2 lg:min-h-[40rem] rounded-3xl shadow-2xl bg-white overflow-hidden">
                 {/* LEFT SIDE: Image & Testimonial */}
-                <div className="relative hidden bg-muted lg:block">
+                <div className="relative hidden w-full h-full bg-muted lg:block">
                     <Image
                         src={daImage.src}
                         alt="Testimonial background"
@@ -199,7 +199,7 @@ export default function SignupPage() {
                 </div>
 
                 {/* RIGHT SIDE: Login Form */}
-                <div className="flex flex-col items-center justify-center p-8 lg:p-12 mx-auto">
+                <div className="flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 w-full">
                     <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
 
                         {/* Logo & Header */}
@@ -214,7 +214,7 @@ export default function SignupPage() {
                         </div>
 
                         {/* Form Fields */}
-                        <form onSubmit={handleSignUp} className="grid gap-2 lg:mr-5">
+                        <form onSubmit={handleSignUp} className="grid gap-2">
                             <div className="grid gap-2">
                                 <div className="grid w-full grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="grid gap-1.5">
@@ -371,7 +371,7 @@ export default function SignupPage() {
                         </form>
 
                         {/* Divider */}
-                        <div className="relative lg:mr-5">
+                        <div className="relative">
                             <div className="absolute inset-0 flex items-center">
                                 <span className="w-full border-t" />
                             </div>
@@ -380,7 +380,7 @@ export default function SignupPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:mr-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
                             <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
                                 <Image src={googleImage.src} alt="Google" width={20} height={20} className="mr-2" />
