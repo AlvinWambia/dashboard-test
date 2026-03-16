@@ -68,15 +68,15 @@ export default function CommentsSection({ comments = [], currentUser }) {
     };
 
     return (
-        <div className="w-150 h-[500px] bg-white rounded-xl flex flex-col">
-            <div className="flex justify-between items-center p-8 pb-4">
+        <div className="w-full h-[500px] bg-white rounded-xl flex flex-col border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex justify-between items-center p-6 sm:p-8 pb-4">
                 <p className="text-lg text-slate-900 font-semibold">Comments</p>
                 <Badge variant="outline" className="rounded-full px-4 py-1 bg-white border-slate-200">
                     <MessageSquare className="w-3 h-3 mr-2" /> {comments.length}
                 </Badge>
             </div>
 
-            <div className="px-8 pb-4">
+            <div className="px-6 sm:px-8 pb-4">
                 <form ref={formRef} action={handleSubmit}>
                     <Field>
                         <FieldLabel htmlFor="comment-body" className="sr-only">Add Comment</FieldLabel>
@@ -97,7 +97,7 @@ export default function CommentsSection({ comments = [], currentUser }) {
                 </form>
             </div>
 
-            <ScrollArea className="flex-1 px-8 pb-8">
+            <ScrollArea className="flex-1 px-6 sm:px-8 pb-8">
                 <div className="space-y-6">
                     {comments.map((comment) => (
                         <div key={comment.id} className="flex gap-3">

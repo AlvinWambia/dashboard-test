@@ -56,7 +56,12 @@ export function TaskCard({ task, profiles }) {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
+        touchAction: 'none' // Prevent pull-to-refresh and native scroll on touch
     };
+
+    // A simple window object check ensures we don't disable pointer listeners entirely,
+    // but rather leverage CSS and pointer down stoppers for touch screens.
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
     const handleDelete = () => {
         setIsDeleteOpen(true);
@@ -81,7 +86,7 @@ export function TaskCard({ task, profiles }) {
 
     return (
         <>
-            <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            <div ref={setNodeRef} style={style} {...attributes} {...(!isMobile ? listeners : {})}>
                 <Card className="group relative">
                     <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                         <div className="flex flex-col gap-2">
@@ -91,7 +96,7 @@ export function TaskCard({ task, profiles }) {
                         <div onPointerDown={(e) => e.stopPropagation()}>
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                         <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                 </PopoverTrigger>

@@ -25,7 +25,7 @@ export function UserChart({ chartData }) {
                 bodyColor: '#166534',
                 displayColors: false,
                 callbacks: {
-                    label: (context) => `${context.raw}%`,
+                    label: (context) => `${context.raw} users`,
                 },
             },
         },

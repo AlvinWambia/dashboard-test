@@ -17,7 +17,7 @@ export default function Navbar() {
 
                         {/* Logo */}
                         <Link href="/" className="text-xl font-bold tracking-tight">
-                            FitWithP
+                            myFit
                         </Link>
 
                         {/* Desktop Links */}

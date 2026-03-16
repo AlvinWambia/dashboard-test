@@ -46,7 +46,14 @@ export default async function DashboardPage() {
     const supabase = await createClient();
 
     // Inside your async DashboardPage()
-    const { data: users } = await supabase.from('profiles').select('created_at').eq('role', 'user');
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const { data: users } = await supabase
+        .from('profiles')
+        .select('created_at')
+        .eq('role', 'user')
+        .gte('created_at', sevenDaysAgo.toISOString());
 
     // Simple logic to count users per day of the week
     const counts = new Array(7).fill(0);

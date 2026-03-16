@@ -301,6 +301,13 @@ export default function SignupPage() {
                                                 </p>
                                             </div>
                                         )}
+                                        <div className="h-5 text-sm text-red-500">
+                                            {errors.password && touched.password && (
+                                                <p className="animate-in fade-in-0 slide-in-from-top-1 duration-300">
+                                                    {errors.password[0]}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="grid gap-1.5">
                                         <Label htmlFor="confirm-password" className="">Confirm Password</Label>

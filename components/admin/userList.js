@@ -81,14 +81,14 @@ const MembersModal = ({ initialUsers = [] }) => {
     return (
         <div className="w-full bg-white rounded-[32px] border border-gray-100 overflow-hidden">
             {/* Header */}
-            <div className="flex justify-between items-center p-8 pb-4">
+            <div className="flex justify-between items-center p-6 sm:p-8 pb-4">
                 <h2 className="text-lg text-slate-900 font-semibold">Members</h2>
             </div>
 
-            <div className="px-8 pb-8 space-y-6">
+            <div className="px-5 sm:px-8 pb-6 sm:pb-8 space-y-6">
                 {/* Search and Filter Area */}
-                <div className="flex items-center gap-3">
-                    <div className="relative flex-1">
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <div className="relative w-full sm:flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <Input
                             type="search"
@@ -99,7 +99,7 @@ const MembersModal = ({ initialUsers = [] }) => {
                         />
                     </div>
                     <Select onValueChange={setRoleFilter} defaultValue="all">
-                        <SelectTrigger className="w-[180px] border-gray-200 rounded-lg bg-white">
+                        <SelectTrigger className="w-full sm:w-[180px] border-gray-200 rounded-lg bg-white">
                             <SelectValue placeholder="Filter by role" />
                         </SelectTrigger>
                         <SelectContent>
@@ -111,45 +111,45 @@ const MembersModal = ({ initialUsers = [] }) => {
                 </div>
 
                 {/* Shareable Link Banner */}
-                <div className="bg-gray-50/60 border border-gray-100 rounded-[24px] p-5 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="relative bg-white p-3 rounded-full border border-gray-100 shadow-sm">
+                <div className="bg-gray-50/60 border border-gray-100 rounded-[24px] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="relative bg-white p-3 rounded-full border border-gray-100 shadow-sm shrink-0 hidden sm:block">
                             <LinkIcon size={20} className="text-slate-600" />
                             <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full" />
                         </div>
                         <div>
-                            <h4 className="font-semibold text-slate-900">Shareable Link is now Live!</h4>
-                            <p className="text-sm text-slate-500">Create and get shareable link for this file.</p>
+                            <h4 className="font-semibold text-slate-900 text-sm sm:text-base">Shareable Link is now Live!</h4>
+                            <p className="text-xs sm:text-sm text-slate-500">Create and get shareable link for this file.</p>
                         </div>
                     </div>
-                    <Button variant="outline" className="rounded-2xl border-gray-200 font-semibold text-slate-700 bg-white hover:bg-gray-50 shadow-sm">
+                    <Button variant="outline" className="w-full sm:w-auto rounded-2xl border-gray-200 font-semibold text-slate-700 bg-white hover:bg-gray-50 shadow-sm">
                         Get Link
                     </Button>
                 </div>
 
                 {/* Teammate List */}
-                <div className="h-96 space-y-6 overflow-y-auto pt-2 pr-4">
+                <div className="h-96 space-y-6 overflow-y-auto pt-2 pr-2 sm:pr-4">
                     {loading ? (
                         <p className="text-sm text-slate-500">Loading members...</p>
                     ) : displayedUsers.length > 0 ? (
                         displayedUsers.map((person, idx) => (
-                            <div key={person.id} className="flex items-center justify-between group">
-                                <div className="flex items-center gap-4">
-                                    <Avatar className="h-11 w-11 border border-gray-50">
+                            <div key={person.id} className="flex items-center justify-between group gap-2">
+                                <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                                    <Avatar className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 border border-gray-50">
                                         <AvatarImage src={person.avatar_url || `https://avatar.iran.liara.run/public/${idx + 10}`} />
                                         <AvatarFallback>{person.full_name?.[0] || 'U'}</AvatarFallback>
                                     </Avatar>
 
-                                    <div>
-                                        <p className="font-semibold text-slate-900 leading-none mb-1.5">{person.full_name}</p>
-                                        <p className="text-sm text-slate-400 font-medium">{person.email}</p>
+                                    <div className="min-w-0">
+                                        <p className="font-semibold text-slate-900 text-sm sm:text-base leading-none mb-1.5 truncate">{person.full_name}</p>
+                                        <p className="text-xs sm:text-sm text-slate-400 font-medium truncate">{person.email}</p>
                                     </div>
 
 
                                 </div>
 
-                                <div className="flex items-center gap-4">
-                                    <Badge variant="outline" className={getRoleBadgeClass(person.role)}>
+                                <div className="flex items-center gap-1 sm:gap-4 shrink-0">
+                                    <Badge variant="outline" className={`${getRoleBadgeClass(person.role)} text-[10px] sm:text-xs px-2 py-0.5`}>
                                         {person.role}
                                     </Badge>
                                     <DropdownMenu>

@@ -13,11 +13,11 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Profile", href: "/admin/dashboard" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
   { icon: ListTodo, label: "Tasks", href: "/admin/tasks", badge: "12+" },
   { icon: Calendar, label: "Calendar", href: "/admin/calendar" },
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
-  { icon: Users, label: "Team", href: "/admin/members" },
+  { icon: Users, label: "Members", href: "/admin/members" },
 ];
 
 export function Sidebar() {
@@ -28,12 +28,11 @@ export function Sidebar() {
 
   const SidebarContent = () => (
     <>
-      <div className="flex items-center gap-2 text-[#2D6A4F] font-bold text-xl">
-        <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white">⠿</div>
-        <p className="text-black">FitWithP</p>
-      </div>
-
-      <nav className="flex flex-col gap-1">
+      <div className="flex h-14 items-center pl-4 lg:h-[60px] lg:pl-6 border-b border-gray-100 dark:border-gray-800">
+        <Link href="/" className="flex items-center gap-2 font-semibold text-xl">
+          <p className="text-black">myFit</p>
+        </Link>
+      </div>    <nav className="flex flex-col gap-1">
         <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider px-3">Menu</p>
         {menuItems.map((item) => (
           <Link

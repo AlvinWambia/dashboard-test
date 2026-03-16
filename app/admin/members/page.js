@@ -85,7 +85,7 @@ export default async function MembersPage() {
 
 
     return (
-        <div className="p-4 md:p-8 bg-white min-h-screen">
+        <div className="p-4 sm:p-6 md:p-8 bg-white min-h-screen">
             <AdminHeader title="Members" profile={profile} user={user} />
 
             {/* Hero Section */}
@@ -95,23 +95,23 @@ export default async function MembersPage() {
                         <h1 className="text-2xl font-bold">Members</h1>
                         <p className="text-gray-500 text-sm">Manage your community and team members.</p>
                     </div>
-                    <div className="flex flex-wrap gap-3">
-                        <Button className="bg-black text-white hover:bg-white hover:text-black hover:border hover:border-black rounded-xl h-10">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <Button className="w-full sm:w-auto bg-black text-white hover:bg-white hover:text-black hover:border hover:border-black rounded-xl h-10">
                             <Plus className="mr-2" size={18} /> Create Content
                         </Button>
-                        <Button variant="outline" className="bg-white rounded-xl h-10">
+                        <Button variant="outline" className="w-full sm:w-auto bg-white rounded-xl h-10">
                             <Import className="mr-2" size={18} /> Import Data
                         </Button>
                     </div>
                 </div>
 
                 {/* Grid Content */}
-                <div className="flex flex-col lg:flex-row gap-6">
-                    <div className="w-full lg:flex-1 overflow-x-auto">
+                <div className="flex flex-col xl:flex-row gap-6">
+                    <div className="w-full lg:flex-1 overflow-visible xl:overflow-x-auto">
                         <MembersModal initialUsers={allProfiles || []} />
                     </div>
 
-                    <div className="flex flex-col gap-6 w-full lg:w-96">
+                    <div className="flex flex-col gap-6 w-full xl:w-96 shrink-0">
                         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
                             <div className="flex justify-between items-center mb-4">
                                 <p className="text-lg text-slate-900 font-semibold">Announcements</p>
@@ -134,4 +134,4 @@ export default async function MembersPage() {
             </div>
         </div>
     );
-}
+}

@@ -39,7 +39,7 @@ function TaskColumn({ column, tasks, isExpanded, toggleShowMore, allProfiles }) 
     const visibleTasks = isExpanded ? tasks : tasks.slice(0, 3);
 
     return (
-        <div ref={setNodeRef} className="w-80 flex-shrink-0">
+        <div ref={setNodeRef} className="w-full lg:w-80 flex-shrink-0">
             <div className="flex flex-row bg-gray-100 rounded-lg px-3 py-2 my-4">
                 <h3 className="font-semibold text-sm">{column.title}</h3>
             </div>
@@ -312,7 +312,7 @@ export default function TasksPage() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    <div className="bg-white rounded-xl p-4 border shadow-sm flex flex-row gap-4 overflow-x-auto">
+                    <div className="bg-white rounded-xl p-4 border shadow-sm flex flex-col lg:flex-row gap-4 lg:overflow-x-auto">
                         {columns.map((column) => {
                             const tasksForColumn = tasksByStatus[column.id] || [];
                             const isExpanded = expandedColumns[column.id];
