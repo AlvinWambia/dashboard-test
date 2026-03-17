@@ -62,7 +62,7 @@ export default function LoginPage() {
         if (profile?.role === 'admin') {
             router.replace('/admin/dashboard');
         } else {
-            router.replace('/home2');
+            router.replace('/home2?signed_in=true');
         }
 
         setLoading(false);
@@ -72,7 +72,7 @@ export default function LoginPage() {
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: getURL('/auth/callback'),
+                redirectTo: getURL('/auth/callback?next=/home2?signed_in=true'),
             },
         });
     };
@@ -115,9 +115,9 @@ export default function LoginPage() {
                         {/* Logo & Header */}
                         <div className="flex flex-col space-y-2 text-center">
                             <div className="flex items-center justify-center font-bold text-2xl mb-4">
-                                <span className="mr-2">⠿</span> FitWithP
+                                <span className="mr-2">⠿</span> myFitPal
                             </div>
-                            <h1 className="text-3xl font-bold tracking-tight">Welcome back to FitWithP</h1>
+                            <h1 className="text-3xl font-bold tracking-tight">Welcome back to myFit</h1>
                             <p className="text-sm text-muted-foreground">
                                 Build your design system effortlessly with our powerful component library.
                             </p>
@@ -140,7 +140,7 @@ export default function LoginPage() {
                             <div className="grid gap-2">
                                 <div className="flex items-center justify-between">
                                     <Label htmlFor="password">Password</Label>
-                                    <Link href="#" className="text-sm font-medium text-blue-600 hover:underline">
+                                    <Link href="/auth/updatepassword" className="text-sm font-medium text-blue-600 hover:underline">
                                         Forgot password?
                                     </Link>
                                 </div>

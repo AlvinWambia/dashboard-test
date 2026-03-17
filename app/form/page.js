@@ -53,7 +53,7 @@ const calculateAge = (birthDateString) => {
 export default function IntakePage() {
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(1);
-    const totalSteps = 7;
+    const totalSteps = 6;
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const supabase = createClient();
@@ -122,7 +122,6 @@ export default function IntakePage() {
         "Any medical conditions we should be aware of?",
         "How do you prefer to train?",
         "Almost there! Please review your information.",
-        "You're all set! Welcome aboard."
     ];
 
     // Handle step transitions with validation
@@ -163,7 +162,7 @@ export default function IntakePage() {
 
                     if (error) throw error;
 
-                    setCurrentStep((prev) => prev + 1);
+                    router.push('/home2?form_submitted=true');
                 } catch (error) {
                     console.error("Error submitting form:", error);
                     alert("There was an error submitting your form. Please try again.");
@@ -208,9 +207,8 @@ export default function IntakePage() {
                         {currentStep === 4 && <MedicalInfoStep />}
                         {currentStep === 5 && <TrainingPreferencesStep />}
                         {currentStep === 6 && <ReviewStep />}
-                        {currentStep === totalSteps && <SuccessStep />}
 
-                        {currentStep < totalSteps && (
+                        {currentStep <= totalSteps && (
                             <div className="flex items-center justify-between pt-6">
                                 {currentStep > 1 ? (
                                     <button
@@ -243,7 +241,7 @@ export default function IntakePage() {
 // --- Sub-Components ---
 
 function StepperHeader({ currentStep, totalSteps }) {
-    const icons = [User, MapPin, Layers, Users, Bookmark, ClipboardList, Check];
+    const icons = [User, MapPin, Layers, Users, Bookmark, ClipboardList];
     const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
 
     return (
@@ -642,16 +640,6 @@ function ReviewStep() {
                     </div>
                 </details>
             </div>
-        </div>
-    );
-}
-
-function SuccessStep() {
-    return (
-        <div className="text-center py-10 space-y-4">
-            <div className="text-6xl">✅</div>
-            <h2 className="text-2xl font-bold">Form intake Complete!</h2>
-            <p className="text-slate-500">Success. You will be getting a confirmation email shortly with your payment receipt. </p>
         </div>
     );
 }

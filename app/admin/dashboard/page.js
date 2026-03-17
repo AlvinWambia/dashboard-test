@@ -1,7 +1,7 @@
 
 import {
     Plus, Import, Eye, ReceiptText,
-    CircleDollarSign
+    CircleDollarSign, ShieldAlert, Bell, Info, AlertTriangle
 } from 'lucide-react';
 import { createClient } from "@/supabase/server";
 import { redirect } from "next/navigation";
@@ -17,26 +17,33 @@ import { ProfileForm } from "@/components/admin/profileForm";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import React from 'react';
 
-const notifications = [
-    {
-        id: 1,
-        title: "New Order Created",
-        target: "Order #284",
-        time: "8 minutes ago",
-        icon: <ReceiptText className="h-5 w-5 text-green-600" />,
-        bgColor: "bg-green-100",
-        unread: false,
-    },
-    {
-        id: 2,
-        title: "Payment Completed",
-        target: "Order #255",
-        time: "12 minutes ago",
-        icon: <CircleDollarSign className="h-5 w-5 text-blue-600" />,
-        bgColor: "bg-blue-50", // Highlighted unread background
-        unread: true,
-    },
-]
+/** Maps a notification `type` to an icon element and badge background color. */
+function getNotificationStyle(type) {
+    switch ((type || '').toLowerCase()) {
+        case 'order':
+            return { icon: <ReceiptText className="h-5 w-5 text-green-600" />, bgColor: 'bg-green-100' };
+        case 'payment':
+            return { icon: <CircleDollarSign className="h-5 w-5 text-blue-600" />, bgColor: 'bg-blue-100' };
+        case 'warning':
+            return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, bgColor: 'bg-yellow-100' };
+        case 'security':
+        case 'alert':
+            return { icon: <ShieldAlert className="h-5 w-5 text-red-600" />, bgColor: 'bg-red-100' };
+        case 'info':
+            return { icon: <Info className="h-5 w-5 text-indigo-600" />, bgColor: 'bg-indigo-100' };
+        default:
+            return { icon: <Bell className="h-5 w-5 text-gray-600" />, bgColor: 'bg-gray-100' };
+    }
+}
+
+/** Formats a UTC timestamp into a human-friendly relative string. */
+function timeAgo(dateStr) {
+    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+}
 
 
 
@@ -77,14 +84,23 @@ export default async function DashboardPage() {
         .eq('id', user.id)
         .single();
 
-
     console.log("Fetched Profile Data:", profile); // Check your terminal (not browser console)
-
 
     // 4. Redirect if they are NOT an admin
     if (!profile || profile.role !== 'admin') {
         redirect("/home?error=unauthorized");
     }
+
+    // 5. Fetch live notifications from admin_notifications (non-expired, newest first)
+    const now = new Date().toISOString();
+    const { data: alertsData } = await supabase
+        .from('admin_notifications')
+        .select('id, type, message, created_at')
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+    const alerts = alertsData ?? [];
 
 
 
@@ -137,22 +153,30 @@ export default async function DashboardPage() {
                                 <CardTitle className="text-lg">Recent Alerts</CardTitle>
                             </CardHeader>
                             <CardContent className="p-6 pt-0 space-y-4">
-                                {notifications.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className={`flex items-center gap-3 p-3 rounded-2xl transition-colors cursor-pointer hover:bg-gray-50 ${item.unread ? 'bg-blue-50/50' : ''}`}
-                                    >
-                                        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${item.bgColor}`}>
-                                            {React.cloneElement(item.icon, { size: 18 })}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-xs font-bold text-slate-900 truncate">
-                                                {item.title}
-                                            </p>
-                                            <p className="text-[10px] text-slate-500 truncate">{item.time}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                                {alerts.length === 0 ? (
+                                    <p className="text-xs text-gray-400 text-center py-4">No recent alerts.</p>
+                                ) : (
+                                    alerts.map((item) => {
+                                        const { icon, bgColor } = getNotificationStyle(item.type);
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                className="flex items-center gap-3 p-3 rounded-2xl transition-colors cursor-pointer hover:bg-gray-50"
+                                            >
+                                                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${bgColor}`}>
+                                                    {React.cloneElement(icon, { size: 18 })}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-xs font-bold text-slate-900 truncate capitalize">
+                                                        {item.type}
+                                                    </p>
+                                                    <p className="text-[10px] text-slate-700 truncate">{item.message}</p>
+                                                    <p className="text-[10px] text-slate-400">{timeAgo(item.created_at)}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
                             </CardContent>
                         </Card>
 

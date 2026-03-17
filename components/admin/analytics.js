@@ -34,12 +34,15 @@ ChartJS.register(
 );
 
 const Dashboard = ({ data }) => {
-    const { 
-        totalRevenue = 0, 
-        totalOrders = 0, 
-        avgOrderValue = 0, 
-        programStats = [], 
-        revenueTrend = [] 
+    const {
+        totalRevenue = 0,
+        totalOrders = 0,
+        avgOrderValue = 0,
+        revenueChange = 0,
+        ordersChange = 0,
+        avgOrderValueChange = 0,
+        programStats = [],
+        revenueTrend = []
     } = data || {};
 
     // Prepare chart data from revenueTrend
@@ -61,26 +64,26 @@ const Dashboard = ({ data }) => {
         <div className="p-0 bg-transparent min-h-screen text-slate-900">
             {/* Top Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
-                <StatCard 
-                    title="Total Revenue" 
-                    value={`KES ${totalRevenue.toLocaleString()}`} 
-                    change="+12.5%" 
-                    trend="up" 
-                    icon={<TrendingUp size={20} />} 
+                <StatCard
+                    title="Total Revenue"
+                    value={`KES ${totalRevenue.toLocaleString()}`}
+                    change={revenueChange}
+                    icon={<TrendingUp size={20} />}
                 />
-                <StatCard 
-                    title="Total Orders" 
-                    value={totalOrders.toString()} 
-                    change="+8.2%" 
-                    trend="up" 
-                    icon={<Users size={20} />} 
+                <StatCard
+                    title="Total Orders"
+                    value={totalOrders.toString()}
+                    change={ordersChange}
+                    icon={<Users size={20} />}
                 />
-                <StatCard 
-                    title="Avg Order Value" 
-                    value={`KES ${avgOrderValue.toLocaleString()}`} 
-                    change="+3.1%" 
-                    trend="up" 
-                    icon={<Percent size={20} />} 
+                <StatCard
+                    title="Avg Order Value"
+                    value={`KES ${avgOrderValue.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}`}
+                    change={avgOrderValueChange}
+                    icon={<Percent size={20} />}
                 />
             </div>
 
@@ -112,8 +115,8 @@ const Dashboard = ({ data }) => {
                                     <span>{program.count} sales</span>
                                 </div>
                                 <div className="w-full bg-gray-50 rounded-full h-1.5 lg:h-2">
-                                    <div 
-                                        className="bg-black h-full rounded-full transition-all duration-500" 
+                                    <div
+                                        className="bg-black h-full rounded-full transition-all duration-500"
                                         style={{ width: `${(program.revenue / totalRevenue) * 100}%` }}
                                     ></div>
                                 </div>
@@ -133,18 +136,23 @@ const Dashboard = ({ data }) => {
 
 // --- Subcomponents ---
 
-const StatCard = ({ title, value, change, trend, icon }) => (
-    <div className="bg-white p-5 lg:p-6 rounded-3xl border border-gray-100 shadow-sm transition-transform hover:scale-[1.02]">
-        <div className="bg-gray-50 w-10 h-10 rounded-xl flex items-center justify-center text-black mb-4">
-            {icon}
+const StatCard = ({ title, value, change, icon }) => {
+    const trend = change >= 0 ? 'up' : 'down';
+    const formattedChange = `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+
+    return (
+        <div className="bg-white p-5 lg:p-6 rounded-3xl border border-gray-100 shadow-sm transition-transform hover:scale-[1.02]">
+            <div className="bg-gray-50 w-10 h-10 rounded-xl flex items-center justify-center text-black mb-4">
+                {icon}
+            </div>
+            <p className="text-gray-500 text-xs lg:text-sm mb-1 font-medium">{title}</p>
+            <h2 className="text-xl lg:text-2xl font-bold mb-2">{value}</h2>
+            <p className={`text-[10px] lg:text-xs font-bold ${trend === 'up' ? 'text-green-500' : 'text-red-400'}`}>
+                {trend === 'up' ? '↑' : '↓'} {formattedChange} <span className="text-gray-400 font-normal">from last 30 days</span>
+            </p>
         </div>
-        <p className="text-gray-500 text-xs lg:text-sm mb-1 font-medium">{title}</p>
-        <h2 className="text-xl lg:text-2xl font-bold mb-2">{value}</h2>
-        <p className={`text-[10px] lg:text-xs font-bold ${trend === 'up' ? 'text-green-500' : 'text-red-400'}`}>
-            {trend === 'up' ? '↑' : '↓'} {change} <span className="text-gray-400 font-normal">from last month</span>
-        </p>
-    </div>
-);
+    );
+};
 
 const Heatmap = () => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -189,8 +197,8 @@ const lineOptions = {
         x: { grid: { display: false }, border: { display: false } },
         y: {
             min: 0,
-            ticks: { 
-                callback: (v) => v === 0 ? '0' : (v >= 1000 ? (v / 1000 + 'k') : v) 
+            ticks: {
+                callback: (v) => v === 0 ? '0' : (v >= 1000 ? (v / 1000 + 'k') : v)
             },
             border: { display: false }
         }

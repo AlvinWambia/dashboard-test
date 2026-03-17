@@ -48,25 +48,70 @@ export default async function DashboardPage() {
     }
 
     // --- REAL ANALYTICS FETCHING ---
-    
-    // 1. Fetch Total Revenue & Total Orders
-    const { data: payments } = await supabase
-        .from('payments')
-        .select('amount, created_at')
-        .eq('status', 'success');
-    
-    const { data: orders } = await supabase
-        .from('orders')
-        .select('program_name, price, created_at')
-        .eq('status', 'paid');
+    const today = new Date();
+    const currentPeriodStart = new Date();
+    currentPeriodStart.setDate(today.getDate() - 30);
 
-    const totalRevenue = payments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0;
-    const totalOrders = orders?.length || 0;
+    const previousPeriodStart = new Date();
+    previousPeriodStart.setDate(today.getDate() - 60);
+    const previousPeriodEnd = new Date(currentPeriodStart);
+
+    // Fetch data for both periods in parallel
+    const [
+        { data: currentPayments },
+        { data: currentOrders },
+        { data: previousPayments },
+        { data: previousOrders }
+    ] = await Promise.all([
+        supabase
+            .from('payments')
+            .select('amount, created_at')
+            .eq('status', 'success')
+            .gte('created_at', currentPeriodStart.toISOString()),
+        supabase
+            .from('orders')
+            .select('program_name, price, created_at')
+            .eq('status', 'paid')
+            .gte('created_at', currentPeriodStart.toISOString()),
+        supabase
+            .from('payments')
+            .select('amount')
+            .eq('status', 'success')
+            .gte('created_at', previousPeriodStart.toISOString())
+            .lt('created_at', previousPeriodEnd.toISOString()),
+        supabase
+            .from('orders')
+            .select('id')
+            .eq('status', 'paid')
+            .gte('created_at', previousPeriodStart.toISOString())
+            .lt('created_at', previousPeriodEnd.toISOString())
+    ]);
+
+    // Calculate stats for the current period (last 30 days)
+    const totalRevenue = currentPayments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0;
+    const totalOrders = currentOrders?.length || 0;
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-    // 2. Program Performance (Sales per Program)
+    // Calculate stats for the previous period (30-60 days ago)
+    const previousTotalRevenue = previousPayments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0;
+    const previousTotalOrders = previousOrders?.length || 0;
+    const previousAvgOrderValue = previousTotalOrders > 0 ? previousTotalRevenue / previousTotalOrders : 0;
+
+    // Calculate percentage changes
+    const calculateChange = (current, previous) => {
+        if (previous === 0) {
+            return current > 0 ? 100 : 0; // If previous is 0, any increase is a 100% change
+        }
+        return ((current - previous) / previous) * 100;
+    };
+
+    const revenueChange = calculateChange(totalRevenue, previousTotalRevenue);
+    const ordersChange = calculateChange(totalOrders, previousTotalOrders);
+    const avgOrderValueChange = calculateChange(avgOrderValue, previousAvgOrderValue);
+
+    // Program Performance (Sales per Program in the last 30 days)
     const programStatsMap = {};
-    orders?.forEach(order => {
+    currentOrders?.forEach(order => {
         const name = order.program_name || 'Unknown';
         if (!programStatsMap[name]) {
             programStatsMap[name] = { name, revenue: 0, count: 0 };
@@ -76,19 +121,18 @@ export default async function DashboardPage() {
     });
     const programStats = Object.values(programStatsMap).sort((a, b) => b.revenue - a.revenue);
 
-    // 3. Weekly Revenue Trend (Last 7 days)
+    // Weekly Revenue Trend (Last 7 days)
     const last7Days = [...Array(7)].map((_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
         d.setHours(0, 0, 0, 0);
         return d;
     });
-
     const revenueTrend = last7Days.map(day => {
         const dayEnd = new Date(day);
         dayEnd.setHours(23, 59, 59, 999);
-        
-        const dayRevenue = payments?.filter(p => {
+
+        const dayRevenue = currentPayments?.filter(p => {
             const pDate = new Date(p.created_at);
             return pDate >= day && pDate <= dayEnd;
         }).reduce((acc, p) => acc + (p.amount || 0), 0) || 0;
@@ -103,6 +147,9 @@ export default async function DashboardPage() {
         totalRevenue,
         totalOrders,
         avgOrderValue,
+        revenueChange,
+        ordersChange,
+        avgOrderValueChange,
         programStats,
         revenueTrend
     };

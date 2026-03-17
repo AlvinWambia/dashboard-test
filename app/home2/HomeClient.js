@@ -13,7 +13,7 @@ import daImage from "@/components/images/da.png"
 import communicationImage from "@/components/images/communication.png"
 import dmbImage from "@/components/images/dmb.png"
 import trcImage from "@/components/images/trc.png"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
@@ -23,9 +23,20 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion"
 import Link from "next/link"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import CommentsSection from "@/components/admin/commentsSection";
 import { urlFor } from "@/lib/sanity";
 import { BuyNowButton } from "@/components/BuyNowButton";
+import { createClient } from "@/supabase/client";
 
+import { toast } from "sonner";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -75,13 +86,59 @@ function FadeInSection({ children }) {
 
 
 export default function HomeClient({ products, programs, testimonials, about }) {
+    const router = useRouter();
     const searchParams = useSearchParams()
     const error = searchParams.get('error')
+    const signedIn = searchParams.get('signed_in');
+    const formSubmitted = searchParams.get('form_submitted');
 
     const [activeTab, setActiveTab] = React.useState(about?.[0]?.name)
     const [api, setApi] = React.useState()
     const [current, setCurrent] = React.useState(0)
     const [count, setCount] = React.useState(0)
+    const [isCommentsOpen, setIsCommentsOpen] = React.useState(false);
+
+    // Newsletter state (shared by contacts + footer inputs)
+    const [newsletterEmail, setNewsletterEmail] = React.useState('');
+    const [footerEmail, setFooterEmail] = React.useState('');
+    const [newsletterLoading, setNewsletterLoading] = React.useState(false);
+    const [footerLoading, setFooterLoading] = React.useState(false);
+
+    const handleNewsletterSubmit = async (email, setEmail, setLoading) => {
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            toast.error('Invalid email', { description: 'Please enter a valid email address.' });
+            return;
+        }
+        setLoading(true);
+        try {
+            const res = await fetch('/api/newsletter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Something went wrong');
+            toast.success('Subscribed! 🎉', { description: 'Check your inbox for a welcome email.' });
+            setEmail('');
+        } catch (err) {
+            toast.error('Failed to subscribe', { description: err.message });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const commentsForModal = testimonials?.map((testimonial, index) => ({
+        id: `testimonial-${index}`,
+        body: testimonial.desc,
+        created_at: new Date().toISOString(), // Placeholder date
+        author: {
+            full_name: testimonial.name,
+            // Using a public avatar service for variety, as none is provided.
+            avatar_url: `https://avatar.iran.liara.run/public/${index + 30}`
+        },
+        // No author_id means edit/delete controls won't be shown for a public user
+        author_id: null
+    })) || [];
 
     React.useEffect(() => {
         if (!api) {
@@ -94,8 +151,54 @@ export default function HomeClient({ products, programs, testimonials, about }) 
         api.on("select", () => {
             setCurrent(api.selectedScrollSnap() + 1)
         })
-    }, [api])
+    }, [api]);
 
+    React.useEffect(() => {
+        if (signedIn) {
+            const showWelcomeToast = async () => {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+
+                let welcomeMessage = "Welcome back!";
+                if (user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('full_name')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (profile?.full_name) {
+                        welcomeMessage = `Welcome back, ${profile.full_name.split(' ')[0]}!`;
+                    }
+                }
+
+                toast.success(welcomeMessage, { description: "You have successfully signed in." });
+                router.replace('/home2', { scroll: false });
+            };
+            showWelcomeToast();
+        } else if (formSubmitted) {
+            toast.success("Form submitted", { description: "Payment Successful and your intake form has been successfully submitted." });
+            router.replace('/home2', { scroll: false });
+        }
+    }, [signedIn, formSubmitted, router]);
+
+    const handleScroll = (e, id) => {
+        e.preventDefault();
+        if (id === 'home') {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth',
+            });
+        } else {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                });
+            }
+        }
+    };
 
     return (
         <div className="min-h-screen bg-white p-4 md:p-8 text-slate-900">
@@ -120,7 +223,12 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
                     <div className="hidden md:flex bg-slate-100 rounded-full p-1 px-2 gap-1 mx-auto">
                         {['Home', 'Testimonials', 'About', 'Programs', 'Contacts'].map((item) => (
-                            <Button key={item} variant="ghost" className="rounded-full px-6 hover:bg-white hover:shadow-sm">
+                            <Button
+                                key={item}
+                                variant="ghost"
+                                className="rounded-full px-6 hover:bg-white hover:shadow-sm"
+                                onClick={(e) => handleScroll(e, item.toLowerCase())}
+                            >
                                 {item}
                             </Button>
                         ))}
@@ -206,7 +314,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
 
             <FadeInSection>
-                <section className="py-24">
+                <section id="testimonials" className="py-24">
                     <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
                         <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
                             <MessageSquare className="w-3 h-3 mr-2" /> Testimonials
@@ -230,7 +338,20 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                 </Card>
                             ))}
                         </div>
-                        <Button variant="outline" className="mt-12 rounded-full px-8 py-6">See all Reviews &gt;</Button>
+                        <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" className="mt-12 rounded-full px-8 py-6">See all Reviews &gt;</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-2xl bg-slate-50 p-0 border-none rounded-2xl">
+                                <DialogHeader className="sr-only">
+                                    <DialogTitle>All Reviews</DialogTitle>
+                                    <DialogDescription>
+                                        A list of all client testimonials and reviews.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <CommentsSection comments={commentsForModal} currentUser={null} />
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </section>
             </FadeInSection>
@@ -238,96 +359,97 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
 
             <FadeInSection>
-                <div className="text-center">
-                    <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
-                        <MessageSquare className="w-3 h-3 mr-2" /> About
-                    </Badge>
-                    <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">About MyFit</p>
-                    <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
-                        We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
-                    </p>
-                </div>
-                <div className="flex flex-col lg:flex-row my-10 mx-4 lg:mx-20 gap-10 lg:gap-20 items-center">
-                    <div className="w-full lg:w-auto">
-                        <Tabs defaultValue="myfit" className="w-full lg:w-140">
-                            <TabsList variant="line">
-                                <TabsTrigger value="myfit">MyFit</TabsTrigger>
-                                <TabsTrigger value="pelesia">Pelesia </TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="myfit" className="text-lg">A little bit about the company. Learning about the coming up of my fit and everything else about it.</TabsContent>
-                            <TabsContent value="pelesia" className="text-lg">A little bit about the trainer, instructor and the dietor. How she does her things and many more.</TabsContent>
-                        </Tabs>
+                <section id="about">
+                    <div className="text-center">
+                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+                            <MessageSquare className="w-3 h-3 mr-2" /> About
+                        </Badge>
+                        <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">About MyFit</p>
+                        <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
+                            We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
+                        </p>
                     </div>
+                    <div className="flex flex-col lg:flex-row my-10 mx-4 lg:mx-20 gap-10 lg:gap-20 items-center">
+                        <div className="w-full lg:w-auto">
+                            <Tabs defaultValue="myfit" className="w-full lg:w-140">
+                                <TabsList variant="line">
+                                    <TabsTrigger value="myfit">MyFit</TabsTrigger>
+                                    <TabsTrigger value="pelesia">Pelesia </TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="myfit" className="text-lg">A little bit about the company. Learning about the coming up of my fit and everything else about it.</TabsContent>
+                                <TabsContent value="pelesia" className="text-lg">A little bit about the trainer, instructor and the dietor. How she does her things and many more.</TabsContent>
+                            </Tabs>
+                        </div>
 
-                    <div className="mx-0 lg:mx-20 my-5 bg-gray-100 w-full max-w-[500px] aspect-square relative overflow-hidden rounded-3xl">
+                        <div className="mx-0 lg:mx-20 my-5 bg-gray-100 w-full max-w-[500px] aspect-square relative overflow-hidden rounded-3xl">
+
+                        </div>
 
                     </div>
-
-                </div>
+                </section>
             </FadeInSection>
 
 
 
             <FadeInSection className="my-10">
-                <div className="text-center">
+                <section id="programs">
+                    <div className="text-center">
+                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+                            <MessageSquare className="w-3 h-3 mr-2" /> Programs
+                        </Badge>
+                        <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Programs</p>
+                        <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
+                            We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
+                        </p>
+                    </div>
 
+                    {programs?.map((program, index) => {
+                        const isEven = index % 2 === 0;
+                        return (
+                            <div key={program._id} className={`flex flex-col md:flex-row${!isEven ? '-reverse' : ''} my-10 mx-4 md:mx-20 gap-10 items-start`}>
+                                <div className="flex flex-col py-5 flex-1">
+                                    <p className="text-lg font-semibold">{program.title}</p>
+                                    <p>{program.description}</p>
+                                    <Card className="w-full max-w-sm my-5">
+                                        <CardHeader>
+                                            <CardTitle>FAQ</CardTitle>
+                                            <CardDescription>
+                                                Common questions about this program.
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <Accordion type="single" collapsible>
+                                                {program.faqs?.map((faq, i) => (
+                                                    <AccordionItem key={i} value={`item-${i}`}>
+                                                        <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
+                                                        <AccordionContent className="text-left">{faq.answer}</AccordionContent>
+                                                    </AccordionItem>
+                                                ))}
+                                            </Accordion>
+                                        </CardContent>
+                                    </Card>
+                                </div>
 
-                    <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
-                        <MessageSquare className="w-3 h-3 mr-2" /> Programs
-                    </Badge>
-                    <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Programs</p>
-                    <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
-                        We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
-                    </p>
-                </div>
-
-                {programs?.map((program, index) => {
-                    const isEven = index % 2 === 0;
-                    return (
-                        <div key={program._id} className={`flex flex-col md:flex-row${!isEven ? '-reverse' : ''} my-10 mx-4 md:mx-20 gap-10 items-start`}>
-                            <div className="flex flex-col py-5 flex-1">
-                                <p className="text-lg font-semibold">{program.title}</p>
-                                <p>{program.description}</p>
-                                <Card className="w-full max-w-sm my-5">
-                                    <CardHeader>
-                                        <CardTitle>FAQ</CardTitle>
-                                        <CardDescription>
-                                            Common questions about this program.
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Accordion type="single" collapsible>
-                                            {program.faqs?.map((faq, i) => (
-                                                <AccordionItem key={i} value={`item-${i}`}>
-                                                    <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
-                                                    <AccordionContent className="text-left">{faq.answer}</AccordionContent>
-                                                </AccordionItem>
-                                            ))}
-                                        </Accordion>
-                                    </CardContent>
-                                </Card>
+                                <div className="mx-10 my-5 bg-gray-100 flex-1 h-96 relative overflow-hidden rounded-xl">
+                                    {program.image && (
+                                        <img
+                                            src={urlFor(program.image).url()}
+                                            alt={program.title}
+                                            className="object-cover w-full h-full"
+                                        />
+                                    )}
+                                </div>
                             </div>
-
-                            <div className="mx-10 my-5 bg-gray-100 flex-1 h-96 relative overflow-hidden rounded-xl">
-                                {program.image && (
-                                    <img
-                                        src={urlFor(program.image).url()}
-                                        alt={program.title}
-                                        className="object-cover w-full h-full"
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-
+                        );
+                    })}
+                </section>
             </FadeInSection>
 
             <FadeInSection>
                 <section className="py-20 px-6 max-w-7xl mx-auto">
                     <div className="text-center">
                         <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
-                            <MessageSquare className="w-3 h-3 mr-2" /> Pro
+                            <MessageSquare className="w-3 h-3 mr-2" /> Products
                         </Badge>
                         <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Products</p>
                         <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
@@ -351,7 +473,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                 </Card>
                                 <div className="flex justify-between items-start mb-1">
                                     <h3 className="font-bold text-sm uppercase">{product.name}</h3>
-                                    <span className="font-bold text-xs">${product.price?.toFixed(2)}</span>
+                                    <span className="font-bold text-xs">Kshs {product.price?.toFixed(2)}</span>
                                 </div>
                                 <p className="text-slate-500 text-sm mb-3">{product.desc}</p>
                                 <div className="flex items-center gap-1 mb-4">
@@ -369,60 +491,82 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
 
             <FadeInSection>
-                <div className="text-center">
-                    <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200 text-center items-center justify-center mx-auto">
-                        <MessageSquare className="w-3 h-3 mr-2" /> Contacts
-                    </Badge>
-                    <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Contacts</p>
-                    <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
-                        We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
-                    </p>
-                </div>
-                <div className="flex flex-col lg:flex-row mx-4 lg:mx-20 my-10 gap-10">
-                    <div className="py-5 w-full lg:w-auto">
-                        <p className="text-3xl font-bold">Get in touch with Me</p>
-                        <p className="text-sm w-full lg:w-150">Reach out to us and I'll answer any of your questions.Or fill in the newsletter form for direct access and new information regularly about the site.</p>
-                        <div className="">
-                            <p className="  pt-8 pb-3 text-sm font-bold">Newsletter</p>
-                            <p className="text-xs w-full lg:w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
+                <section id="contacts">
+                    <div className="text-center">
+                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200 text-center items-center justify-center mx-auto">
+                            <MessageSquare className="w-3 h-3 mr-2" /> Contacts
+                        </Badge>
+                        <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Contacts</p>
+                        <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
+                            We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
+                        </p>
+                    </div>
+                    <div className="flex flex-col lg:flex-row mx-4 lg:mx-20 my-10 gap-10">
+                        <div className="py-5 w-full lg:w-auto">
+                            <p className="text-3xl font-bold">Get in touch with Me</p>
+                            <p className="text-sm w-full lg:w-150">Reach out to us and I'll answer any of your questions.Or fill in the newsletter form for direct access and new information regularly about the site.</p>
                             <div className="">
-                                <Field orientation="horizontal" className="text-xs">
-                                    <Input type="search" placeholder="Enter email..." className="rounded-2xl text-xs w-full sm:w-80" />
-                                    <Button className="rounded-2xl text-xs">Send</Button>
-                                </Field>
+                                <p className="  pt-8 pb-3 text-sm font-bold">Newsletter</p>
+                                <p className="text-xs w-full lg:w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
+                                <div className="">
+                                    <Field orientation="horizontal" className="text-xs">
+                                        <Input
+                                            type="email"
+                                            placeholder="Enter email..."
+                                            className="rounded-2xl text-xs w-full sm:w-80"
+                                            value={newsletterEmail}
+                                            onChange={(e) => setNewsletterEmail(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleNewsletterSubmit(newsletterEmail, setNewsletterEmail, setNewsletterLoading)}
+                                            disabled={newsletterLoading}
+                                        />
+                                        <Button
+                                            className="rounded-2xl text-xs"
+                                            onClick={() => handleNewsletterSubmit(newsletterEmail, setNewsletterEmail, setNewsletterLoading)}
+                                            disabled={newsletterLoading}
+                                        >
+                                            {newsletterLoading ? 'Sending...' : 'Send'}
+                                        </Button>
+                                    </Field>
+                                </div>
                             </div>
                         </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 lg:gap-x-42 gap-y-10 lg:gap-y-40 max-w-4xl mx-auto py-5 w-full">
+                            <div>
+                                <p className="text-xs">general inquiries</p>
+                                <p className="text-sm font-bold">myfit@gmail.com</p>
+                            </div>
+
+                            <div>
+                                <p className="text-xs">instagram</p>
+                                <Link href="https://www.instagram.com/myfit_training">
+                                    <p className="text-sm font-bold">myfit_training</p>
+                                </Link>
+                            </div>
+
+                            <div>
+                                <p className="text-xs">facebook</p>
+                                <Link href="https://www.facebook.com/myfit_training">
+                                    <p className="text-sm font-bold">myfit_training</p>
+                                </Link>
+                            </div>
+
+                            <div>
+                                <p className="text-xs">x</p>
+                                <Link href="https://www.x.com/myfit_training">
+                                    <p className="text-sm font-bold">myfit_training</p>
+                                </Link>
+                            </div>
+
+                        </div>
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 lg:gap-x-42 gap-y-10 lg:gap-y-40 max-w-4xl mx-auto py-5 w-full">
-                        <div>
-                            <p className="text-xs">general inquiries</p>
-                            <p className="text-sm font-bold">myfit@gmail.com</p>
-                        </div>
-
-                        <div>
-                            <p className="text-xs">instagram</p>
-                            <p className="text-sm font-bold">myfit_training</p>
-                        </div>
-
-                        <div>
-                            <p className="text-xs">facebook</p>
-                            <p className="text-sm font-bold">myfit_training</p>
-                        </div>
-
-                        <div>
-                            <p className="text-xs">x</p>
-                            <p className="text-sm font-bold">myfit_training</p>
-                        </div>
-
-                    </div>
-                </div>
+                </section>
             </FadeInSection>
 
             <div className="flex flex-col lg:flex-row px-6 lg:px-20 py-10 mx-4 lg:mx-10 mt-20 mb-10 bg-white text-xs rounded-3xl shadow-2xl">
                 <div className="flex flex-col py-5 ">
                     <p className="text-sm font-bold">⠿myFit</p>
-                    <p className="text-xs mt-2 text-slate-500">© copyright FitWithP 2026. All rights reserved.</p>
+                    <p className="text-xs mt-2 text-slate-500">© copyright myFit 2026. All rights reserved.</p>
                     <Button className="w-50 rounded-2xl text-white bg-black border-2 border-black hover:bg-black hover:text-white mt-3">Become a member</Button>
                 </div>
 
@@ -454,21 +598,27 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                     <div className="flex items-center gap-2 text-sm md:gap-4">
                         <div className="flex flex-col gap-1">
                             <span className="font-medium">Instagram</span>
-                            <span className="text-xs text-muted-foreground">
-                                @myfit_training
-                            </span>
+                            <Link href="https://www.instagram.com/myfit_training">
+                                <span className="text-xs text-muted-foreground">
+                                    @myfit_training
+                                </span>
+                            </Link>
                         </div>
                         <Separator orientation="vertical" />
                         <div className="flex flex-col gap-1">
                             <span className="font-medium">Facebook</span>
-                            <span className="text-xs text-muted-foreground">
-                                @myfit_training
-                            </span>
+                            <Link href="https://www.facebook.com/myfit_training">
+                                <span className="text-xs text-muted-foreground">
+                                    @myfit_training
+                                </span>
+                            </Link>
                         </div>
                         <Separator orientation="vertical" className="hidden md:block" />
                         <div className="hidden flex-col gap-1 md:flex">
                             <span className="font-medium">Tiktok</span>
-                            <span className="text-xs text-muted-foreground">@myfit_training</span>
+                            <Link href="https://www.tiktok.com/@myfit_training">
+                                <span className="text-xs text-muted-foreground">@myfit_training</span>
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -479,8 +629,22 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                     <p className="text-xs px-0 lg:px-20 w-full lg:w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
                     <div className="px-0 lg:px-20">
                         <Field orientation="horizontal" className="text-xs">
-                            <Input type="search" placeholder="Enter email..." className="rounded-2xl text-xs" />
-                            <Button className="rounded-2xl text-xs">Send</Button>
+                            <Input
+                                type="email"
+                                placeholder="Enter email..."
+                                className="rounded-2xl text-xs"
+                                value={footerEmail}
+                                onChange={(e) => setFooterEmail(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleNewsletterSubmit(footerEmail, setFooterEmail, setFooterLoading)}
+                                disabled={footerLoading}
+                            />
+                            <Button
+                                className="rounded-2xl text-xs"
+                                onClick={() => handleNewsletterSubmit(footerEmail, setFooterEmail, setFooterLoading)}
+                                disabled={footerLoading}
+                            >
+                                {footerLoading ? 'Sending...' : 'Send'}
+                            </Button>
                         </Field>
                     </div>
                 </div>

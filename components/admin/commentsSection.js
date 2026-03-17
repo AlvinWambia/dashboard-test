@@ -76,26 +76,28 @@ export default function CommentsSection({ comments = [], currentUser }) {
                 </Badge>
             </div>
 
-            <div className="px-6 sm:px-8 pb-4">
-                <form ref={formRef} action={handleSubmit}>
-                    <Field>
-                        <FieldLabel htmlFor="comment-body" className="sr-only">Add Comment</FieldLabel>
-                        <InputGroup>
-                            <InputGroupTextarea
-                                id="comment-body"
-                                name="body"
-                                placeholder="Write a note..."
-                                className="resize-none min-h-[80px]"
-                            />
-                            <InputGroupAddon align="block-end">
-                                <InputGroupButton type="submit" variant="default" size="sm" className="ml-auto">
-                                    <Send className="w-4 h-4" />
-                                </InputGroupButton>
-                            </InputGroupAddon>
-                        </InputGroup>
-                    </Field>
-                </form>
-            </div>
+            {currentUser && (
+                <div className="px-6 sm:px-8 pb-4">
+                    <form ref={formRef} action={handleSubmit}>
+                        <Field>
+                            <FieldLabel htmlFor="comment-body" className="sr-only">Add Comment</FieldLabel>
+                            <InputGroup>
+                                <InputGroupTextarea
+                                    id="comment-body"
+                                    name="body"
+                                    placeholder="Write a note..."
+                                    className="resize-none min-h-[80px]"
+                                />
+                                <InputGroupAddon align="block-end">
+                                    <InputGroupButton type="submit" variant="default" size="sm" className="ml-auto">
+                                        <Send className="w-4 h-4" />
+                                    </InputGroupButton>
+                                </InputGroupAddon>
+                            </InputGroup>
+                        </Field>
+                    </form>
+                </div>
+            )}
 
             <ScrollArea className="flex-1 px-6 sm:px-8 pb-8">
                 <div className="space-y-6">

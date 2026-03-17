@@ -8,6 +8,7 @@ import React from 'react';
 import MembersModal from "@/components/admin/userList.js";
 import CommentsSection from "@/components/admin/commentsSection";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import AnnouncementButton from "@/components/admin/AnnouncementButton";
 
 
 
@@ -32,7 +33,7 @@ export default async function MembersPage() {
         .single();
 
     if (!profile || profile.role !== 'admin') {
-        redirect("/home?error=unauthorized");
+        redirect("/home2?error=unauthorized");
     }
 
     // 4. Fetch all profiles AND all auth users to get emails
@@ -81,6 +82,9 @@ export default async function MembersPage() {
     // Analytics log
     console.log("Admin Profile Accessed:", profile.full_name);
 
+    // Count non-admin members to display in the announcement modal
+    const userCount = allProfiles.filter(p => p.role !== 'admin').length;
+
 
 
 
@@ -122,9 +126,7 @@ export default async function MembersPage() {
                                     <MessageSquare className="w-3 h-3 mr-2" /> Announce
                                 </Badge>
                                 <p className="text-sm text-gray-500">All of your public announcements will be listed here.</p>
-                                <Button className="text-sm bg-white rounded-2xl border border-black text-black hover:bg-black hover:text-white mt-6 w-full">
-                                    <Plus className="w-3 h-3 mr-2" /> Add Announcement
-                                </Button>
+                                <AnnouncementButton userCount={userCount} />
                             </div>
                         </div>
 

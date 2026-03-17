@@ -145,7 +145,7 @@ export default function SignupPage() {
             if (profile?.role === 'admin') {
                 router.push("/admin/dashboard");
             } else {
-                router.push("/home2");
+                router.push("/home2?signed_in=true");
             }
         }
         setLoading(false);
@@ -157,7 +157,7 @@ export default function SignupPage() {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: getURL('/auth/callback?next=/home2'),
+                redirectTo: getURL('/auth/callback?next=/home2?signed_in=true'),
             },
         });
 
@@ -205,9 +205,9 @@ export default function SignupPage() {
                         {/* Logo & Header */}
                         <div className="flex flex-col space-y-2 text-center">
                             <div className="flex items-center justify-center font-bold text-2xl mb-2">
-                                <span className="mr-2">⠿</span> FitWithP
+                                <span className="mr-2">⠿</span> myFit
                             </div>
-                            <h1 className="text-3xl font-bold tracking-tight">Welcome to FitWithP</h1>
+                            <h1 className="text-3xl font-bold tracking-tight">Welcome to myFit</h1>
                             <p className="text-sm text-muted-foreground">
                                 Build your design system effortlessly with our powerful component library.
                             </p>
@@ -363,7 +363,7 @@ export default function SignupPage() {
                                             checked={terms}
                                             onCheckedChange={(checked) => { setTerms(checked); setTouched((prev) => ({ ...prev, terms: true })); }}
                                         />
-                                        <Label htmlFor="terms">Accept terms and conditions</Label>
+                                        <Label htmlFor="terms">Accept <Link href="/terms">terms and conditions</Link></Label>
                                     </div>
                                     <div className="h-5 pl-6 text-sm text-red-500">
                                         {errors.terms && touched.terms && <p className="animate-in fade-in-0 slide-in-from-top-1 duration-300">{errors.terms[0]}</p>}
