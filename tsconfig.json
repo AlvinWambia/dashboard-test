@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/admin/layout.js", "app/actions/tasks.js", "app/admin/layout.js", "app/auth/loginForm.js", "components/Navbar.js", "app/auth/page.js"  ],
   "exclude": ["node_modules"]
 }

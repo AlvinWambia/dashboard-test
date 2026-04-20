@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -97,8 +97,20 @@ export default function IntakePage() {
                     .eq('id', user.id)
                     .single();
 
-                if (!profile || profile.role !== 'admin') {
+                if (!profile) {
                     router.push('/home2');
+                    return;
+                }
+
+                // CHECK: If user already has an intake form, redirect them away
+                const { data: existingForm } = await supabase
+                    .from('client_intake_forms')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+                
+                if (existingForm) {
+                    router.push('/home2?signed_in=true');
                     return;
                 }
 
@@ -141,6 +153,7 @@ export default function IntakePage() {
 
                     const { error } = await supabase.from('client_intake_forms').insert({
                         user_id: user?.id || null,
+                        order_id: orderId || null, // Capture the order ID!
                         full_name: formData.fullName,
                         email: formData.email,
                         phone_number: formData.phoneNumber,

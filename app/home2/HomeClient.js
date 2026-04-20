@@ -4,6 +4,8 @@
 import "@/app/globals.css";
 import React from 'react';
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator"
@@ -11,6 +13,7 @@ import { ArrowUpRight, Heart, Activity, MousePointer2, Plus, AlertCircleIcon, Pl
 import Image from 'next/image';
 import daImage from "@/components/images/da.png"
 import communicationImage from "@/components/images/communication.png"
+import groupTraining from "@/components/images/grouptraining.jpg"
 import dmbImage from "@/components/images/dmb.png"
 import trcImage from "@/components/images/trc.png"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -62,25 +65,78 @@ function FadeInSection({ children }) {
     React.useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
-                setIsVisible(entry.isIntersecting)
+                if (entry.isIntersecting) setIsVisible(true)
             })
-        })
+        }, { threshold: 0.1 })
         const { current } = domRef
         if (current) observer.observe(current)
         return () => observer.disconnect()
     }, [])
 
     return (
-        <div
+        <motion.div
             ref={domRef}
-            className={`transition-all duration-1000 ease-out transform ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
-                }`}
+            initial={{ opacity: 0, y: 50 }}
+            animate={isVisible ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, ease: "easeOut" }}
         >
-
             {children}
+        </motion.div>
+    )
+}
+
+function ImageScrollyStep({ image, title, description, badge, onInView }) {
+    const ref = React.useRef(null)
+
+    React.useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    onInView()
+                }
+            },
+            { threshold: 0.6 }
+        )
+
+        const currentRef = ref.current
+        if (currentRef) observer.observe(currentRef)
+
+        return () => {
+            if (currentRef) observer.unobserve(currentRef)
+        }
+    }, [onInView])
+
+    return (
+        <div ref={ref} className="min-h-[70vh] lg:h-[80vh] w-full flex items-center justify-center p-4">
+            <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl transform transition-transform hover:scale-[1.01] duration-500">
+                <img
+                    src={image}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                />
+
+                {/* Mobile/Tablet Text Overlay (Visible below 'lg' breakpoint) */}
+                <div className="lg:hidden absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-8 md:p-12">
+                    <Badge variant="outline" className="w-fit rounded-full px-4 py-1 mb-4 text-white border-white/20 bg-white/10 backdrop-blur-md">
+                        {badge}
+                    </Badge>
+                    <h3 className="text-white text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+                        {title}
+                    </h3>
+                    <p className="text-white/80 text-lg md:text-xl max-w-xl leading-relaxed">
+                        {description}
+                    </p>
+                </div>
+
+                {/* Subtle desktop-only gradient */}
+                <div className="hidden lg:block absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            </div>
         </div>
     )
 }
+
+
+
 
 
 
@@ -97,6 +153,29 @@ export default function HomeClient({ products, programs, testimonials, about }) 
     const [current, setCurrent] = React.useState(0)
     const [count, setCount] = React.useState(0)
     const [isCommentsOpen, setIsCommentsOpen] = React.useState(false);
+    const [activeAboutStep, setActiveAboutStep] = React.useState(0);
+
+    const aboutSteps = [
+        {
+            title: "The Vision Behind MyFit",
+            description: "Started with a simple goal: making elite fitness coaching accessible to everyone. We've evolved into a community that prioritizes sustainable results over quick fixes.",
+            badge: "Our Story",
+            image: groupTraining.src,
+        },
+        {
+            title: "Pelesia - Lead Instructor",
+            description: "A little bit about the trainer, instructor and the dietor. How she does her things and many more. Expertise in nutrition and physical training for holistic wellness.",
+            badge: "Expertise",
+            image: communicationImage.src,
+        },
+        {
+            title: "A Community Driven Path",
+            description: "We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
+            badge: "Philosophy",
+            image: daImage.src,
+        }
+    ];
+
 
     // Newsletter state (shared by contacts + footer inputs)
     const [newsletterEmail, setNewsletterEmail] = React.useState('');
@@ -287,13 +366,13 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
                     {/* Right Column: Hero Image & Stats */}
                     <div className="col-span-12 lg:col-span-6 relative">
-                        <div className="bg-gray-200 rounded-[4rem] h-full relative overflow-hidden flex flex-col items-center pt-20">
+                        <div className="bg-gray-200 rounded-[4rem] h-full relative overflow-hidden flex flex-col items-center ">
                             {/* Floating Tags */}
 
 
                             {/* Central Jump Image Placeholder */}
-                            <div className="relative z-10 mt-10">
-                                <img src={trcImage.src} alt="Athlete Jumping" className="h-full object-contain transition-transform duration-500 hover:-translate-y-4" />
+                            <div className="">
+                                <img src={groupTraining.src} alt="Athlete Jumping" className="h-full object-contain transition-transform duration-500 hover:-translate-y-4" />
 
                                 {/* Feature Callouts */}
 
@@ -358,36 +437,70 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
 
 
-            <FadeInSection>
-                <section id="about">
-                    <div className="text-center">
-                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+            <section id="about" className="relative py-24">
+                <div className="max-w-7xl mx-auto px-4 md:px-6">
+                    <div className="mb-20 text-center">
+                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200 mx-auto">
                             <MessageSquare className="w-3 h-3 mr-2" /> About
                         </Badge>
-                        <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">About MyFit</p>
-                        <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
-                            We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
+                        <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-8">About MyFit</h2>
+                        <p className="text-slate-500 text-lg md:text-xl max-w-2xl mx-auto">
+                            We take pride in delivering exceptional solutions that deliver great results. Our journey is defined by the success of our clients.
                         </p>
                     </div>
-                    <div className="flex flex-col lg:flex-row my-10 mx-4 lg:mx-20 gap-10 lg:gap-20 items-center">
-                        <div className="w-full lg:w-auto">
-                            <Tabs defaultValue="myfit" className="w-full lg:w-140">
-                                <TabsList variant="line">
-                                    <TabsTrigger value="myfit">MyFit</TabsTrigger>
-                                    <TabsTrigger value="pelesia">Pelesia </TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="myfit" className="text-lg">A little bit about the company. Learning about the coming up of my fit and everything else about it.</TabsContent>
-                                <TabsContent value="pelesia" className="text-lg">A little bit about the trainer, instructor and the dietor. How she does her things and many more.</TabsContent>
-                            </Tabs>
+
+                    <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
+                        {/* Left: Sticky Text (Follower) */}
+                        <div className="hidden lg:block w-1/2 sticky top-40 h-fit self-start">
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={activeAboutStep}
+                                    initial={{ opacity: 0, x: -30, filter: "blur(10px)" }}
+                                    animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                                    exit={{ opacity: 0, x: 30, filter: "blur(10px)" }}
+                                    transition={{ duration: 0.5, ease: "easeOut" }}
+                                    className="py-12"
+                                >
+                                    <Badge variant="outline" className="w-fit rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+                                        {aboutSteps[activeAboutStep].badge}
+                                    </Badge>
+                                    <h3 className="text-4xl md:text-6xl font-bold mb-8 tracking-tight">
+                                        {aboutSteps[activeAboutStep].title}
+                                    </h3>
+                                    <p className="text-slate-600 text-lg md:text-2xl max-w-md leading-relaxed">
+                                        {aboutSteps[activeAboutStep].description}
+                                    </p>
+
+                                    {/* Progress indicators */}
+                                    <div className="flex gap-2 mt-12">
+                                        {aboutSteps.map((_, i) => (
+                                            <div
+                                                key={i}
+                                                className={`h-1 rounded-full transition-all duration-500 ${i === activeAboutStep ? "w-12 bg-black" : "w-4 bg-slate-200"
+                                                    }`}
+                                            />
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            </AnimatePresence>
                         </div>
 
-                        <div className="mx-0 lg:mx-20 my-5 bg-gray-100 w-full max-w-[500px] aspect-square relative overflow-hidden rounded-3xl">
-
+                        {/* Right: Scrolling Images (Leader) */}
+                        <div className="w-full lg:w-1/2 space-y-12 lg:space-y-40">
+                            {aboutSteps.map((step, i) => (
+                                <ImageScrollyStep
+                                    key={i}
+                                    {...step}
+                                    onInView={() => setActiveAboutStep(i)}
+                                />
+                            ))}
                         </div>
 
                     </div>
-                </section>
-            </FadeInSection>
+
+                </div>
+            </section>
+
 
 
 

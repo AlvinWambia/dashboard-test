@@ -36,7 +36,6 @@ export function UserChart({ chartData }) {
             },
             y: {
                 display: false, // Hide Y axis as seen in your reference
-                beginAtZero: true,
             },
         },
         elements: {

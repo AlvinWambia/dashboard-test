@@ -140,7 +140,7 @@ export default function LoginPage() {
                             <div className="grid gap-2">
                                 <div className="flex items-center justify-between">
                                     <Label htmlFor="password">Password</Label>
-                                    <Link href="/auth/updatepassword" className="text-sm font-medium text-blue-600 hover:underline">
+                                    <Link href="/auth/updatePassword" className="text-sm font-medium text-blue-600 hover:underline">
                                         Forgot password?
                                     </Link>
                                 </div>

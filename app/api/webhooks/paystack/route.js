@@ -25,7 +25,7 @@ export async function POST(req) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get("x-paystack-signature");
-    
+
     console.log("Signature present:", !!signature);
     console.log("Secret Key present:", !!process.env.PAYSTACK_SECRET_KEY);
 
@@ -56,13 +56,11 @@ export async function POST(req) {
     const orderIdFromMetadata = data.metadata?.orderId;
     const orderIdFromReference = reference?.includes('_') ? reference.split('_')[0] : reference;
     const orderId = orderIdFromMetadata || orderIdFromReference;
-    
+
     console.log("Extracted orderId:", orderId, "(from reference:", reference, ")");
 
     // 2. Handle the successful charge event
     if (event === "charge.success") {
-      const reference = data.reference;
-      const orderId = data.metadata?.orderId;
       const customerEmail = data.customer.email;
       const amountPaid = data.amount / 100; // Paystack sends amount in cents/subunits
 

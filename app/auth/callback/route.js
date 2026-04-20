@@ -29,9 +29,12 @@ export async function GET(request) {
             }
             
             return NextResponse.redirect(getURL(next));
+        } else {
+            // Redirect to error page with error message
+            return NextResponse.redirect(getURL(`/auth/auth-code-error?error=${encodeURIComponent(error.message)}`));
         }
     }
 
-    // return the user to an error page with instructions
-    return NextResponse.redirect(getURL('/auth/auth-code-error'));
+    // return the user to an error page with instructions if no code
+    return NextResponse.redirect(getURL('/auth/auth-code-error?error=No_code_provided_in_URL'));
 }
