@@ -48,7 +48,7 @@ export const NewsletterWelcomeTemplate = ({ email = "" }) => (
           </Text>
 
           <Section style={{ textAlign: "center", margin: "28px 0" }}>
-            <Button style={ctaButton} href="https://myfit.com/home2">
+            <Button style={ctaButton} href="https://dashboard-test-3i3q.vercel.app/">
               Explore myFit
             </Button>
           </Section>

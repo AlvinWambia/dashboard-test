@@ -4,7 +4,8 @@
 import "@/app/globals.css";
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "framer-motion";
+
 
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -16,6 +17,12 @@ import communicationImage from "@/components/images/communication.png"
 import groupTraining from "@/components/images/grouptraining.jpg"
 import dmbImage from "@/components/images/dmb.png"
 import trcImage from "@/components/images/trc.png"
+import nutritionImage from "@/components/images/nutrition1.png"
+import fatImage from "@/components/images/fat1.png"
+import fat2Image from "@/components/images/fat2.png"
+import group from "@/components/images/group.jpg"
+import personal2 from "@/components/images/personal2.jpg"
+import group2 from "@/components/images/group2.jpg"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -52,6 +59,8 @@ import {
 } from "@/components/ui/carousel"
 
 import { Badge } from "@/components/ui/badge"
+import HomeSkeleton from "./HomeSkeleton";
+
 
 
 
@@ -65,9 +74,10 @@ function FadeInSection({ children }) {
     React.useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
-                if (entry.isIntersecting) setIsVisible(true)
+                setIsVisible(entry.isIntersecting)
             })
         }, { threshold: 0.1 })
+
         const { current } = domRef
         if (current) observer.observe(current)
         return () => observer.disconnect()
@@ -85,7 +95,92 @@ function FadeInSection({ children }) {
     )
 }
 
+function ParallaxImage({ src, alt, className, speed = 0.5, objectFit = "cover" }) {
+    const ref = React.useRef(null)
+    const { scrollYProgress } = useScroll({
+        target: ref,
+        offset: ["start end", "end start"]
+    })
+
+    // Support both string paths and Next.js image objects
+    const resolvedSrc = src?.src || src
+
+    const y = useTransform(scrollYProgress, [0, 1], [-50 * speed, 50 * speed])
+    const springY = useSpring(y, { stiffness: 100, damping: 30 })
+
+    return (
+        <div ref={ref} className={`relative overflow-hidden ${className}`}>
+            <motion.img
+                src={resolvedSrc}
+                alt={alt}
+                style={{ y: springY, scale: 1.1 }}
+                className={`absolute inset-0 w-full h-full ${objectFit === "cover" ? "object-cover" : "object-contain"}`}
+            />
+        </div>
+    )
+}
+
+
+
+function ScrollReveal({ children, delay = 0, direction = "up" }) {
+    const directions = {
+        up: { y: 40 },
+        down: { y: -40 },
+        left: { x: 40 },
+        right: { x: -40 }
+    }
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, ...directions[direction] }}
+            whileInView={{ opacity: 1, x: 0, y: 0 }}
+            viewport={{ once: false, margin: "-100px" }}
+
+            transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+        >
+            {children}
+        </motion.div>
+    )
+}
+
+function AutoplayVideo({ src, className }) {
+    const videoRef = React.useRef(null)
+
+    React.useEffect(() => {
+        const video = videoRef.current
+        if (!video) return
+
+        const handleIntersection = (entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    video.play().catch(() => { })
+                } else {
+                    video.pause()
+                }
+            })
+        }
+
+        const observer = new IntersectionObserver(handleIntersection, { threshold: 0.1 })
+        observer.observe(video)
+
+        return () => observer.disconnect()
+    }, [])
+
+    return (
+        <video
+            ref={videoRef}
+            src={src}
+            loop
+            muted
+            playsInline
+            className={className}
+        />
+    )
+}
+
 function ImageScrollyStep({ image, title, description, badge, onInView }) {
+
+
     const ref = React.useRef(null)
 
     React.useEffect(() => {
@@ -108,7 +203,7 @@ function ImageScrollyStep({ image, title, description, badge, onInView }) {
 
     return (
         <div ref={ref} className="min-h-[70vh] lg:h-[80vh] w-full flex items-center justify-center p-4">
-            <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl transform transition-transform hover:scale-[1.01] duration-500">
+            <div className="relative w-full h-full rounded-3xl overflow-hidden  transform transition-transform hover:scale-[1.01] duration-500">
                 <img
                     src={image}
                     alt={title}
@@ -142,11 +237,21 @@ function ImageScrollyStep({ image, title, description, badge, onInView }) {
 
 
 export default function HomeClient({ products, programs, testimonials, about }) {
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 1500);
+        return () => clearTimeout(timer);
+    }, []);
+
     const router = useRouter();
     const searchParams = useSearchParams()
     const error = searchParams.get('error')
     const signedIn = searchParams.get('signed_in');
     const formSubmitted = searchParams.get('form_submitted');
+
 
     const [activeTab, setActiveTab] = React.useState(about?.[0]?.name)
     const [api, setApi] = React.useState()
@@ -166,13 +271,13 @@ export default function HomeClient({ products, programs, testimonials, about }) 
             title: "Pelesia - Lead Instructor",
             description: "A little bit about the trainer, instructor and the dietor. How she does her things and many more. Expertise in nutrition and physical training for holistic wellness.",
             badge: "Expertise",
-            image: communicationImage.src,
+            image: personal2.src,
         },
         {
             title: "A Community Driven Path",
             description: "We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
             badge: "Philosophy",
-            image: daImage.src,
+            image: group.src,
         }
     ];
 
@@ -280,7 +385,25 @@ export default function HomeClient({ products, programs, testimonials, about }) 
     };
 
     return (
-        <div className="min-h-screen bg-white p-4 md:p-8 text-slate-900">
+        <AnimatePresence mode="wait">
+            {isLoading ? (
+                <motion.div
+                    key="skeleton"
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <HomeSkeleton />
+                </motion.div>
+            ) : (
+                <motion.div
+                    key="content"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.8 }}
+                    className="min-h-screen bg-white p-4 md:p-8 text-slate-900 selection:bg-blue-100"
+                >
+
             {error === 'unauthorized' && (
                 <div className="fixed top-5 right-5 z-50 w-full max-w-md animate-in fade-in slide-in-from-top-5">
                     <Alert variant="destructive" className="bg-white shadow-lg">
@@ -294,107 +417,132 @@ export default function HomeClient({ products, programs, testimonials, about }) 
             )}
             {/* --- Navigation --- */}
 
-            <FadeInSection>
-                <nav className="flex items-center justify-between mb-12">
-                    <div className="flex items-center gap-2 font-bold text-xl">
-                        ⠿myFit
-                    </div>
+            {/* --- Navigation --- */}
+            <nav className="flex items-center justify-between mb-12 sticky top-0 z-50 bg-white/80 backdrop-blur-md py-4 transition-all">
+                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-2 font-bold text-xl">
+                    ⠿myFit
+                </motion.div>
 
-                    <div className="hidden md:flex bg-slate-100 rounded-full p-1 px-2 gap-1 mx-auto">
-                        {['Home', 'Testimonials', 'About', 'Programs', 'Contacts'].map((item) => (
+                <div className="hidden md:flex bg-slate-100/50 rounded-full p-1 px-2 gap-1 mx-auto border border-white/20">
+                    {['Home', 'Testimonials', 'About', 'Programs', 'Contacts'].map((item, i) => (
+                        <motion.div
+                            key={item}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                        >
                             <Button
-                                key={item}
                                 variant="ghost"
-                                className="rounded-full px-6 hover:bg-white hover:shadow-sm"
+                                className="rounded-full px-6 hover:bg-white hover:shadow-sm transition-all"
                                 onClick={(e) => handleScroll(e, item.toLowerCase())}
                             >
                                 {item}
                             </Button>
-                        ))}
-                    </div>
+                        </motion.div>
+                    ))}
+                </div>
 
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                     <Link href="/auth/login">
-                        <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm">
+                        <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm transition-all">
                             Join Now!
                         </Button>
                     </Link>
-                </nav>
-            </FadeInSection>
+                </motion.div>
+            </nav>
 
             {/* --- Main Content Grid --- */}
-            <FadeInSection>
-                <div className="grid grid-cols-12 gap-6 max-w-7xl mx-auto my-5">
-
-                    {/* Left Column: Headline & Small Cards */}
-                    <div className="col-span-12 lg:col-span-6 space-y-8">
+            <section id="home" className="grid grid-cols-12 gap-6 max-w-7xl mx-auto my-5">
+                {/* Left Column: Headline & Small Cards */}
+                <div className="col-span-12 lg:col-span-6 space-y-8">
+                    <ScrollReveal>
                         <h1 className="text-6xl md:text-5xl font-semibold leading-[1.1] tracking-tight">
                             Join the Fitness Revolution, Your Body, Your Rules!
                         </h1>
+                    </ScrollReveal>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <Card className="bg-blue-100 border-none p-6 rounded-[2rem] relative flex flex-col justify-between aspect-square">
-                                <Button size="icon" variant="secondary" className="absolute top-4 right-4 rounded-full w-8 h-8">
-                                    <ArrowUpRight className="w-4 h-4" />
-                                </Button>
-                                <p className="font-medium text-lg mt-auto">Workout Program</p>
-                            </Card>
-                            <Card className="bg-slate-100 border-none p-6 rounded-[2rem] relative flex flex-col justify-between aspect-square">
-                                <Button size="icon" variant="secondary" className="absolute top-4 right-4 rounded-full w-8 h-8">
-                                    <ArrowUpRight className="w-4 h-4" />
-                                </Button>
-                                <p className="font-medium text-lg mt-auto">Wellness</p>
-                            </Card>
-                            <Card className="bg-blue-200 border-none p-6 rounded-[2rem] relative flex flex-col justify-between aspect-square">
-                                <Button size="icon" variant="secondary" className="absolute top-4 right-4 rounded-full w-8 h-8">
-                                    <ArrowUpRight className="w-4 h-4" />
-                                </Button>
-                                <p className="font-medium text-lg mt-auto">Nutrition</p>
-                            </Card>
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[
+                            { title: "💪Workout Program", bg: "bg-blue-100", delay: 0.1, description: "Personal Training" },
+                            { title: "🧘Wellness", bg: "bg-slate-100", delay: 0.2, description: "Personal Therapy" },
+                            { title: "🥗Nutrition", bg: "bg-blue-100", delay: 0.3, description: "Curated Diet" }
+                        ].map((card, i) => (
+                            <ScrollReveal key={i} delay={card.delay} direction="up">
+                                <Card className={`${card.bg} border-none p-6 rounded-[2rem] relative flex flex-col items-center justify-center text-center aspect-square group overflow-hidden`}>
+                                    <motion.div
+                                        whileHover={{ scale: 1.1, rotate: 5 }}
+                                        className="absolute top-4 right-4 z-10"
+                                    >
+                                        <Button size="icon" variant="secondary" className="rounded-full w-8 h-8 bg-white">
+                                            <ArrowUpRight className="w-4 h-4" />
+                                        </Button>
+                                    </motion.div>
 
-                        {/* Bottom Left: Stretching Image Card */}
-                        <div className="relative rounded-[3rem] overflow-hidden h-[300px] bg-gray-200">
-                            <div className="w-full h-full bg-slate-300 flex items-center justify-center text-slate-400">
-                                <Activity className="w-12 h-12" />
-                            </div>
+                                    <div className="relative z-10 space-y-2">
+                                        <p className="text-[10px] text-slate-800 font-medium tracking-wider uppercase">
+                                            {card.description}
+                                        </p>
+                                        <p className="group-hover:scale-105 transition-transform">
+                                            <Badge variant="outline" className="rounded-full px-4 py-1 bg-white/50 backdrop-blur-sm border-slate-200 text-slate-800">
+                                                {card.title}
+                                            </Badge>
+                                        </p>
+                                    </div>
+                                </Card>
+
+                            </ScrollReveal>
+
+                        ))}
+
+                    </div>
+
+                    {/* Bottom Left: Stretching Image Card */}
+                    <ScrollReveal delay={0.4}>
+                        <div className="relative rounded-[3rem] overflow-hidden h-[300px] bg-gray-200 group">
+                            <ParallaxImage
+                                src={group2.src}
+                                alt="Training"
+                                className="w-full h-full"
+                                speed={0.2}
+                            />
                             {/* Heart Rate Overlay */}
-                            <div className="absolute top-6 left-6 bg-white/80 backdrop-blur-md p-2 rounded-2xl w-32 ">
-                                <p className="text-sm text-black mx-auto pl-2">Train With Me</p>
-                            </div>
+                            <motion.div
+                                initial={{ x: -20, opacity: 0 }}
+                                whileInView={{ x: 0, opacity: 1 }}
+                                className="absolute top-6 left-6 bg-white/80 backdrop-blur-md p-2 rounded-2xl w-32 border border-white/20 shadow-xl"
+                            >
+                                <p className="text-sm text-black mx-auto pl-2 font-medium">Train With Me</p>
+                            </motion.div>
                         </div>
-                    </div>
-
-                    {/* Right Column: Hero Image & Stats */}
-                    <div className="col-span-12 lg:col-span-6 relative">
-                        <div className="bg-gray-200 rounded-[4rem] h-full relative overflow-hidden flex flex-col items-center ">
-                            {/* Floating Tags */}
+                    </ScrollReveal>
 
 
-                            {/* Central Jump Image Placeholder */}
-                            <div className="">
-                                <img src={groupTraining.src} alt="Athlete Jumping" className="h-full object-contain transition-transform duration-500 hover:-translate-y-4" />
-
-                                {/* Feature Callouts */}
-
-                            </div>
-
-                            {/* Bottom Right White Card */}
-                            <div className="absolute bottom-6 right-6 bg-white p-3 rounded-[3rem] w-45 shadow-sm z-20 border border-white/20 my-5 mx-5">
-                                <p className="text-black text-sm mx-auto my-auto pl-2">MyFit Training Program</p>
-                            </div>
-                        </div>
-
-                        {/* Scroll Down Indicator */}
-
-                    </div>
 
                 </div>
-            </FadeInSection>
 
+                {/* Right Column: Hero Image & Stats */}
+                <div className="col-span-12 lg:col-span-6 relative">
+                    <div className="bg-slate-100/50 rounded-[4rem] h-full relative overflow-hidden flex items-center justify-center min-h-[650px]">
+                        <img
+                            src={groupTraining.src || groupTraining}
+                            alt="Athlete Jumping"
+                            className="w-full h-full object-contain relative z-20"
+                        />
 
-            <FadeInSection>
-                <section id="testimonials" className="py-24">
-                    <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
+                        {/* Bottom Right White Card */}
+                        <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            className="absolute bottom-6 right-6 bg-white p-3 px-6 rounded-[3rem] shadow-xl z-30 border border-white/20 transition-all font-medium"
+                        >
+                            <p className="text-black text-sm">MyFit Training Program</p>
+                        </motion.div>
+                    </div>
+                </div>
+            </section >
+
+            <section id="testimonials" className="py-24">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
+                    <ScrollReveal>
                         <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
                             <MessageSquare className="w-3 h-3 mr-2" /> Testimonials
                         </Badge>
@@ -402,24 +550,33 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16">
                             We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
                         </p>
+                    </ScrollReveal>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {testimonials?.map((testimonials, i) => (
-                                <Card key={i} className="border-none shadow-sm rounded-2xl p-6 text-left flex flex-col justify-between">
-                                    <p className="text-slate-700 leading-relaxed mb-8 italic">"{testimonials.desc}"</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {testimonials?.map((t, i) => (
+                            <ScrollReveal key={i} delay={i * 0.1} direction="up">
+                                <Card className="border-none shadow-sm hover:shadow-xl transition-shadow duration-500 rounded-2xl p-6 text-left h-full flex flex-col justify-between bg-white group">
+                                    <p className="text-slate-700 leading-relaxed mb-8 italic group-hover:text-black transition-colors">"{t.desc}"</p>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden" />
+                                        <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden relative">
+                                            <div className="absolute inset-0 bg-slate-300 animate-pulse" />
+                                        </div>
                                         <div>
-                                            <p className="font-bold text-sm">{testimonials.name}</p>
-                                            <p className="text-xs text-slate-500">{testimonials.role}</p>
+                                            <p className="font-bold text-sm">{t.name}</p>
+                                            <p className="text-xs text-slate-500">{t.role}</p>
                                         </div>
                                     </div>
                                 </Card>
-                            ))}
-                        </div>
+                            </ScrollReveal>
+                        ))}
+                    </div>
+
+                    <ScrollReveal delay={0.4}>
                         <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="outline" className="mt-12 rounded-full px-8 py-6">See all Reviews &gt;</Button>
+                                <Button variant="outline" className="mt-12 rounded-full px-8 py-6 hover:bg-black hover:text-white transition-all">
+                                    See all Reviews &gt;
+                                </Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-2xl bg-slate-50 p-0 border-none rounded-2xl">
                                 <DialogHeader className="sr-only">
@@ -431,23 +588,27 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                 <CommentsSection comments={commentsForModal} currentUser={null} />
                             </DialogContent>
                         </Dialog>
-                    </div>
-                </section>
-            </FadeInSection>
+                    </ScrollReveal>
+                </div>
+            </section>
+
 
 
 
             <section id="about" className="relative py-24">
                 <div className="max-w-7xl mx-auto px-4 md:px-6">
-                    <div className="mb-20 text-center">
-                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200 mx-auto">
-                            <MessageSquare className="w-3 h-3 mr-2" /> About
-                        </Badge>
-                        <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-8">About MyFit</h2>
-                        <p className="text-slate-500 text-lg md:text-xl max-w-2xl mx-auto">
-                            We take pride in delivering exceptional solutions that deliver great results. Our journey is defined by the success of our clients.
-                        </p>
-                    </div>
+                    <ScrollReveal>
+                        <div className="mb-20 text-center">
+                            <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200 mx-auto">
+                                <MessageSquare className="w-3 h-3 mr-2" /> About
+                            </Badge>
+                            <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-8">About MyFit</h2>
+                            <p className="text-slate-500 text-lg md:text-xl max-w-2xl mx-auto">
+                                We take pride in delivering exceptional solutions that deliver great results. Our journey is defined by the success of our clients.
+                            </p>
+                        </div>
+                    </ScrollReveal>
+
 
                     <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
                         {/* Left: Sticky Text (Follower) */}
@@ -504,179 +665,219 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
 
 
-            <FadeInSection className="my-10">
-                <section id="programs">
-                    <div className="text-center">
-                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
-                            <MessageSquare className="w-3 h-3 mr-2" /> Programs
-                        </Badge>
-                        <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Programs</p>
-                        <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
-                            We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
-                        </p>
-                    </div>
+            <section id="programs" className="py-24 bg-slate-50/50">
+                <div className="max-w-7xl mx-auto px-4 md:px-6">
+                    <ScrollReveal>
+                        <div className="text-center mb-20">
+                            <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+                                <MessageSquare className="w-3 h-3 mr-2" /> Programs
+                            </Badge>
+                            <p className="text-5xl font-bold tracking-tight mb-6">Explore Our Programs</p>
+                            <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+                                Tailored fitness journeys designed for your unique goals. From beginner to elite, we have a path for you.
+                            </p>
+                        </div>
+                    </ScrollReveal>
 
                     {programs?.map((program, index) => {
                         const isEven = index % 2 === 0;
                         return (
-                            <div key={program._id} className={`flex flex-col md:flex-row${!isEven ? '-reverse' : ''} my-10 mx-4 md:mx-20 gap-10 items-start`}>
-                                <div className="flex flex-col py-5 flex-1">
-                                    <p className="text-lg font-semibold">{program.title}</p>
-                                    <p>{program.description}</p>
-                                    <Card className="w-full max-w-sm my-5">
-                                        <CardHeader>
-                                            <CardTitle>FAQ</CardTitle>
-                                            <CardDescription>
-                                                Common questions about this program.
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <Accordion type="single" collapsible>
-                                                {program.faqs?.map((faq, i) => (
-                                                    <AccordionItem key={i} value={`item-${i}`}>
-                                                        <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
-                                                        <AccordionContent className="text-left">{faq.answer}</AccordionContent>
-                                                    </AccordionItem>
-                                                ))}
-                                            </Accordion>
-                                        </CardContent>
-                                    </Card>
+                            <div key={program._id} className={`flex flex-col lg:flex-row${!isEven ? '-reverse' : ''} my-24 items-center gap-16`}>
+                                <div className="flex-1 space-y-8">
+                                    <ScrollReveal direction={isEven ? "right" : "left"}>
+                                        <p className="text-xl font-bold tracking-tight">{program.title}</p>
+                                        <p className="text-slate-600 text-sm leading-relaxed">{program.description}</p>
+
+                                        <Card className="border-none rounded-[1.5rem] bg-white overflow-hidden mt-8">
+
+                                            <CardContent className="p-6 pt-1">
+                                                <Accordion type="single" collapsible>
+                                                    {program.faqs?.map((faq, i) => (
+                                                        <AccordionItem key={i} value={`item-${i}`} className="border-none">
+                                                            <AccordionTrigger className="text-left font-medium hover:text-black">
+                                                                {faq.question}
+                                                            </AccordionTrigger>
+                                                            <AccordionContent className="text-slate-500">
+                                                                {faq.answer}
+                                                            </AccordionContent>
+                                                        </AccordionItem>
+                                                    ))}
+                                                </Accordion>
+                                            </CardContent>
+                                        </Card>
+                                    </ScrollReveal>
                                 </div>
 
-                                <div className="mx-10 my-5 bg-gray-100 flex-1 h-96 relative overflow-hidden rounded-xl">
-                                    {program.image && (
-                                        <img
-                                            src={urlFor(program.image).url()}
-                                            alt={program.title}
-                                            className="object-cover w-full h-full"
-                                        />
-                                    )}
+                                <div className="flex-1 w-full">
+                                    <ScrollReveal direction={isEven ? "left" : "right"}>
+                                        <div className="relative aspect-video lg:aspect-square rounded-[3rem] overflow-hidden  group bg-slate-900">
+                                            {/* Video background for premium look with smart autoplay */}
+                                            <AutoplayVideo
+                                                src={index === 0
+                                                    ? "https://assets.mixkit.co/videos/preview/mixkit-young-man-training-in-the-gym-at-night-1282-preview.mp4"
+                                                    : index === 1
+                                                        ? "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-mountain-climber-exercise-726-preview.mp4"
+                                                        : "https://assets.mixkit.co/videos/preview/mixkit-man-training-on-the-beach-at-sunset-1296-preview.mp4"
+                                                }
+                                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-70"
+                                            />
+
+
+                                            {/* Glassmorphism overlay */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-12">
+                                                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                                                    <p className="text-white text-sm font-medium tracking-wide">{program.title}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Fallback image if video fails or is not desired as primary */}
+                                            {!index && program.image && (
+                                                <div className="sr-only">
+                                                    <ParallaxImage
+                                                        src={urlFor(program.image).url()}
+                                                        alt={program.title}
+                                                        className="w-full h-full"
+                                                        speed={0.2}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </ScrollReveal>
                                 </div>
+
                             </div>
                         );
                     })}
-                </section>
-            </FadeInSection>
+                </div>
+            </section>
 
-            <FadeInSection>
-                <section className="py-20 px-6 max-w-7xl mx-auto">
-                    <div className="text-center">
-                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
-                            <MessageSquare className="w-3 h-3 mr-2" /> Products
-                        </Badge>
-                        <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Products</p>
-                        <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
-                            We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap justify-center gap-8 mx-auto">
-                        {products?.map((product) => (
-                            <div key={product._id} className="group w-full sm:w-[calc(50%-1rem)] lg:w-[calc(25%-1.5rem)]">
-                                <Card className="bg-slate-50 border-none rounded-3xl overflow-hidden relative mb-4 aspect-square flex items-center justify-center p-8">
-                                    <Button size="icon" variant="ghost" className="absolute top-4 right-4 bg-white rounded-full  opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Heart className="w-4 h-4 text-white" />
-                                    </Button>
-                                    {product.image && (
-                                        <img
-                                            src={urlFor(product.image).width(300).height(300).url()}
-                                            alt={product.name}
-                                            className="object-contain w-full h-full mix-blend-multiply"
-                                        />
-                                    )}
-                                </Card>
-                                <div className="flex justify-between items-start mb-1">
-                                    <h3 className="font-bold text-sm uppercase">{product.name}</h3>
-                                    <span className="font-bold text-xs">Kshs {product.price?.toFixed(2)}</span>
+            <section id="products" className="py-24">
+                <div className="max-w-7xl mx-auto px-4 md:px-6">
+                    <ScrollReveal>
+                        <div className="text-center mb-20">
+                            <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+                                <Tag className="w-3 h-3 mr-2" /> Store
+                            </Badge>
+                            <p className="text-5xl font-bold tracking-tight mb-6">Our Premium Products</p>
+                            <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+                                Gear and supplements curated to support your fitness journey and maximize performance.
+                            </p>
+                        </div>
+                    </ScrollReveal>
+
+                    <div className="flex flex-wrap justify-center gap-8">
+                        {products?.map((product, i) => (
+                            <ScrollReveal key={product._id} delay={i * 0.1} direction="up">
+                                <div className="group w-full max-w-[300px]">
+                                    <Card className="bg-slate-50 border-none rounded-[2.5rem] overflow-hidden relative mb-4 aspect-square flex items-center justify-center p-8 transition-all hover:bg-slate-100 hover:shadow-2xl">
+                                        <motion.div whileHover={{ scale: 1.1 }} className="absolute top-4 right-4 z-10">
+                                            <Button size="icon" variant="ghost" className="bg-white/80 backdrop-blur-md rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all">
+                                                <Heart className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
+                                            </Button>
+                                        </motion.div>
+                                        {product.image && (
+                                            <motion.img
+                                                src={urlFor(product.image).width(400).height(400).url()}
+                                                alt={product.name}
+                                                whileHover={{ scale: 1.05, rotate: 2 }}
+                                                className="object-contain w-full h-full mix-blend-multiply"
+                                            />
+                                        )}
+                                    </Card>
+                                    <div className="px-2">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <h3 className="font-bold text-sm uppercase tracking-wider">{product.name}</h3>
+                                            <span className="font-bold text-sm">Kshs {product.price?.toLocaleString()}</span>
+                                        </div>
+                                        <p className="text-slate-500 text-sm mb-3 line-clamp-2">{product.desc}</p>
+                                        <div className="flex items-center gap-1 mb-5">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} className={`w-3.5 h-3.5 ${i < (product.rating || 5) ? "fill-black text-black" : "text-slate-200"}`} />
+                                            ))}
+                                            <span className="text-xs text-slate-400 font-medium ml-1">({product.reviews || 0})</span>
+                                        </div>
+                                        <BuyNowButton product={product} />
+                                    </div>
                                 </div>
-                                <p className="text-slate-500 text-sm mb-3">{product.desc}</p>
-                                <div className="flex items-center gap-1 mb-4">
-                                    {[...Array(product.rating || 5)].map((_, i) => (
-                                        <Star key={i} className="w-4 h-4 fill-green-500 text-green-500" />
-                                    ))}
-                                    <span className="text-xs text-slate-400 font-medium ml-1">({product.reviews})</span>
-                                </div>
-                                <BuyNowButton product={product} />
-                            </div>
+                            </ScrollReveal>
                         ))}
                     </div>
-                </section>
-            </FadeInSection>
+                </div>
+            </section>
 
 
-            <FadeInSection>
-                <section id="contacts">
-                    <div className="text-center">
-                        <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200 text-center items-center justify-center mx-auto">
-                            <MessageSquare className="w-3 h-3 mr-2" /> Contacts
-                        </Badge>
-                        <p className="text-5xl font-bold tracking-tight mb-6 text-center items-center justify-center pt-2">Contacts</p>
-                        <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16 text-center">
-                            We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
-                        </p>
-                    </div>
-                    <div className="flex flex-col lg:flex-row mx-4 lg:mx-20 my-10 gap-10">
-                        <div className="py-5 w-full lg:w-auto">
-                            <p className="text-3xl font-bold">Get in touch with Me</p>
-                            <p className="text-sm w-full lg:w-150">Reach out to us and I'll answer any of your questions.Or fill in the newsletter form for direct access and new information regularly about the site.</p>
-                            <div className="">
-                                <p className="  pt-8 pb-3 text-sm font-bold">Newsletter</p>
-                                <p className="text-xs w-full lg:w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
-                                <div className="">
-                                    <Field orientation="horizontal" className="text-xs">
+
+            <section id="contacts" className="py-24 bg-black text-white rounded-[4rem] mx-4 md:mx-6">
+                <div className="max-w-7xl mx-auto px-6 lg:px-20">
+                    <ScrollReveal>
+                        <div className="text-center mb-20">
+                            <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white/10 border-white/20 text-white">
+                                <MessageSquare className="w-3 h-3 mr-2" /> Get In Touch
+                            </Badge>
+                            <h2 className="text-5xl font-bold tracking-tight mb-8">Let's Talk Fitness</h2>
+                            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                                Have questions about our programs or products? Reach out and we'll help you find the perfect path.
+                            </p>
+                        </div>
+                    </ScrollReveal>
+
+                    <div className="flex flex-col lg:flex-row gap-16">
+                        <div className="flex-1 space-y-12">
+                            <ScrollReveal direction="right">
+                                <h3 className="text-3xl font-bold">Contact Information</h3>
+                                <p className="text-slate-400">Reach out directly or subscribe to our newsletter for exclusive updates and training tips.</p>
+
+                                <div className="space-y-8 mt-12">
+                                    {[
+                                        { label: "General Inquiries", value: "myfit@gmail.com", type: "email" },
+                                        { label: "Instagram", value: "@myfit_training", link: "https://www.instagram.com/myfit_training" },
+                                        { label: "Facebook", value: "MyFit Training", link: "https://www.facebook.com/myfit_training" }
+                                    ].map((contact, i) => (
+                                        <div key={i}>
+                                            <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">{contact.label}</p>
+                                            <p className="text-[11px] font-medium hover:text-blue-400 transition-colors cursor-pointer">
+                                                {contact.value}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </ScrollReveal>
+                        </div>
+
+                        <div className="flex-1">
+                            <ScrollReveal direction="left">
+                                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-10 backdrop-blur-xl">
+                                    <h4 className="text-xl font-bold mb-2">Join Our Newsletter</h4>
+                                    <p className="text-slate-400 text-sm mb-8">Get the latest workout plans and dietary tips delivered to your inbox.</p>
+
+                                    <div className="flex flex-col gap-4">
                                         <Input
                                             type="email"
-                                            placeholder="Enter email..."
-                                            className="rounded-2xl text-xs w-full sm:w-80"
+                                            placeholder="Enter your email"
+                                            className="rounded-2xl bg-white/10 border-white/20 text-white h-14"
                                             value={newsletterEmail}
                                             onChange={(e) => setNewsletterEmail(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleNewsletterSubmit(newsletterEmail, setNewsletterEmail, setNewsletterLoading)}
-                                            disabled={newsletterLoading}
                                         />
                                         <Button
-                                            className="rounded-2xl text-xs"
+                                            className="rounded-2xl h-14 bg-white text-black hover:bg-slate-200 transition-all font-bold"
                                             onClick={() => handleNewsletterSubmit(newsletterEmail, setNewsletterEmail, setNewsletterLoading)}
                                             disabled={newsletterLoading}
                                         >
-                                            {newsletterLoading ? 'Sending...' : 'Send'}
+                                            {newsletterLoading ? 'Joining...' : 'Subscribe Now'}
                                         </Button>
-                                    </Field>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-4 text-center">
+                                        Proper data protection guaranteed. Unsubscribe at any time.
+                                    </p>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 lg:gap-x-42 gap-y-10 lg:gap-y-40 max-w-4xl mx-auto py-5 w-full">
-                            <div>
-                                <p className="text-xs">general inquiries</p>
-                                <p className="text-sm font-bold">myfit@gmail.com</p>
-                            </div>
-
-                            <div>
-                                <p className="text-xs">instagram</p>
-                                <Link href="https://www.instagram.com/myfit_training">
-                                    <p className="text-sm font-bold">myfit_training</p>
-                                </Link>
-                            </div>
-
-                            <div>
-                                <p className="text-xs">facebook</p>
-                                <Link href="https://www.facebook.com/myfit_training">
-                                    <p className="text-sm font-bold">myfit_training</p>
-                                </Link>
-                            </div>
-
-                            <div>
-                                <p className="text-xs">x</p>
-                                <Link href="https://www.x.com/myfit_training">
-                                    <p className="text-sm font-bold">myfit_training</p>
-                                </Link>
-                            </div>
-
+                            </ScrollReveal>
                         </div>
                     </div>
-                </section>
-            </FadeInSection>
+                </div>
+            </section>
 
-            <div className="flex flex-col lg:flex-row px-6 lg:px-20 py-10 mx-4 lg:mx-10 mt-20 mb-10 bg-white text-xs rounded-3xl shadow-2xl">
+
+            <div className="flex flex-col lg:flex-row px-6 lg:px-20 py-10 mx-4 lg:mx-10 mt-20 mb-10 bg-white text-xs rounded-3xl shadow-xl">
                 <div className="flex flex-col py-5 ">
                     <p className="text-sm font-bold">⠿myFit</p>
                     <p className="text-xs mt-2 text-slate-500">© copyright myFit 2026. All rights reserved.</p>
@@ -763,12 +964,9 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                 </div>
 
 
-            </div>
-
-
-
-
-
-        </div>
-    );
-}
+                </div>
+            </motion.div>
+        )}
+    </AnimatePresence>
+    )
+}
