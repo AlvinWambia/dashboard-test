@@ -647,11 +647,10 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                             </ScrollReveal>
 
                             {programs?.map((program, index) => {
-                                const isEven = index % 2 === 0;
                                 return (
-                                    <div key={program._id} className={`flex flex-col lg:flex-row${!isEven ? '-reverse' : ''} my-24 items-center gap-16`}>
+                                    <div key={program._id} className={`flex flex-col lg:flex-row my-24 items-start gap-16`}>
                                         <div className="flex-1 space-y-8">
-                                            <ScrollReveal direction={isEven ? "right" : "left"}>
+                                            <ScrollReveal direction="right">
                                                 <p className="text-xl font-bold tracking-tight">{program.title}</p>
                                                 <p className="text-slate-600 text-sm leading-relaxed">{program.description}</p>
 
@@ -676,7 +675,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                         </div>
 
                                         <div className="flex-1 w-full">
-                                            <ScrollReveal direction={isEven ? "left" : "right"}>
+                                            <ScrollReveal direction="left">
                                                 <div className="relative aspect-video lg:aspect-square rounded-[3rem] overflow-hidden group">
                                                     {program.image && (
                                                         <ParallaxImage
