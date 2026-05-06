@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, createBrowserClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export const createClient = () => {
@@ -30,8 +30,9 @@ export const createClient = () => {
  * like webhooks or admin actions.
  */
 export function createAdminClient() {
-  return createSupabaseClient(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    { cookies: {} } // Admin client usually doesn't need to manage user cookies
   );
 }
