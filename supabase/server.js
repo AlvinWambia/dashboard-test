@@ -1,8 +1,11 @@
 import { createServerClient, createBrowserClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export const createClient = () => {
-  const cookieStore = cookies()
+export const createClient = async () => {
+  // In Next.js 15, cookies() is async. Awaiting it ensures compatibility
+  // and allows the client to correctly read the PKCE code verifier.
+  const cookieStore = await cookies()
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
