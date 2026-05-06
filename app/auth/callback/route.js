@@ -1,40 +1,18 @@
-import { createClient } from "@/supabase/server";
-import { NextResponse } from "next/server";
-import { getURL } from "@/lib/getURL";
+// app/auth/callback/route.js
+import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server' // Path to your server client
 
 export async function GET(request) {
-    const { searchParams, origin } = new URL(request.url);
-    const code = searchParams.get("code");
-    // if "next" is in param, use it as the redirect URL
-    const next = searchParams.get("next") ?? "/home2";
+    const { searchParams, origin } = new URL(request.url)
+    const code = searchParams.get('code')
 
     if (code) {
-        const supabase = await createClient();
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        const supabase = createClient()
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
-            // Fetch user to get ID
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            if (user) {
-                // Fetch actual role from the database
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', user.id)
-                    .single();
-
-                if (profile?.role === 'admin') {
-                    return NextResponse.redirect(getURL('/admin/dashboard'));
-                }
-            }
-            
-            return NextResponse.redirect(getURL(next));
-        } else {
-            // Redirect to error page with error message
-            return NextResponse.redirect(getURL(`/auth/auth-code-error?error=${encodeURIComponent(error.message)}`));
+            return NextResponse.redirect(`${origin}/dashboard`)
         }
     }
 
-    // return the user to an error page with instructions if no code
-    return NextResponse.redirect(getURL('/auth/auth-code-error?error=No_code_provided_in_URL'));
+    return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }
