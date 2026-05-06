@@ -226,6 +226,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
     const [count, setCount] = React.useState(0)
     const [isCommentsOpen, setIsCommentsOpen] = React.useState(false);
     const [activeAboutStep, setActiveAboutStep] = React.useState(0);
+    const [userProfile, setUserProfile] = React.useState(null);
 
     const aboutSteps = [
         {
@@ -305,6 +306,22 @@ export default function HomeClient({ products, programs, testimonials, about }) 
     }, [api]);
 
     React.useEffect(() => {
+        const fetchUser = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name')
+                    .eq('id', user.id)
+                    .single();
+                setUserProfile(profile);
+            }
+        };
+        fetchUser();
+    }, []);
+
+    React.useEffect(() => {
         if (signedIn) {
             const showWelcomeToast = async () => {
                 const supabase = createClient();
@@ -320,6 +337,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
                     if (profile?.full_name) {
                         welcomeMessage = `Welcome back, ${profile.full_name.split(' ')[0]}!`;
+                        setUserProfile(profile);
                     }
                 }
 
@@ -410,9 +428,9 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         </div>
 
                         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-                            <Link href="/auth/login">
+                            <Link href={userProfile ? "/home2" : "/auth/login"}>
                                 <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm transition-all">
-                                    Join Now!
+                                    {userProfile?.full_name ? `Welcome ${userProfile.full_name.split(' ')[0]}` : 'Join Now!'}
                                 </Button>
                             </Link>
                         </motion.div>

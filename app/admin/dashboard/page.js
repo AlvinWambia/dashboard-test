@@ -116,9 +116,11 @@ export default async function DashboardPage() {
                         <p className="text-gray-500 text-sm">Update your administrative profile and view notifications.</p>
                     </div>
                     <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-                        <Button className="bg-black text-white hover:bg-white hover:text-black hover:border hover:border-black rounded-xl h-10">
-                            <Plus className="mr-2" size={18} /> Create Content
-                        </Button>
+                        
+                            <Button className="bg-black text-white hover:bg-white hover:text-black hover:border hover:border-black rounded-xl h-10">
+                                <Plus className="mr-2" size={18} /> Create Content
+                            </Button>
+                        
                         <Button variant="outline" className="bg-white rounded-xl h-10">
                             <Import className="mr-2" size={18} /> Import Data
                         </Button>

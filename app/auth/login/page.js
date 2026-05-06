@@ -69,13 +69,14 @@ export default function LoginPage() {
     };
 
     const handleGoogleSignIn = async () => {
-        await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: getURL('/auth/callback?next=/home2?signed_in=true'),
-            },
-        });
-    };
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: `${origin}/auth/callback?next=/home2?signed_in=true`,
+        },
+    });
+};
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
@@ -101,8 +102,8 @@ export default function LoginPage() {
                                 &ldquo;Simply the tools that my team and I need.&rdquo;
                             </p>
                             <footer className="text-sm pb-5">
-                                <div className="font-semibold">Alvin Wambia</div>
-                                <div className="text-white/80">Software Developer</div>
+                                <div className="font-semibold">Pelesia Wambia</div>
+                                <div className="text-white/80">Fitness Trainer</div>
                             </footer>
                         </blockquote>
                     </div>
