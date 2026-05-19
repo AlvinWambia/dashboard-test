@@ -13,6 +13,9 @@ import { Separator } from "@/components/ui/separator"
 import { ArrowUpRight, Heart, Activity, MousePointer2, Plus, AlertCircleIcon, Plane, Tag, MessageSquare, Star } from "lucide-react";
 import Image from 'next/image';
 import daImage from "@/components/images/da.png"
+import workout from "@/components/images/workout.jpeg"
+import nutrition from "@/components/images/nutrition.jpeg"
+import wellness from "@/components/images/wellness.jpeg"
 import communicationImage from "@/components/images/communication.png"
 import groupTraining from "@/components/images/grouptraining.jpg"
 import dmbImage from "@/components/images/dmb.png"
@@ -231,7 +234,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
     const aboutSteps = [
         {
             title: "The Vision Behind MyFit",
-            description: "Started with a simple goal: making elite fitness coaching accessible to everyone. We've evolved into a community that prioritizes sustainable results over quick fixes.",
+            description: "Started with a simple goal: making elite fitness coaching accessible to everyone. We've evolved into a community that prioritizes sustainable results over quick fixes.Using a community driven path , We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
             badge: "Our Story",
             image: groupTraining.src,
         },
@@ -241,12 +244,6 @@ export default function HomeClient({ products, programs, testimonials, about }) 
             badge: "Expertise",
             image: personal2.src,
         },
-        {
-            title: "A Community Driven Path",
-            description: "We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
-            badge: "Philosophy",
-            image: group.src,
-        }
     ];
 
 
@@ -409,7 +406,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         </motion.div>
 
                         <div className="hidden md:flex bg-slate-100/50 rounded-full p-1 px-2 gap-1 mx-auto border border-white/20">
-                            {['Home', 'Testimonials', 'About', 'Programs', 'Contacts'].map((item, i) => (
+                            {['Home', 'About', 'Programs', 'Testimonials', 'Contacts'].map((item, i) => (
                                 <motion.div
                                     key={item}
                                     initial={{ opacity: 0, y: -10 }}
@@ -448,37 +445,34 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {[
-                                    { title: "💪Workout Program", bg: "bg-blue-100", delay: 0.1, description: "Personal Training" },
-                                    { title: "🧘Wellness", bg: "bg-slate-100", delay: 0.2, description: "Personal Therapy" },
-                                    { title: "🥗Nutrition", bg: "bg-blue-100", delay: 0.3, description: "Curated Diet" }
+                                    { title: "💪Workout Program", bg: workout, delay: 0.1, description: "Personal Training" },
+                                    { title: "🧘Wellness", bg: wellness, delay: 0.2, description: "Personal Therapy" },
+                                    { title: "🥗Nutrition", bg: nutrition, delay: 0.3, description: "Curated Diet" }
                                 ].map((card, i) => (
                                     <ScrollReveal key={i} delay={card.delay} direction="up">
-                                        <Card className={`${card.bg} border-none p-6 rounded-[2rem] relative flex flex-col items-center justify-center text-center aspect-square group overflow-hidden`}>
+                                        <Card className="border-none p-6 rounded-[2rem] relative flex flex-col items-center justify-center text-center aspect-square group overflow-hidden">
+                                            {/* Background Image */}
+                                            <img
+                                                src={card.bg.src || card.bg}
+                                                alt={card.title}
+                                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                            />
+                                            {/* Overlay for better text readability */}
+
+
                                             <motion.div
                                                 whileHover={{ scale: 1.1, rotate: 5 }}
                                                 className="absolute top-4 right-4 z-10"
                                             >
-                                                <Button size="icon" variant="secondary" className="rounded-full w-8 h-8 bg-white">
+                                                <Button size="icon" variant="secondary" className="rounded-full w-8 h-8 bg-white/90 backdrop-blur-sm">
                                                     <ArrowUpRight className="w-4 h-4" />
                                                 </Button>
                                             </motion.div>
 
-                                            <div className="relative z-10 space-y-2">
-                                                <p className="text-[10px] text-slate-800 font-medium tracking-wider uppercase">
-                                                    {card.description}
-                                                </p>
-                                                <p className="group-hover:scale-105 transition-transform">
-                                                    <Badge variant="outline" className="rounded-full px-4 py-1 bg-white/50 backdrop-blur-sm border-slate-200 text-slate-800">
-                                                        {card.title}
-                                                    </Badge>
-                                                </p>
-                                            </div>
+
                                         </Card>
-
                                     </ScrollReveal>
-
                                 ))}
-
                             </div>
 
                             {/* Bottom Left: Stretching Image Card */}
@@ -525,57 +519,6 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         </div>
                     </section >
 
-                    <section id="testimonials" className="py-24">
-                        <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
-                            <ScrollReveal>
-                                <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
-                                    <MessageSquare className="w-3 h-3 mr-2" /> Testimonials
-                                </Badge>
-                                <h2 className="text-5xl font-bold tracking-tight mb-6">What Our Clients Are Saying</h2>
-                                <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16">
-                                    We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
-                                </p>
-                            </ScrollReveal>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {testimonials?.map((t, i) => (
-                                    <ScrollReveal key={i} delay={i * 0.1} direction="up">
-                                        <Card className="border-none shadow-sm hover:shadow-xl transition-shadow duration-500 rounded-2xl p-6 text-left h-full flex flex-col justify-between bg-white group">
-                                            <p className="text-slate-700 leading-relaxed mb-8 italic group-hover:text-black transition-colors">"{t.desc}"</p>
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden relative">
-                                                    <div className="absolute inset-0 bg-slate-300 animate-pulse" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-sm">{t.name}</p>
-                                                    <p className="text-xs text-slate-500">{t.role}</p>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    </ScrollReveal>
-                                ))}
-                            </div>
-
-                            <ScrollReveal delay={0.4}>
-                                <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline" className="mt-12 rounded-full px-8 py-6 hover:bg-black hover:text-white transition-all">
-                                            See all Reviews &gt;
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-2xl bg-slate-50 p-0 border-none rounded-2xl">
-                                        <DialogHeader className="sr-only">
-                                            <DialogTitle>All Reviews</DialogTitle>
-                                            <DialogDescription>
-                                                A list of all client testimonials and reviews.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <CommentsSection comments={commentsForModal} currentUser={null} />
-                                    </DialogContent>
-                                </Dialog>
-                            </ScrollReveal>
-                        </div>
-                    </section>
 
 
 
@@ -610,10 +553,10 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                             <Badge variant="outline" className="w-fit rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
                                                 {aboutSteps[activeAboutStep].badge}
                                             </Badge>
-                                            <h3 className="text-4xl md:text-6xl font-bold mb-8 tracking-tight">
+                                            <h3 className="text-2xl md:text-4xl font-bold mb-8 tracking-tight">
                                                 {aboutSteps[activeAboutStep].title}
                                             </h3>
-                                            <p className="text-slate-600 text-lg md:text-2xl max-w-md leading-relaxed">
+                                            <p className="text-slate-600 text-sm md:text-xl max-w-md leading-relaxed">
                                                 {aboutSteps[activeAboutStep].description}
                                             </p>
 
@@ -645,7 +588,62 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                             </div>
 
                         </div>
+
+                        {/*Quote Div */}
+                        <div className="relative py-32 overflow-hidden flex items-center justify-center min-h-[60vh] mt-12">
+                            {/* Floating Badges */}
+                            <motion.div
+                                animate={{ y: [0, -15, 0] }}
+                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                className="absolute top-10 left-[20%] bg-white/80 backdrop-blur-md  rounded-2xl px-4 py-2.5 flex items-center gap-2 border border-slate-100/50 z-10"
+                            >
+                                <span className="text-lg leading-none">🌸</span> <span className="font-semibold text-sm text-slate-800">Beautiful</span>
+                            </motion.div>
+
+                            <motion.div
+                                animate={{ y: [0, 20, 0] }}
+                                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                                className="absolute top-0 right-[25%] bg-white/80 backdrop-blur-md  rounded-2xl px-4 py-2.5 flex items-center gap-2 border border-slate-100/50 z-10"
+                            >
+                                <span className="text-lg leading-none">💗</span> <span className="font-semibold text-sm text-slate-800">Healthy</span>
+                            </motion.div>
+
+                            <motion.div
+                                animate={{ y: [0, -15, 0] }}
+                                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                                className="absolute top-[40%] left-[5%] bg-white/80 backdrop-blur-md  rounded-2xl px-4 py-2.5 flex items-center gap-2 border border-slate-100/50 z-10"
+                            >
+                                <span className="text-lg leading-none">⭐</span> <span className="font-semibold text-sm text-slate-800">Confident</span>
+                            </motion.div>
+
+                            <motion.div
+                                animate={{ y: [0, 25, 0] }}
+                                transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                                className="absolute bottom-[20%] left-[40%] bg-white/100 backdrop-blur-xl  rounded-2xl px-4 py-2.5 flex items-center gap-2 border border-slate-100/50 z-10"
+                            >
+                                <span className="text-lg leading-none">✨</span> <span className="font-semibold text-sm text-slate-800 ">Glowing</span>
+                            </motion.div>
+
+                            <motion.div
+                                animate={{ y: [0, -20, 0] }}
+                                transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                                className="absolute bottom-[10%] right-[15%] bg-white/80 backdrop-blur-md  rounded-2xl px-4 py-2.5 flex items-center gap-2 border border-slate-100/50 z-10"
+                            >
+                                <span className="text-lg leading-none">😊</span> <span className="font-semibold text-sm text-slate-800">Happy</span>
+                            </motion.div>
+
+                            {/* Text */}
+                            <div className="max-w-5xl mx-auto text-center px-4 relative z-0">
+                                <ScrollReveal>
+                                    <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-[3.5rem] font-medium  text-slate-300 leading-[1.1]">
+                                        "MyFit helps you understand and care for your body like never before. Get insights and tips backed by expert coaching and real science <span className="text-slate-900 font-semibold">for your healthiest, happiest self."</span>
+                                    </h2>
+                                </ScrollReveal>
+                            </div>
+                        </div>
                     </section>
+
+
 
 
 
@@ -703,7 +701,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                                             speed={0.2}
                                                         />
                                                     )}
-                                                    <div className="absolute inset-0 bg-black/10 transition-colors group-hover:bg-transparent" />
+                                                    <div className="absolute  transition-colors group-hover:bg-transparent" />
                                                 </div>
                                             </ScrollReveal>
                                         </div>
@@ -729,10 +727,14 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                 </div>
                             </ScrollReveal>
 
+
+                            <p className="text-lg font-bold ml-10  mb-5">Training programs</p>
                             <div className="flex flex-wrap justify-center gap-8">
                                 {products?.map((product, i) => (
                                     <ScrollReveal key={product._id} delay={i * 0.1} direction="up">
+
                                         <div className="group w-full max-w-[300px]">
+
                                             <Card className="bg-slate-50 border-none rounded-[2.5rem] overflow-hidden relative mb-4 aspect-square flex items-center justify-center p-8 transition-all hover:bg-slate-100 hover:shadow-2xl">
                                                 <motion.div whileHover={{ scale: 1.1 }} className="absolute top-4 right-4 z-10">
                                                     <Button size="icon" variant="ghost" className="bg-white/80 backdrop-blur-md rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all">
@@ -769,6 +771,46 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         </div>
                     </section>
 
+                    <section id="testimonials" className="py-24">
+                        <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
+                            <ScrollReveal>
+                                <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
+                                    <MessageSquare className="w-3 h-3 mr-2" /> Testimonials
+                                </Badge>
+                                <h2 className="text-5xl font-bold tracking-tight mb-6">What Our Clients Are Saying</h2>
+                                <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-16">
+                                    We take pride in delivering exceptional solutions that deliver great results. But don't just take our word for it.
+                                </p>
+                            </ScrollReveal>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {testimonials?.map((t, i) => (
+                                    <ScrollReveal key={i} delay={i * 0.1} direction="up">
+                                        <Card className="border-none shadow-sm hover:shadow-xl transition-shadow duration-500 rounded-2xl p-6 text-left h-full flex flex-col justify-between bg-white group">
+                                            <p className="text-slate-700 leading-relaxed mb-8 italic group-hover:text-black transition-colors">"{t.desc}"</p>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden relative">
+                                                    <div className="absolute inset-0 bg-slate-300 animate-pulse" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm">{t.name}</p>
+                                                    <p className="text-xs text-slate-500">{t.role}</p>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </ScrollReveal>
+                                ))}
+                            </div>
+
+                            <ScrollReveal delay={0.4}>
+                                <Link href="/reviews">
+                                    <Button variant="outline" className="mt-12 rounded-full px-8 py-6 hover:bg-black hover:text-white transition-all">
+                                        See all Reviews &gt;
+                                    </Button>
+                                </Link>
+                            </ScrollReveal>
+                        </div>
+                    </section>
 
 
                     <section id="contacts" className="py-24 bg-black text-white rounded-[4rem] mx-4 md:mx-6">
@@ -930,7 +972,8 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
                     </div>
                 </motion.div>
-            )}
-        </AnimatePresence>
+            )
+            }
+        </AnimatePresence >
     )
 }

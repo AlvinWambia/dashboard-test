@@ -114,3 +114,37 @@ export async function updateWeeklyPin(formData) {
     revalidatePath("/admin/calendar");
     return { error: null };
 }
+
+export async function checkAvailability(date, time) {
+    const supabase = await createClient();
+    
+    const { data: schedules, error } = await supabase
+        .from('admin_schedules')
+        .select('id')
+        .eq('schedule_date', date)
+        .eq('start_time', time);
+        
+    if (error) {
+        console.error("Error checking availability:", error);
+        return { available: false, error: error.message };
+    }
+    
+    return { available: schedules.length === 0 };
+}
+
+export async function approveMeetingRequest(scheduleId) {
+    const supabase = await createClient();
+    const { error } = await supabase.from('admin_schedules').update({
+        type: 'Meeting',
+        color: 'bg-green-50 text-green-600',
+        description: 'Approved meeting request.'
+    }).eq('id', scheduleId);
+
+    if (error) {
+        console.error("Error approving meeting:", error);
+        return { error: error.message };
+    }
+
+    revalidatePath("/admin/calendar");
+    return { success: true };
+}

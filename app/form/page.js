@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { User, MapPin, Layers, Users, Bookmark, ClipboardList, Check } from "lucide-react";
 import { createClient } from "@/supabase/client";
+import { toast } from "sonner";
+import { checkAvailability } from "@/app/actions/calendar";
 
 // 1. Validation Schema
 const formSchema = z.object({
@@ -33,9 +35,8 @@ const formSchema = z.object({
     medicalConditions: z.string().optional(),
 
     // Step 5
-    trainingDays: z.array(z.string()).optional(),
-    trainingTime: z.string().optional(),
-    trainingLocation: z.string().optional(),
+    meetingDate: z.string().min(1, "Meeting date is required"),
+    meetingTime: z.string().min(1, "Meeting time is required"),
 });
 
 const calculateAge = (birthDateString) => {
@@ -50,8 +51,10 @@ const calculateAge = (birthDateString) => {
     return age;
 };
 
-export default function IntakePage() {
+function IntakeForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const orderId = searchParams.get('orderId');
     const [currentStep, setCurrentStep] = useState(1);
     const totalSteps = 6;
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,9 +78,8 @@ export default function IntakePage() {
             goalDescription: "",
             injuries: "",
             medicalConditions: "",
-            trainingDays: [],
-            trainingTime: "",
-            trainingLocation: "gym",
+            meetingDate: "",
+            meetingTime: "",
         },
     });
 
@@ -108,9 +110,13 @@ export default function IntakePage() {
                     .select('id')
                     .eq('user_id', user.id)
                     .maybeSingle();
-                
+
                 if (existingForm) {
-                    router.push('/home2?signed_in=true');
+                    if (orderId) {
+                        router.push(`/checkout/${orderId}`);
+                    } else {
+                        router.push('/home2?signed_in=true');
+                    }
                     return;
                 }
 
@@ -143,6 +149,45 @@ export default function IntakePage() {
         const isValid = await methods.trigger(fieldsToValidate);
 
         if (isValid) {
+            if (currentStep === 1) {
+                const birthDateStr = methods.getValues("birthDate");
+                const age = calculateAge(birthDateStr);
+                if (age < 18) {
+                    toast.error("Age Restriction", { description: "You must be at least 18 years old to fill this form." });
+                    return;
+                }
+            }
+
+            if (currentStep === 5) {
+                const meetingDate = methods.getValues("meetingDate");
+                const meetingTime = methods.getValues("meetingTime");
+                
+                // Restriction: Can't be on the same day. Must be tomorrow or later.
+                const selectedDate = new Date(meetingDate);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                if (selectedDate <= today) {
+                    toast.error("Invalid Date", { description: "Meetings must be scheduled for a future date (not today)." });
+                    return;
+                }
+                
+                // Restriction: Can't be after 6 PM
+                const [hours, minutes] = meetingTime.split(':').map(Number);
+                if (hours > 18 || (hours === 18 && minutes > 0)) {
+                    toast.error("Invalid Time", { description: "Meetings cannot be scheduled after 6:00 PM." });
+                    return;
+                }
+
+                setIsSubmitting(true);
+                const { available, error } = await checkAvailability(meetingDate, meetingTime);
+                setIsSubmitting(false);
+
+                if (!available) {
+                    toast.error("Time Unavailable", { description: "The admin is already booked for this time. Please select another time." });
+                    return;
+                }
+            }
+
             if (currentStep === 6) {
                 setIsSubmitting(true);
                 try {
@@ -168,14 +213,34 @@ export default function IntakePage() {
                         goal_description: formData.goalDescription,
                         injuries: formData.injuries,
                         medical_conditions: formData.medicalConditions,
-                        training_days: formData.trainingDays,
-                        training_time: formData.trainingTime,
-                        training_location: formData.trainingLocation,
                     });
 
                     if (error) throw error;
 
-                    router.push('/home2?form_submitted=true');
+                    // Send Meeting Request to admin_schedules
+                    const { error: scheduleError } = await supabase.from('admin_schedules').insert({
+                        schedule_date: formData.meetingDate,
+                        start_time: formData.meetingTime,
+                        title: `Meeting Request: ${formData.fullName}`,
+                        type: 'Pending Meeting',
+                        color: 'bg-orange-50 text-orange-600',
+                        description: `Pending meeting request from ${formData.fullName}.`,
+                        created_by: user?.id || null,
+                    });
+
+                    if (scheduleError) {
+                        console.error("Error creating schedule:", scheduleError);
+                    }
+
+                    toast.success("Meeting Requested", {
+                        description: "The instructor will approve the scheduled meeting and you will receive an email once done."
+                    });
+
+                    if (orderId) {
+                        router.push(`/checkout/${orderId}`);
+                    } else {
+                        router.push('/home2?form_submitted=true');
+                    }
                 } catch (error) {
                     console.error("Error submitting form:", error);
                     alert("There was an error submitting your form. Please try again.");
@@ -248,6 +313,14 @@ export default function IntakePage() {
                 </FormProvider>
             </div>
         </main>
+    );
+}
+
+export default function IntakePage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">Loading...</div>}>
+            <IntakeForm />
+        </Suspense>
     );
 }
 
@@ -530,42 +603,28 @@ function MedicalInfoStep() {
 
 function TrainingPreferencesStep() {
     const { register, formState: { errors } } = useFormContext();
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
     return (
         <div className="grid grid-cols-12 gap-x-6 gap-y-8">
-            <div className="col-span-12 flex flex-col gap-3">
-                <label className="text-xs font-bold text-slate-500">What are your preferred training days? (Optional)</label>
-                <div className="flex flex-wrap gap-4">
-                    {days.map(day => (
-                        <div key={day} className="flex items-center gap-2">
-                            <input type="checkbox" id={`day-${day}`} value={day} {...register("trainingDays")} className="h-4 w-4" />
-                            <label htmlFor={`day-${day}`} className="text-sm">{day}</label>
-                        </div>
-                    ))}
-                </div>
-            </div>
             <div className="col-span-12 md:col-span-6 flex flex-col gap-2">
-                <label className="text-xs font-bold text-slate-500">Where do you mostly do your workouts?</label>
-                <div className="flex gap-6 pt-2">
-                    <div className="flex items-center gap-2">
-                        <input type="radio" id="loc-gym" value="gym" {...register("trainingLocation")} className="h-4 w-4" />
-                        <label htmlFor="loc-gym" className="text-sm">Gym</label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <input type="radio" id="loc-home" value="home" {...register("trainingLocation")} className="h-4 w-4" />
-                        <label htmlFor="loc-home" className="text-sm">Home</label>
-                    </div>
-                </div>
-            </div>
-            <div className="col-span-12 md:col-span-6 flex flex-col gap-2">
-                <label htmlFor="trainingTime" className="text-xs font-bold text-slate-500">What's your preferred training time? (Optional)</label>
+                <label htmlFor="meetingDate" className="text-xs font-bold text-slate-500">Meeting Date</label>
                 <input
-                    id="trainingTime"
+                    id="meetingDate"
+                    type="date"
                     className="p-3 rounded bg-slate-50 border border-slate-100 text-sm"
-                    placeholder="e.g., Morning, Afternoon, 5-7 PM"
-                    {...register("trainingTime")}
+                    {...register("meetingDate")}
                 />
+                {errors.meetingDate && <p className="text-red-500 text-sm mt-1">{errors.meetingDate.message}</p>}
+            </div>
+            <div className="col-span-12 md:col-span-6 flex flex-col gap-2">
+                <label htmlFor="meetingTime" className="text-xs font-bold text-slate-500">Meeting Time (Max 6:00 PM)</label>
+                <input
+                    id="meetingTime"
+                    type="time"
+                    className="p-3 rounded bg-slate-50 border border-slate-100 text-sm"
+                    {...register("meetingTime")}
+                />
+                {errors.meetingTime && <p className="text-red-500 text-sm mt-1">{errors.meetingTime.message}</p>}
             </div>
         </div>
     );
@@ -645,11 +704,11 @@ function ReviewStep() {
 
                 {/* Section for Preferences */}
                 <details className="p-4 border rounded-lg" open>
-                    <summary className="text-lg font-semibold cursor-pointer">Training Preferences</summary>
+                    <summary className="text-lg font-semibold cursor-pointer">Meeting Setup</summary>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-4 text-sm">
-                        <p><strong>Preferred Days:</strong> {formatDisplayValue(formData.trainingDays)}</p>
-                        <p><strong>Preferred Location:</strong> {formatDisplayValue(formData.trainingLocation)}</p>
-                        <p><strong>Preferred Time:</strong> {formatDisplayValue(formData.trainingTime)}</p>
+                        <p><strong>Meeting Date:</strong> {formatDisplayValue(formData.meetingDate)}</p>
+                        <p><strong>Meeting Time:</strong> {formatDisplayValue(formData.meetingTime)}</p>
+                        <p className="col-span-2 text-orange-600 font-medium">Your meeting request will be sent to the instructor for approval.</p>
                     </div>
                 </details>
             </div>
@@ -668,7 +727,7 @@ function getFieldsByStep(step) {
         case 4:
             return ["injuries", "medicalConditions"];
         case 5:
-            return ["trainingDays", "trainingTime", "trainingLocation"];
+            return ["meetingDate", "meetingTime"];
         default:
             return [];
     }

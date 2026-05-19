@@ -16,6 +16,7 @@ import { useState } from "react";
 import { createClient } from "@/supabase/client";
 import { useRouter } from "next/navigation";
 import { getURL } from "@/lib/getURL";
+import { checkAuthRateLimit } from "@/app/actions/rateLimit";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -29,6 +30,13 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
+        const rateLimitRes = await checkAuthRateLimit();
+        if (rateLimitRes.error) {
+            setError(rateLimitRes.error);
+            setLoading(false);
+            return;
+        }
 
         // 1. Authenticate the user
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -62,21 +70,21 @@ export default function LoginPage() {
         if (profile?.role === 'admin') {
             router.replace('/admin/dashboard');
         } else {
-            router.replace('/home2?signed_in=true');
+            router.replace('/?signed_in=true');
         }
 
         setLoading(false);
     };
 
     const handleGoogleSignIn = async () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: `${origin}/auth/callback?next=/home2?signed_in=true`,
-        },
-    });
-};
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${origin}/auth/callback?next=/home2?signed_in=true`,
+            },
+        });
+    };
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">

@@ -14,7 +14,17 @@ export async function GET(request) {
         if (!error) {
             // Constructing a new URL using the request.url as a base ensures 
             // we stay on the same domain (Vercel) and keep our cookies.
-            return NextResponse.redirect(new URL(next, request.url))
+            const response = NextResponse.redirect(new URL(next, request.url))
+
+            // Example of setting a custom httpOnly cookie
+            response.cookies.set('auth_verified', 'true', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 60 * 60 * 24 // 1 day
+            })
+
+            return response
         }
     }
 

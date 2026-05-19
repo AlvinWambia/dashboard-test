@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { getURL } from "@/lib/getURL";
 import zxcvbn from "zxcvbn"
 import { z } from "zod";
+import { checkAuthRateLimit } from "@/app/actions/rateLimit";
 
 const signupSchema = z.object({
     name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -118,6 +119,13 @@ export default function SignupPage() {
             return;
         }
 
+        const rateLimitRes = await checkAuthRateLimit();
+        if (rateLimitRes.error) {
+            setErrors({ form: [rateLimitRes.error] });
+            setLoading(false);
+            return;
+        }
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -145,7 +153,7 @@ export default function SignupPage() {
             if (profile?.role === 'admin') {
                 router.push("/admin/dashboard");
             } else {
-                router.push("/home2?signed_in=true");
+                router.push("/?signed_in=true");
             }
         }
         setLoading(false);
@@ -157,7 +165,7 @@ export default function SignupPage() {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: getURL('/auth/callback?next=/home2?signed_in=true'),
+                redirectTo: getURL('/auth/callback?next=/?signed_in=true'),
             },
         });
 

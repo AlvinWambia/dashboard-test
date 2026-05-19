@@ -18,8 +18,9 @@ import { AddScheduleButton } from "@/components/admin/addSchedule";
 import { AddWeeklyPinButton } from "@/components/admin/addWeeklyPin";
 import { EditWeeklyPinButton } from "@/components/admin/editWeeklyPin";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { deleteWeeklyPin, deleteSchedule } from "@/app/actions/calendar";
+import { deleteWeeklyPin, deleteSchedule, approveMeetingRequest } from "@/app/actions/calendar";
 import { toast } from "sonner";
+import { CheckCircle } from "lucide-react";
 
 export default function CalenderPage() {
     const [profile, setProfile] = useState(null);
@@ -133,6 +134,16 @@ export default function CalenderPage() {
                 toast.success("Schedule deleted");
                 setRefreshKey(prev => prev + 1);
             }
+        }
+    };
+
+    const handleApproveMeeting = async (scheduleId) => {
+        const result = await approveMeetingRequest(scheduleId);
+        if (result?.error) {
+            toast.error(result.error);
+        } else {
+            toast.success("Meeting approved successfully");
+            setRefreshKey(prev => prev + 1);
         }
     };
 
@@ -268,6 +279,11 @@ export default function CalenderPage() {
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <Badge className={`${item.color || 'bg-gray-100'} border-none`}>{item.type}</Badge>
+                                                            {item.type === 'Pending Meeting' && (
+                                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-orange-400 hover:text-green-600" title="Approve Meeting" onClick={() => handleApproveMeeting(item.id)}>
+                                                                    <CheckCircle size={14} />
+                                                                </Button>
+                                                            )}
                                                             {item.type !== 'Weekly Pin' && (
                                                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-red-600" onClick={() => handleDeleteSchedule(item.id)}>
                                                                     <Trash size={14} />

@@ -50,7 +50,6 @@ export async function createOrder(productId) {
     return redirect('/home2?error=order_creation_failed');
   }
 
-  // On success, redirect the user to a dedicated checkout page for this order.
-  // This is where you would typically integrate with a payment provider like Stripe.
-  redirect(`/checkout/${newOrder.id}`);
+  // On success, redirect the user to the intake form for this order before checkout.
+  redirect(`/form?orderId=${newOrder.id}`);
 }
