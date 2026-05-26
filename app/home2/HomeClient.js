@@ -10,8 +10,16 @@ import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "fra
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator"
-import { ArrowUpRight, Heart, Activity, MousePointer2, Plus, AlertCircleIcon, Plane, Tag, MessageSquare, Star } from "lucide-react";
+import { ArrowUpRight, Heart, Activity, MousePointer2, Plus, AlertCircleIcon, Plane, Tag, MessageSquare, Star, Menu } from "lucide-react";
 import Image from 'next/image';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import daImage from "@/components/images/da.png"
 import workout from "@/components/images/workout.jpeg"
 import nutrition from "@/components/images/nutrition.jpeg"
@@ -408,32 +416,92 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
                     {/* --- Navigation --- */}
                     <nav className="flex items-center justify-between mb-12 sticky top-0 z-50 bg-white/80 backdrop-blur-md py-4 transition-all">
-                        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-2 font-bold text-xl">
-                            ⠿myFit
-                        </motion.div>
-
-                        <div className="hidden md:flex bg-slate-100/50 rounded-full p-1 px-2 gap-1 mx-auto border border-white/20">
-                            {['Home', 'About', 'Programs', 'Testimonials', 'Contacts'].map((item, i) => (
-                                <motion.div
-                                    key={item}
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.1 }}
-                                >
-                                    <Button
-                                        variant="ghost"
-                                        className="rounded-full px-6 hover:bg-white hover:shadow-sm transition-all"
-                                        onClick={(e) => handleScroll(e, item.toLowerCase())}
-                                    >
-                                        {item}
-                                    </Button>
-                                </motion.div>
-                            ))}
+                        
+                        {/* Mobile Left: Hamburger Menu */}
+                        <div className="md:hidden flex-1 flex justify-start pl-2">
+                            {userProfile && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-black">
+                                            <Menu className="w-6 h-6" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start">
+                                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => router.push('/profile')}>Profile</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={async () => {
+                                            const supabase = createClient();
+                                            await supabase.auth.signOut();
+                                            setUserProfile(null);
+                                            router.push('/');
+                                        }}>Log out</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
                         </div>
 
-                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-                            <Link href={userProfile ? "/" : "/auth/login"}>
-                                <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm transition-all">
+                        {/* Desktop Left / Mobile Center: Logo */}
+                        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex justify-center md:justify-start items-center font-bold text-xl cursor-pointer md:w-1/4">
+                            {userProfile ? (
+                                <div className="hidden md:block">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                                                ⠿myFit
+                                            </div>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start">
+                                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onClick={() => router.push('/profile')}>Profile</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={async () => {
+                                                const supabase = createClient();
+                                                await supabase.auth.signOut();
+                                                setUserProfile(null);
+                                                router.push('/');
+                                            }}>Log out</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            ) : (
+                                <div className="hidden md:flex items-center gap-2">
+                                    ⠿myFit
+                                </div>
+                            )}
+
+                            {/* Mobile Logo */}
+                            <div className="md:hidden flex items-center gap-2">
+                                ⠿myFit
+                            </div>
+                        </motion.div>
+
+                        {/* Desktop Center: Main Nav Links */}
+                        <div className="hidden md:flex flex-1 justify-center">
+                            <div className="bg-slate-100/50 rounded-full p-1 px-2 gap-1 flex border border-white/20">
+                                {['Home', 'About', 'Programs', 'Testimonials', 'Contacts'].map((item, i) => (
+                                    <motion.div
+                                        key={item}
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: i * 0.1 }}
+                                    >
+                                        <Button
+                                            variant="ghost"
+                                            className="rounded-full px-6 hover:bg-white hover:shadow-sm transition-all"
+                                            onClick={(e) => handleScroll(e, item.toLowerCase())}
+                                        >
+                                            {item}
+                                        </Button>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Right: Join Now / Welcome */}
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex-1 md:w-1/4 flex justify-end pr-2 md:pr-0">
+                            <Link href={userProfile ? "/profile" : "/auth/login"}>
+                                <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm transition-all whitespace-nowrap">
                                     {userProfile?.full_name ? `Welcome ${userProfile.full_name.split(' ')[0]}` : 'Join Now!'}
                                 </Button>
                             </Link>

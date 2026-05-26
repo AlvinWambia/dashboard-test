@@ -81,7 +81,7 @@ export default function ReviewsPage() {
         <header className="mb-20">
           <div className="flex justify-between items-center mb-12">
             <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
-              <span className="text-xl leading-none">✦</span> [RESULT]
+              <span className="text-xl leading-none">✦</span> myfit
             </div>
 
             <Link href="/" className="flex items-center gap-2 text-sm font-bold hover:opacity-70 transition-opacity bg-black text-white px-4 py-2 rounded-full">
@@ -89,14 +89,14 @@ export default function ReviewsPage() {
             </Link>
           </div>
 
-          <h1 className="text-[3rem] sm:text-[5rem] md:text-[6rem] lg:text-[9rem] font-bold leading-[0.85] tracking-tighter mb-12">
+          <h1 className="text-[2rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-semibold leading-[0.85] tracking-tighter mb-12">
             Reviews
           </h1>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-gray-300 pb-12">
             <h2 className="text-xl md:text-3xl font-bold tracking-tight">©myfit</h2>
             <p className="text-gray-500 max-w-sm text-sm leading-relaxed">
-              100+ B2B companies trusted us to improve their marketing...
+              20+ Clients Trusted us to improve their marketing strategies...
             </p>
           </div>
         </header>
