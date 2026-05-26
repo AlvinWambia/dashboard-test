@@ -128,10 +128,10 @@ function ParallaxImage({ src, alt, className, speed = 0.5, objectFit = "cover" }
 
 function ScrollReveal({ children, delay = 0, direction = "up" }) {
     const directions = {
-        up: { y: 40 },
-        down: { y: -40 },
-        left: { x: 40 },
-        right: { x: -40 }
+        up: { y: 10 },
+        down: { y: -10 },
+        left: { x: 10 },
+        right: { x: -10 }
     }
 
     return (
@@ -234,7 +234,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
     const aboutSteps = [
         {
             title: "The Vision Behind MyFit",
-            description: "Started with a simple goal: making elite fitness coaching accessible to everyone. We've evolved into a community that prioritizes sustainable results over quick fixes.Using a community driven path , We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
+            description: "Started with a simple goal: making elite fitness coaching accessible to everyone. Using a community driven path , We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
             badge: "Our Story",
             image: groupTraining.src,
         },
@@ -248,12 +248,18 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
 
     // Newsletter state (shared by contacts + footer inputs)
+    const [newsletterName, setNewsletterName] = React.useState('');
     const [newsletterEmail, setNewsletterEmail] = React.useState('');
+    const [footerName, setFooterName] = React.useState('');
     const [footerEmail, setFooterEmail] = React.useState('');
     const [newsletterLoading, setNewsletterLoading] = React.useState(false);
     const [footerLoading, setFooterLoading] = React.useState(false);
 
-    const handleNewsletterSubmit = async (email, setEmail, setLoading) => {
+    const handleNewsletterSubmit = async (name, email, setName, setEmail, setLoading) => {
+        if (!name || name.trim() === '') {
+            toast.error('Name required', { description: 'Please enter your name.' });
+            return;
+        }
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             toast.error('Invalid email', { description: 'Please enter a valid email address.' });
             return;
@@ -263,11 +269,12 @@ export default function HomeClient({ products, programs, testimonials, about }) 
             const res = await fetch('/api/newsletter', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ name, email }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Something went wrong');
             toast.success('Subscribed! 🎉', { description: 'Check your inbox for a welcome email.' });
+            setName('');
             setEmail('');
         } catch (err) {
             toast.error('Failed to subscribe', { description: err.message });
@@ -339,12 +346,12 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                 }
 
                 toast.success(welcomeMessage, { description: "You have successfully signed in." });
-                router.replace('/home2', { scroll: false });
+                router.replace('/', { scroll: false });
             };
             showWelcomeToast();
         } else if (formSubmitted) {
             toast.success("Form submitted", { description: "Payment Successful and your intake form has been successfully submitted." });
-            router.replace('/home2', { scroll: false });
+            router.replace('/', { scroll: false });
         }
     }, [signedIn, formSubmitted, router]);
 
@@ -425,7 +432,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         </div>
 
                         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-                            <Link href={userProfile ? "/home2" : "/auth/login"}>
+                            <Link href={userProfile ? "/" : "/auth/login"}>
                                 <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm transition-all">
                                     {userProfile?.full_name ? `Welcome ${userProfile.full_name.split(' ')[0]}` : 'Join Now!'}
                                 </Button>
@@ -500,8 +507,8 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         </div>
 
                         {/* Right Column: Hero Image & Stats */}
-                        <div className="col-span-6 lg:col-span-6 relative">
-                            <div className="bg-slate-100/50 rounded-[4rem] h-full relative overflow-hidden flex items-center justify-center min-h-[650px]">
+                        <div className="col-span-12 lg:col-span-6 relative mt-6 lg:mt-0">
+                            <div className="bg-slate-100/50 rounded-[4rem] h-full relative overflow-hidden flex items-center justify-center min-h-[400px] lg:min-h-[650px]">
                                 <img
                                     src={groupTraining.src || groupTraining}
                                     alt="Athlete Jumping"
@@ -858,6 +865,13 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
                                             <div className="flex flex-col gap-4">
                                                 <Input
+                                                    type="text"
+                                                    placeholder="Enter your name"
+                                                    className="rounded-2xl bg-white/10 border-white/20 text-white h-14"
+                                                    value={newsletterName}
+                                                    onChange={(e) => setNewsletterName(e.target.value)}
+                                                />
+                                                <Input
                                                     type="email"
                                                     placeholder="Enter your email"
                                                     className="rounded-2xl bg-white/10 border-white/20 text-white h-14"
@@ -866,7 +880,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                                 />
                                                 <Button
                                                     className="rounded-2xl h-14 bg-white text-black hover:bg-slate-200 transition-all font-bold"
-                                                    onClick={() => handleNewsletterSubmit(newsletterEmail, setNewsletterEmail, setNewsletterLoading)}
+                                                    onClick={() => handleNewsletterSubmit(newsletterName, newsletterEmail, setNewsletterName, setNewsletterEmail, setNewsletterLoading)}
                                                     disabled={newsletterLoading}
                                                 >
                                                     {newsletterLoading ? 'Joining...' : 'Subscribe Now'}
@@ -947,7 +961,17 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         <div className="ml-0 lg:ml-15 mt-10 lg:mt-0">
                             <p className="px-0 lg:px-20 pt-8 pb-3 text-xs font-bold">Newsletter</p>
                             <p className="text-xs px-0 lg:px-20 w-full lg:w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
-                            <div className="px-0 lg:px-20">
+                            <div className="px-0 lg:px-20 flex flex-col gap-2">
+                                <Field orientation="horizontal" className="text-xs">
+                                    <Input
+                                        type="text"
+                                        placeholder="Enter name..."
+                                        className="rounded-2xl text-xs"
+                                        value={footerName}
+                                        onChange={(e) => setFooterName(e.target.value)}
+                                        disabled={footerLoading}
+                                    />
+                                </Field>
                                 <Field orientation="horizontal" className="text-xs">
                                     <Input
                                         type="email"
@@ -955,12 +979,12 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                         className="rounded-2xl text-xs"
                                         value={footerEmail}
                                         onChange={(e) => setFooterEmail(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleNewsletterSubmit(footerEmail, setFooterEmail, setFooterLoading)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleNewsletterSubmit(footerName, footerEmail, setFooterName, setFooterEmail, setFooterLoading)}
                                         disabled={footerLoading}
                                     />
                                     <Button
                                         className="rounded-2xl text-xs"
-                                        onClick={() => handleNewsletterSubmit(footerEmail, setFooterEmail, setFooterLoading)}
+                                        onClick={() => handleNewsletterSubmit(footerName, footerEmail, setFooterName, setFooterEmail, setFooterLoading)}
                                         disabled={footerLoading}
                                     >
                                         {footerLoading ? 'Sending...' : 'Send'}

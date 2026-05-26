@@ -7,61 +7,55 @@ import {
   Preview,
   Section,
   Text,
-  Hr,
   Button,
 } from "@react-email/components";
 import * as React from "react";
 
-export const NewsletterWelcomeTemplate = ({ email = "" }) => (
+export const NewsletterWelcomeTemplate = ({ name = "[name]" }) => (
   <Html>
     <Head />
-    <Preview>Welcome to the myFit newsletter! 🎉</Preview>
+    <Preview>Welcome to the myfit newsletter!</Preview>
     <Body style={main}>
       <Container style={container}>
-        {/* Header */}
+        {/* Header Section */}
         <Section style={header}>
-          <Text style={logo}>⠿ myFit</Text>
+          <Text style={smallLogo}>myfit</Text>
+          <Heading style={heading}>Newsletter</Heading>
+          <Text style={paragraph}>
+            Thanks for subscribing to the myfit newsletter!
+            <br />
+            You've just joined a community focused on fitness,
+            <br />
+            wellness and results.
+          </Text>
+          <Button style={buttonSmall} href="https://myfitraining.com">
+            Explore myfit
+          </Button>
         </Section>
 
-        {/* Main Content */}
-        <Section style={content}>
-          <Heading style={heading}>You're in! 🎉</Heading>
-          <Hr style={hr} />
-          <Text style={body}>
-            Hey there,
-          </Text>
-          <Text style={body}>
-            Thanks for subscribing to the <strong>myFit newsletter</strong>! You've just joined a community focused on fitness, wellness, and results.
-          </Text>
-          <Text style={body}>
-            Here's what you can expect:
-          </Text>
-          <Text style={listItem}>💪 &nbsp; Exclusive workout tips & new programs</Text>
-          <Text style={listItem}>🥗 &nbsp; Nutrition advice and healthy recipes</Text>
-          <Text style={listItem}>🎁 &nbsp; Early access to discounts & new products</Text>
-          <Text style={listItem}>📣 &nbsp; Updates directly from your trainer</Text>
-
-          <Hr style={hr} />
-
-          <Text style={body}>
-            Ready to start your journey?
-          </Text>
-
-          <Section style={{ textAlign: "center", margin: "28px 0" }}>
-            <Button style={ctaButton} href="https://dashboard-test-3i3q.vercel.app/">
-              Explore myFit
-            </Button>
-          </Section>
-
-          <Text style={footNote}>
-            You subscribed with <strong>{email}</strong>. If this wasn't you, you can safely ignore this email.
-          </Text>
+        {/* Hero Section */}
+        <Section style={heroSection}>
+          <div style={heroContentWrapper}>
+            <Text style={heroText}>myfit</Text>
+            <Text style={heroTextVertical}>myfit</Text>
+          </div>
         </Section>
 
-        {/* Footer */}
-        <Section style={footer}>
-          <Text style={footerText}>© myFit 2026. All rights reserved.</Text>
-          <Text style={footerText}>Sent by the myFit team.</Text>
+        {/* Bottom Section */}
+        <Section style={bottomSection}>
+          <Text style={greeting}>Hi, {name}</Text>
+          <Text style={paragraphBottom}>
+            You can expect exclusive workout
+            <br />
+            tips, fitness programs, nutrition
+            <br />
+            advice , early access on information
+            <br />
+            about new programs
+          </Text>
+          <Button style={buttonLarge} href="https://dashboard-test-3i3q.vercel.app/programs">
+            Explore Programs
+          </Button>
         </Section>
       </Container>
     </Body>
@@ -73,96 +67,132 @@ export default NewsletterWelcomeTemplate;
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const main = {
-  backgroundColor: "#f4f4f7",
+  backgroundColor: "#f4f4f4",
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+  margin: "0",
+  padding: "0",
 };
 
 const container = {
-  margin: "40px auto",
-  padding: "20px",
-  width: "600px",
-  maxWidth: "100%",
+  margin: "0 auto",
+  backgroundColor: "#ffffff",
+  width: "100%",
+  maxWidth: "600px",
+  padding: "0",
 };
 
 const header = {
-  padding: "30px 0",
+  padding: "40px 20px 30px",
   textAlign: "center",
 };
 
-const logo = {
-  fontSize: "18px",
-  fontWeight: "bold",
-  color: "#1a1a1a",
-  letterSpacing: "2px",
-  margin: "0",
-};
-
-const content = {
-  backgroundColor: "#ffffff",
-  padding: "40px",
-  borderRadius: "16px",
-  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-  border: "1px solid #eaeaec",
+const smallLogo = {
+  fontSize: "12px",
+  margin: "0 0 10px",
+  color: "#000000",
+  fontWeight: "500",
+  textAlign: "center",
 };
 
 const heading = {
-  fontSize: "28px",
-  lineHeight: "1.3",
-  fontWeight: "700",
-  color: "#1a1a1a",
-  marginTop: "0",
-  marginBottom: "20px",
+  fontSize: "32px",
+  fontWeight: "bold",
+  margin: "0 0 15px",
+  color: "#000000",
   textAlign: "center",
 };
 
-const hr = {
-  borderColor: "#eaeaec",
-  margin: "20px 0",
+const paragraph = {
+  fontSize: "12px",
+  lineHeight: "16px",
+  color: "#000000",
+  margin: "0 auto 20px",
+  textAlign: "center",
 };
 
-const body = {
-  color: "#4a4a4a",
-  fontSize: "16px",
-  lineHeight: "26px",
-  margin: "8px 0",
-};
-
-const listItem = {
-  color: "#4a4a4a",
-  fontSize: "15px",
-  lineHeight: "24px",
-  margin: "6px 0",
-  paddingLeft: "8px",
-};
-
-const ctaButton = {
+const buttonSmall = {
   backgroundColor: "#000000",
   color: "#ffffff",
-  fontSize: "14px",
-  fontWeight: "600",
+  fontSize: "10px",
+  padding: "10px 24px",
+  borderRadius: "20px",
   textDecoration: "none",
-  padding: "14px 32px",
-  borderRadius: "999px",
+  display: "inline-block",
+  fontWeight: "bold",
+  textAlign: "center",
+};
+
+const heroSection = {
+  backgroundColor: "#C6CED7", // Grey-blue color matching the image
+  height: "250px",
+  width: "100%",
+  position: "relative",
+  overflow: "hidden",
+  textAlign: "center",
+};
+
+const heroContentWrapper = {
+  position: "relative",
+  width: "100%",
+  height: "250px",
+};
+
+const heroText = {
+  fontSize: "72px",
+  fontWeight: "bold",
+  color: "#ffffff",
+  margin: "0",
+  letterSpacing: "-2px",
+  lineHeight: "250px",
+  textAlign: "center",
   display: "inline-block",
 };
 
-const footNote = {
-  color: "#999999",
-  fontSize: "12px",
-  lineHeight: "18px",
-  textAlign: "center",
-  marginTop: "24px",
+const heroTextVertical = {
+  position: "absolute",
+  right: "-60px",
+  top: "50%",
+  fontSize: "100px",
+  fontWeight: "bold",
+  color: "#ffffff",
+  margin: "0",
+  letterSpacing: "-2px",
+  transform: "translateY(-50%) rotate(-90deg)",
+  opacity: 1,
+  display: "inline-block",
 };
 
-const footer = {
-  padding: "30px 0",
+const bottomSection = {
+  padding: "40px 20px 60px",
   textAlign: "center",
 };
 
-const footerText = {
-  color: "#999999",
+const greeting = {
+  fontSize: "18px",
+  color: "#000000",
+  margin: "0 0 15px",
+  fontWeight: "500",
+  textAlign: "center",
+};
+
+const paragraphBottom = {
+  fontSize: "15px",
+  lineHeight: "22px",
+  color: "#000000",
+  margin: "0 auto 25px",
+  fontWeight: "500",
+  textAlign: "center",
+};
+
+const buttonLarge = {
+  backgroundColor: "#000000",
+  color: "#ffffff",
   fontSize: "12px",
-  lineHeight: "18px",
-  margin: "4px 0",
+  padding: "14px 32px",
+  borderRadius: "24px",
+  textDecoration: "none",
+  display: "inline-block",
+  fontWeight: "bold",
+  textAlign: "center",
 };

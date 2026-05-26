@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req) {
   try {
-    const { email } = await req.json();
+    const { name, email } = await req.json();
 
     // Basic validation
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -21,7 +21,7 @@ export async function POST(req) {
       from: "myFit <info@myfitraining.com>",
       to: [email],
       subject: "Welcome to the myFit Newsletter! 🎉",
-      react: NewsletterWelcomeTemplate({ email }),
+      react: NewsletterWelcomeTemplate({ name, email }),
     });
 
     if (resendError) {
