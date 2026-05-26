@@ -47,7 +47,7 @@ export async function POST(req) {
     // 3. Send email via Resend
     console.log("Attempting to send email via Resend to:", to);
     const { data, error: resendError } = await resend.emails.send({
-      from: "Admin <onboarding@resend.dev>",
+      from: "Admin <info@myfitraining.com>",
       to: to,
       subject: subject,
       react: AdminEmailTemplate({ subject, htmlContent: html }),

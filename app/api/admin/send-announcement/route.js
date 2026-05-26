@@ -78,7 +78,7 @@ export async function POST(req) {
 
     for (let i = 0; i < recipientEmails.length; i += BATCH_SIZE) {
       const batch = recipientEmails.slice(i, i + BATCH_SIZE).map((email) => ({
-        from: "myFit <onboarding@resend.dev>",
+        from: "myFit <info@myfitraining.com>",
         to: [email],
         subject,
         react: AdminEmailTemplate({ subject, htmlContent: html }),

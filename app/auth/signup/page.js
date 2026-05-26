@@ -140,8 +140,19 @@ export default function SignupPage() {
         if (error) {
             console.error("Signup Error Details:", error);
             setErrors({ form: [error.message] });
-        } else if (data.session) {
+        } else if (data.session || data.user) {
             setSuccess("Account created successfully! Redirecting...");
+
+            // Send welcome email
+            try {
+                await fetch('/api/auth/welcome', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, name }),
+                });
+            } catch (emailError) {
+                console.error("Failed to send welcome email:", emailError);
+            }
 
             // ✅ RIGHT: Fetch the actual role from your profiles table
             const { data: profile } = await supabase

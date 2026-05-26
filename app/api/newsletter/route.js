@@ -18,7 +18,7 @@ export async function POST(req) {
 
     // Send the welcome email via Resend
     const { data, error: resendError } = await resend.emails.send({
-      from: "myFit <onboarding@resend.dev>",
+      from: "myFit <info@myfitraining.com>",
       to: [email],
       subject: "Welcome to the myFit Newsletter! 🎉",
       react: NewsletterWelcomeTemplate({ email }),
