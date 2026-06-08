@@ -42,6 +42,13 @@ export function createAdminClient() {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { cookies: {} } // Admin client usually doesn't need to manage user cookies
+    {
+      cookies: {
+        getAll() {
+          return []
+        },
+        setAll() {},
+      },
+    }
   );
 }

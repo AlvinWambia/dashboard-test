@@ -33,6 +33,14 @@ async function getData() {
         name,
         desc,
         image
+        },
+        "loungewear": *[_type == "loungewear"]{
+            _id,
+            name,
+            price,
+            desc,
+            image,
+            link
         }
     }`;
     console.log("Attempting to fetch data from Sanity...");
@@ -42,15 +50,15 @@ async function getData() {
         return data;
     } catch (error) {
         console.error("Error fetching data from Sanity:", error);
-        return { products: [], programs: [], testimonials: [], about: [] };
+        return { products: [], programs: [], testimonials: [], about: [], loungewear: [] };
     }
 }
 
 export default async function MyFitLandingPage() {
-    const { products, programs, testimonials, about } = await getData();
+    const { products, programs, testimonials, about, loungewear } = await getData();
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <HomeClient products={products} programs={programs} testimonials={testimonials} about={about} />
+            <HomeClient products={products} programs={programs} testimonials={testimonials} about={about} loungewear={loungewear} />
         </Suspense>
     );
 }

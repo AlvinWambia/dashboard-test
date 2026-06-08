@@ -24,6 +24,9 @@ import daImage from "@/components/images/da.png"
 import workout from "@/components/images/workout.jpeg"
 import nutrition from "@/components/images/nutrition.jpeg"
 import wellness from "@/components/images/wellness.jpeg"
+import nutrition2 from "@/components/images/nutritionmyfit.png"
+import loungewear from "@/components/images/loungewearmyfit.png"
+import workout2 from "@/components/images/woroutmyfit.png"
 import communicationImage from "@/components/images/communication.png"
 import groupTraining from "@/components/images/grouptraining.jpg"
 import dmbImage from "@/components/images/dmb.png"
@@ -214,7 +217,7 @@ function ImageScrollyStep({ image, title, description, badge, onInView }) {
 
 
 
-export default function HomeClient({ products, programs, testimonials, about }) {
+export default function HomeClient({ products, programs, testimonials, about, loungewear }) {
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
@@ -324,7 +327,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
             if (user) {
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('full_name')
+                    .select('full_name, role')
                     .eq('id', user.id)
                     .single();
                 setUserProfile(profile);
@@ -416,7 +419,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
 
                     {/* --- Navigation --- */}
                     <nav className="flex items-center justify-between mb-12 sticky top-0 z-50 bg-white/80 backdrop-blur-md py-4 transition-all">
-                        
+
                         {/* Mobile Left: Hamburger Menu */}
                         <div className="md:hidden flex-1 flex justify-start pl-2">
                             {userProfile && (
@@ -430,6 +433,12 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                         <DropdownMenuLabel>My Account</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={() => router.push('/profile')}>Profile</DropdownMenuItem>
+                                        {userProfile?.role === 'admin' && (
+                                            <DropdownMenuItem onClick={() => router.push('/admin/dashboard')}>
+                                                Admin Dashboard
+                                            </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={async () => {
                                             const supabase = createClient();
                                             await supabase.auth.signOut();
@@ -455,6 +464,12 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onClick={() => router.push('/profile')}>Profile</DropdownMenuItem>
+                                            {userProfile?.role === 'admin' && (
+                                                <DropdownMenuItem onClick={() => router.push('/admin/dashboard')}>
+                                                    Admin Dashboard
+                                                </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuSeparator />
                                             <DropdownMenuItem onClick={async () => {
                                                 const supabase = createClient();
                                                 await supabase.auth.signOut();
@@ -628,10 +643,10 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                             <Badge variant="outline" className="w-fit rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
                                                 {aboutSteps[activeAboutStep].badge}
                                             </Badge>
-                                            <h3 className="text-2xl md:text-4xl font-bold mb-8 tracking-tight">
+                                            <h3 className="text-xl md:text-4xl font-bold mb-8 tracking-tight">
                                                 {aboutSteps[activeAboutStep].title}
                                             </h3>
-                                            <p className="text-slate-600 text-sm md:text-xl max-w-md leading-relaxed">
+                                            <p className="text-slate-600 text-xs md:text-lg max-w-md leading-relaxed">
                                                 {aboutSteps[activeAboutStep].description}
                                             </p>
 
@@ -710,7 +725,7 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                             {/* Text */}
                             <div className="max-w-5xl mx-auto text-center px-4 relative z-0">
                                 <ScrollReveal>
-                                    <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-[3.5rem] font-medium  text-slate-300 leading-[1.1]">
+                                    <h2 className="text-2xl md:text-3xl lg:text-4xl xl:text-[3rem] font-medium  text-slate-300 leading-[1.1]">
                                         "MyFit helps you understand and care for your body like never before. Get insights and tips backed by expert coaching and real science <span className="text-slate-900 font-semibold">for your healthiest, happiest self."</span>
                                     </h2>
                                 </ScrollReveal>
@@ -843,6 +858,96 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                                     </ScrollReveal>
                                 ))}
                             </div>
+
+                            {loungewear && loungewear.length > 0 && (
+                                <>
+                                    <p className="text-lg font-bold ml-10 mt-16 mb-5">Loungewear</p>
+                                    <div className="flex flex-wrap justify-center gap-8">
+                                        {loungewear?.map((product, i) => (
+                                            <ScrollReveal key={product._id || i} delay={i * 0.1} direction="up">
+                                                <div className="group w-full max-w-[300px]">
+                                                    <Card className="bg-slate-50 border-none rounded-[2.5rem] overflow-hidden relative mb-4 aspect-square flex items-center justify-center p-8 transition-all hover:bg-slate-100 hover:shadow-2xl">
+                                                        <motion.div whileHover={{ scale: 1.1 }} className="absolute top-4 right-4 z-10">
+                                                            <Button size="icon" variant="ghost" className="bg-white/80 backdrop-blur-md rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all">
+                                                                <Heart className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
+                                                            </Button>
+                                                        </motion.div>
+                                                        {product.image && (
+                                                            <motion.img
+                                                                src={urlFor(product.image).width(400).height(400).url()}
+                                                                alt={product.name}
+                                                                whileHover={{ scale: 1.05, rotate: 2 }}
+                                                                className="object-contain w-full h-full mix-blend-multiply"
+                                                            />
+                                                        )}
+                                                    </Card>
+                                                    <div className="px-2">
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <h3 className="font-bold text-sm uppercase tracking-wider">{product.name}</h3>
+                                                            <span className="font-bold text-sm">Kshs {product.price?.toLocaleString()}</span>
+                                                        </div>
+                                                        <p className="text-slate-500 text-sm mb-3 line-clamp-2">{product.desc}</p>
+                                                        <div className="flex items-center gap-1 mb-5">
+                                                            {[...Array(5)].map((_, i) => (
+                                                                <Star key={i} className={`w-3.5 h-3.5 fill-black text-black`} />
+                                                            ))}
+                                                            <span className="text-xs text-slate-400 font-medium ml-1">({product.reviews || 0})</span>
+                                                        </div>
+                                                        <BuyNowButton product={product} />
+                                                    </div>
+                                                </div>
+                                            </ScrollReveal>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </section>
+
+                    <section id="faq" className="py-24 bg-slate-50/50">
+                        <div className="max-w-7xl mx-auto px-4 md:px-6">
+                            <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
+                                <div className="lg:w-1/3">
+                                    <ScrollReveal direction="right">
+                                        <p className="text-blue-600 font-bold text-sm tracking-wide uppercase mb-2">FAQ</p>
+                                        <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">Frequently Asked<br/>Questions</h2>
+                                        <p className="text-slate-500 text-lg">
+                                            We compiled a list of answers to address your most pressing questions regarding our Services.
+                                        </p>
+                                    </ScrollReveal>
+                                </div>
+
+                                <div className="lg:w-2/3">
+                                    <ScrollReveal direction="left">
+                                        <Accordion type="single" collapsible className="w-full space-y-4">
+                                            <AccordionItem value="item-1" className="border border-slate-200 rounded-xl px-6 bg-slate-50/50 shadow-sm overflow-hidden">
+                                                <AccordionTrigger className="text-left font-semibold py-4 hover:no-underline transition-colors text-black">What payment methods do you accept?</AccordionTrigger>
+                                                <AccordionContent className="text-slate-500 pb-4 text-base">
+                                                    We accept secure online payments through supported payment providers.
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                            <AccordionItem value="item-2" className="border border-slate-200 rounded-xl px-6 bg-slate-50/50 shadow-sm overflow-hidden">
+                                                <AccordionTrigger className="text-left font-semibold py-4 hover:no-underline transition-colors text-black">Can I get a refund?</AccordionTrigger>
+                                                <AccordionContent className="text-slate-500 pb-4 text-base">
+                                                    Refund eligibility depends on the type of program purchased and whether services have already been delivered. Please review our refund policy before purchasing.
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                            <AccordionItem value="item-3" className="border border-slate-200 rounded-xl px-6 bg-slate-50/50 shadow-sm overflow-hidden">
+                                                <AccordionTrigger className="text-left font-semibold py-4 hover:no-underline transition-colors text-black">Can I switch programs after purchasing?</AccordionTrigger>
+                                                <AccordionContent className="text-slate-500 pb-4 text-base">
+                                                    Program changes may be possible before services begin. Contact support for assistance.
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                            <AccordionItem value="item-4" className="border border-slate-200 rounded-xl px-6 bg-slate-50/50 shadow-sm overflow-hidden">
+                                                <AccordionTrigger className="text-left font-semibold py-4 hover:no-underline transition-colors text-black">Is my personal information secure?</AccordionTrigger>
+                                                <AccordionContent className="text-slate-500 pb-4 text-base">
+                                                    Yes. Your information is stored securely and is only shared with your assigned trainer when necessary to provide your service.
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        </Accordion>
+                                    </ScrollReveal>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -973,91 +1078,35 @@ export default function HomeClient({ products, programs, testimonials, about }) 
                         </div>
 
 
-                        <div className="flex flex-col gap-10 my-5 ml-0 lg:ml-15">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 my-5 ml-0 lg:ml-15 w-full">
+                            <div className="flex flex-col gap-3">
+                                <span className="font-bold text-sm">Company</span>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">About Us</Link>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Contact Us</Link>
 
-
-                            <div className="flex items-center gap-2 text-sm md:gap-4">
-                                <div className="flex flex-col gap-1">
-                                    <span className="font-medium">Testimonials</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        We take pride in delivering.
-                                    </span>
-                                </div>
-                                <Separator orientation="vertical" />
-                                <div className="flex flex-col gap-1">
-                                    <span className="font-medium">About</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        We take pride in delivering.
-                                    </span>
-                                </div>
-                                <Separator orientation="vertical" className="hidden md:block" />
-                                <div className="hidden flex-col gap-1 md:flex">
-                                    <span className="font-medium">Programs</span>
-                                    <span className="text-xs text-muted-foreground">We take pride.</span>
-                                </div>
                             </div>
 
-                            <div className="flex items-center gap-2 text-sm md:gap-4">
-                                <div className="flex flex-col gap-1">
-                                    <span className="font-medium">Instagram</span>
-                                    <Link href="https://www.instagram.com/myfit_training">
-                                        <span className="text-xs text-muted-foreground">
-                                            @myfit_training
-                                        </span>
-                                    </Link>
-                                </div>
-                                <Separator orientation="vertical" />
-                                <div className="flex flex-col gap-1">
-                                    <span className="font-medium">Facebook</span>
-                                    <Link href="https://www.facebook.com/myfit_training">
-                                        <span className="text-xs text-muted-foreground">
-                                            @myfit_training
-                                        </span>
-                                    </Link>
-                                </div>
-                                <Separator orientation="vertical" className="hidden md:block" />
-                                <div className="hidden flex-col gap-1 md:flex">
-                                    <span className="font-medium">Tiktok</span>
-                                    <Link href="https://www.tiktok.com/@myfit_training">
-                                        <span className="text-xs text-muted-foreground">@myfit_training</span>
-                                    </Link>
-                                </div>
+                            <div className="flex flex-col gap-3">
+                                <span className="font-bold text-sm">Programs</span>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Personalized Plans</Link>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Online Coaching</Link>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">In-Person Coaching</Link>
                             </div>
-                        </div>
 
+                            <div className="flex flex-col gap-3">
+                                <span className="font-bold text-sm">Support</span>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">FAQ</Link>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Help Center</Link>
+                            </div>
 
-                        <div className="ml-0 lg:ml-15 mt-10 lg:mt-0">
-                            <p className="px-0 lg:px-20 pt-8 pb-3 text-xs font-bold">Newsletter</p>
-                            <p className="text-xs px-0 lg:px-20 w-full lg:w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
-                            <div className="px-0 lg:px-20 flex flex-col gap-2">
-                                <Field orientation="horizontal" className="text-xs">
-                                    <Input
-                                        type="text"
-                                        placeholder="Enter name..."
-                                        className="rounded-2xl text-xs"
-                                        value={footerName}
-                                        onChange={(e) => setFooterName(e.target.value)}
-                                        disabled={footerLoading}
-                                    />
-                                </Field>
-                                <Field orientation="horizontal" className="text-xs">
-                                    <Input
-                                        type="email"
-                                        placeholder="Enter email..."
-                                        className="rounded-2xl text-xs"
-                                        value={footerEmail}
-                                        onChange={(e) => setFooterEmail(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleNewsletterSubmit(footerName, footerEmail, setFooterName, setFooterEmail, setFooterLoading)}
-                                        disabled={footerLoading}
-                                    />
-                                    <Button
-                                        className="rounded-2xl text-xs"
-                                        onClick={() => handleNewsletterSubmit(footerName, footerEmail, setFooterName, setFooterEmail, setFooterLoading)}
-                                        disabled={footerLoading}
-                                    >
-                                        {footerLoading ? 'Sending...' : 'Send'}
-                                    </Button>
-                                </Field>
+                            <div className="flex flex-col gap-3">
+                                <span className="font-bold text-sm">Legal</span>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Privacy Policy</Link>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Terms of Service</Link>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Refund Policy</Link>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Cancellation Policy</Link>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Health Disclaimer</Link>
+                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Cookie Policy</Link>
                             </div>
                         </div>
 

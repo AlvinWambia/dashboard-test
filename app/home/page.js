@@ -221,36 +221,35 @@ function AuthPageContent() {
             <Button className="w-50 rounded-2xl text-white bg-black border-2 border-black hover:bg-black hover:text-white mt-3">Become a member</Button>
           </div>
 
-          <div className="flex flex-col px-20 py-5">
-            <p className="px-20 py-3 font-bold">Pages</p>
-            <div className="flex flex-col px-20 text-black">
-              <p className="py-1">Home</p>
-              <p className="py-1">About</p>
-              <p className="py-1">Projects</p>
-              <p className="py-1">Contact</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-5 ml-0 lg:ml-15 w-full">
+            <div className="flex flex-col gap-3">
+              <span className="font-bold text-sm">Company</span>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">About Us</Link>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Contact Us</Link>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Become a Trainer</Link>
             </div>
 
-
-          </div>
-
-          <div className="flex flex-col py-5 ml-15">
-            <p className="py-3 font-bold">Socials</p>
-            <div className="flex flex-col text-black">
-              <p className="py-1">Instagram</p>
-              <p className="py-1">Facebook</p>
-              <p className="py-1">Twitter</p>
-              <p className="py-1">TikTok</p>
+            <div className="flex flex-col gap-3">
+              <span className="font-bold text-sm">Programs</span>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Personalized Plans</Link>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Online Coaching</Link>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">In-Person Coaching</Link>
             </div>
-          </div>
 
-          <div className="ml-15">
-            <p className="px-20  pt-8 pb-3 text-xs font-bold">Newsletter</p>
-            <p className="text-xs px-20 w-100 pb-4">Receive product updates news, exclusive discounts and early access.</p>
-            <div className="px-20">
-              <Field orientation="horizontal" className="text-xs">
-                <Input type="search" placeholder="Enter email..." className="rounded-2xl text-xs" />
-                <Button className="rounded-2xl text-xs">Send</Button>
-              </Field>
+            <div className="flex flex-col gap-3">
+              <span className="font-bold text-sm">Support</span>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">FAQ</Link>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Help Center</Link>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <span className="font-bold text-sm">Legal</span>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Privacy Policy</Link>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Terms of Service</Link>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Refund Policy</Link>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Cancellation Policy</Link>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Health Disclaimer</Link>
+              <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Cookie Policy</Link>
             </div>
           </div>
 
