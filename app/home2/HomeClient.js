@@ -21,6 +21,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import daImage from "@/components/images/da.png"
+import pele from "@/components/images/pelebg.png"
 import workout from "@/components/images/workout.jpeg"
 import nutrition from "@/components/images/nutrition.jpeg"
 import wellness from "@/components/images/wellness.jpeg"
@@ -159,7 +160,7 @@ function ScrollReveal({ children, delay = 0, direction = "up" }) {
 }
 
 
-function ImageScrollyStep({ image, title, description, badge, onInView }) {
+function ImageScrollyStep({ image, title, description, badge, buttonText, onInView }) {
 
 
     const ref = React.useRef(null)
@@ -183,8 +184,8 @@ function ImageScrollyStep({ image, title, description, badge, onInView }) {
     }, [onInView])
 
     return (
-        <div ref={ref} className="min-h-[70vh] lg:h-[80vh] w-full flex items-center justify-center p-4">
-            <div className="relative w-full h-full rounded-3xl overflow-hidden  transform transition-transform hover:scale-[1.01] duration-500">
+        <div ref={ref} className="min-h-[60vh] lg:h-[80vh] w-full flex items-center justify-center p-4">
+            <div className="relative w-full h-full rounded-[2rem] overflow-hidden transform transition-transform hover:scale-[1.01] duration-500 shadow-xl">
                 <img
                     src={image}
                     alt={title}
@@ -192,16 +193,21 @@ function ImageScrollyStep({ image, title, description, badge, onInView }) {
                 />
 
                 {/* Mobile/Tablet Text Overlay (Visible below 'lg' breakpoint) */}
-                <div className="lg:hidden absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-8 md:p-12">
-                    <Badge variant="outline" className="w-fit rounded-full px-4 py-1 mb-4 text-white border-white/20 bg-white/10 backdrop-blur-md">
+                <div className="lg:hidden absolute bottom-4 left-4 right-4 bg-black/40 backdrop-blur-xl rounded-3xl p-6 md:p-8 flex flex-col border border-white/20 shadow-2xl">
+                    <Badge variant="outline" className="w-fit rounded-full px-4 py-1 mb-4 text-white border-white/30 bg-white/10 backdrop-blur-md">
                         {badge}
                     </Badge>
-                    <h3 className="text-white text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+                    <h3 className="text-white text-2xl md:text-4xl font-bold mb-3 tracking-tight">
                         {title}
                     </h3>
-                    <p className="text-white/80 text-lg md:text-xl max-w-xl leading-relaxed">
+                    <p className="text-white/90 text-sm md:text-lg mb-6 leading-relaxed">
                         {description}
                     </p>
+                    {buttonText && (
+                        <Button className="w-full sm:w-fit bg-white text-black hover:bg-slate-100 rounded-full px-6 py-5 font-semibold text-sm shadow-lg transition-all active:scale-95">
+                            {buttonText}
+                        </Button>
+                    )}
                 </div>
 
                 {/* Subtle desktop-only gradient */}
@@ -248,12 +254,14 @@ export default function HomeClient({ products, programs, testimonials, about, lo
             description: "Started with a simple goal: making elite fitness coaching accessible to everyone. Using a community driven path , We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
             badge: "Our Story",
             image: groupTraining.src,
+            buttonText: "More About MyFit"
         },
         {
             title: "Pelesia - Lead Instructor",
             description: "A little bit about the trainer, instructor and the dietor. How she does her things and many more. Expertise in nutrition and physical training for holistic wellness.",
             badge: "Expertise",
-            image: personal2.src,
+            image: pele.src,
+            buttonText: "More About Pelesia"
         },
     ];
 
@@ -646,9 +654,17 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                                             <h3 className="text-xl md:text-4xl font-bold mb-8 tracking-tight">
                                                 {aboutSteps[activeAboutStep].title}
                                             </h3>
-                                            <p className="text-slate-600 text-xs md:text-lg max-w-md leading-relaxed">
+                                            <p className="text-slate-600 text-sm md:text-lg max-w-md leading-relaxed">
                                                 {aboutSteps[activeAboutStep].description}
                                             </p>
+
+                                            {aboutSteps[activeAboutStep].buttonText && (
+                                                <div className="mt-8">
+                                                    <Button className="rounded-full px-6 py-4 text-sm shadow-lg hover:scale-105 transition-transform bg-black text-white hover:bg-black/90">
+                                                        {aboutSteps[activeAboutStep].buttonText}
+                                                    </Button>
+                                                </div>
+                                            )}
 
                                             {/* Progress indicators */}
                                             <div className="flex gap-2 mt-12">
@@ -785,8 +801,8 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                                                 <div className="relative aspect-video lg:aspect-square rounded-[3rem] overflow-hidden group">
                                                     {program.image && (
                                                         <ParallaxImage
-                                                            src={urlFor(program.image).url()}
-                                                            alt={program.title}
+                                                            src={typeof program.image === 'string' ? program.image : urlFor(program.image).url()}
+                                                            alt={program.title || program.name || 'Program Image'}
                                                             className="w-full h-full"
                                                             speed={0.2}
                                                         />
@@ -833,8 +849,8 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                                                 </motion.div>
                                                 {product.image && (
                                                     <motion.img
-                                                        src={urlFor(product.image).width(400).height(400).url()}
-                                                        alt={product.name}
+                                                        src={typeof product.image === 'string' ? product.image : urlFor(product.image).width(400).height(400).url()}
+                                                        alt={product.name || 'Product Image'}
                                                         whileHover={{ scale: 1.05, rotate: 2 }}
                                                         className="object-contain w-full h-full mix-blend-multiply"
                                                     />
@@ -842,7 +858,7 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                                             </Card>
                                             <div className="px-2">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <h3 className="font-bold text-sm uppercase tracking-wider">{product.name}</h3>
+                                                    <h3 className="font-bold text-sm uppercase tracking-wider">{product.name || product.title}</h3>
                                                     <span className="font-bold text-sm">Kshs {product.price?.toLocaleString()}</span>
                                                 </div>
                                                 <p className="text-slate-500 text-sm mb-3 line-clamp-2">{product.desc}</p>
@@ -852,7 +868,11 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                                                     ))}
                                                     <span className="text-xs text-slate-400 font-medium ml-1">({product.reviews || 0})</span>
                                                 </div>
-                                                <BuyNowButton product={product} />
+                                                <Link href={`/programs/${product._id}/onboarding`}>
+                                                    <Button variant="outline" className="w-full rounded-full border-slate-900 px-6 font-bold hover:bg-slate-900 hover:text-white transition-all">
+                                                        Select Program
+                                                    </Button>
+                                                </Link>
                                             </div>
                                         </div>
                                     </ScrollReveal>
@@ -893,7 +913,11 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                                                             ))}
                                                             <span className="text-xs text-slate-400 font-medium ml-1">({product.reviews || 0})</span>
                                                         </div>
-                                                        <BuyNowButton product={product} />
+                                                        <Link href={`/programs/${product._id}/onboarding`}>
+                                                            <Button variant="outline" className="w-full rounded-full border-slate-900 px-6 font-bold hover:bg-slate-900 hover:text-white transition-all">
+                                                                Select Program
+                                                            </Button>
+                                                        </Link>
                                                     </div>
                                                 </div>
                                             </ScrollReveal>

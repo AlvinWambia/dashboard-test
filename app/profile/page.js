@@ -22,23 +22,31 @@ export default async function ProfilePage() {
 
     // 4. Fetch the programs they have access to
     const { data: accessData } = await supabase
-        .from('program_access')
+        .from('client_programs')
         .select(`
             *,
             programs (
                 id,
-                name,
+                title,
                 description,
-                image_url
+                image_url,
+                has_digital_downloads,
+                has_dashboard_access,
+                has_online_consultations,
+                has_physical_sessions,
+                booking_url,
+                location_details
             )
         `)
-        .eq('user_id', user.id);
+        .eq('client_id', user.id);
 
     // Extract the programs from the access table
     const purchasedPrograms = accessData?.map(access => ({
         ...access.programs,
         access_id: access.id,
         granted_at: access.granted_at,
+        status: access.status,
+        review_status: access.review_status,
     })) || [];
 
     // 5. Fetch their existing reviews

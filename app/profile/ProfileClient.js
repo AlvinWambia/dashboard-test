@@ -99,28 +99,66 @@ export default function ProfileClient({ profile, user, purchasedPrograms, review
                                             <div className="w-full h-48 bg-slate-100">
                                                 <img
                                                     src={program.image_url}
-                                                    alt={program.name}
+                                                    alt={program.title}
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
                                         ) : (
-                                            <div className="w-full h-48 bg-slate-200 flex items-center justify-center text-slate-400 font-bold">
-                                                {program.name}
+                                            <div className="w-full h-48 bg-slate-200 flex items-center justify-center text-slate-400 font-bold text-center p-4">
+                                                {program.title}
                                             </div>
                                         )}
                                         <CardContent className="p-6 flex flex-col flex-1">
-                                            <h3 className="font-bold text-lg mb-2">{program.name}</h3>
+                                            <h3 className="font-bold text-lg mb-2">{program.title}</h3>
                                             <p className="text-slate-500 text-sm line-clamp-2 mb-6 flex-1">
                                                 {program.description}
                                             </p>
 
                                             <div className="flex flex-col gap-2 mt-auto">
-                                                <Button className="w-full rounded-full bg-black text-white">
-                                                    Access Program
-                                                </Button>
+                                                {program.status === 'active' ? (
+                                                    program.review_status === 'pending' ? (
+                                                        <div className="bg-orange-50 p-3 rounded-xl border border-orange-100 text-center mb-2">
+                                                            <p className="text-xs font-semibold text-orange-600">Review Pending</p>
+                                                            <p className="text-[10px] text-orange-500 mt-1">Admin is reviewing your application.</p>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            {program.has_dashboard_access && (
+                                                                <Link href={`/profile/programs/${program.id}`}>
+                                                                    <Button className="w-full rounded-full bg-black text-white hover:bg-slate-800 transition-colors">
+                                                                        Access Dashboard
+                                                                    </Button>
+                                                                </Link>
+                                                            )}
+                                                            {program.has_digital_downloads && (
+                                                                <Link href={`/profile/programs/${program.id}/downloads`}>
+                                                                    <Button variant="outline" className="w-full rounded-full">
+                                                                        Digital Downloads
+                                                                    </Button>
+                                                                </Link>
+                                                            )}
+                                                            {program.has_online_consultations && program.booking_url && (
+                                                                <Button variant="outline" className="w-full rounded-full" onClick={() => window.open(program.booking_url, '_blank')}>
+                                                                    Book Consultation
+                                                                </Button>
+                                                            )}
+                                                            {program.has_physical_sessions && program.location_details && (
+                                                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mt-2">
+                                                                    <p className="text-xs font-semibold text-slate-700 mb-1">Physical Location:</p>
+                                                                    <p className="text-xs text-slate-600">{program.location_details}</p>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )
+                                                ) : (
+                                                    <div className="bg-red-50 p-3 rounded-xl border border-red-100 text-center mb-2">
+                                                        <p className="text-xs font-semibold text-red-600">Subscription Cancelled / Expired</p>
+                                                    </div>
+                                                )}
+
                                                 <Button
-                                                    variant="outline"
-                                                    className="w-full rounded-full"
+                                                    variant="ghost"
+                                                    className="w-full rounded-full mt-2"
                                                     onClick={() => openReviewModal(program)}
                                                 >
                                                     {hasReviewed ? 'Edit Review' : 'Leave a Review'}
@@ -139,7 +177,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms, review
             <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
                 <DialogContent className="sm:max-w-[425px] rounded-3xl p-6 bg-white">
                     <DialogHeader>
-                        <DialogTitle>Review {selectedProgram?.name}</DialogTitle>
+                        <DialogTitle>Review {selectedProgram?.title}</DialogTitle>
                         <DialogDescription>
                             Share your experience with this program to help others.
                         </DialogDescription>

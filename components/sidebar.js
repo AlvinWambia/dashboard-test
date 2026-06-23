@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ListTodo, Calendar, BarChart3, Users,
-  Settings, LifeBuoy, LogOut, Menu, Inbox
+  Settings, LifeBuoy, LogOut, Menu, Inbox, 
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +15,13 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
   { icon: Inbox, label: "Requests", href: "/admin/requests" },
+  { icon: Users, label: "Clients", href: "/admin/clients" },
   { icon: ListTodo, label: "Tasks", href: "/admin/tasks", badge: "12+" },
   { icon: Calendar, label: "Calendar", href: "/admin/calendar" },
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
   { icon: Users, label: "Members", href: "/admin/members" },
+  { icon: Inbox, label: "Programs", href: "/admin/programs" },
+   { icon: Inbox, label: "Applications", href: "/admin/applications" },
 ];
 
 export function Sidebar() {

@@ -2,18 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, MoreHorizontal, Pencil, Trash, CalendarDays } from 'lucide-react';
+import { Trash, CalendarDays, AlignLeft } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
     DialogContent,
@@ -26,15 +18,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
 import { deleteTask, updateTask } from "@/app/actions/tasks";
 import { toast } from "sonner";
 
-const getPriorityBadgeClass = (priority) => {
+const getPriorityStyle = (priority) => {
     switch (priority?.toLowerCase()) {
-        case 'high': return 'bg-red-50 text-red-600';
-        case 'medium': return 'bg-yellow-50 text-yellow-600';
-        case 'low': return 'bg-green-50 text-green-600';
-        default: return 'bg-gray-100 text-gray-500';
+        case 'high': return { bg: 'bg-yellow-50', text: 'text-yellow-600', dot: 'bg-yellow-400' };
+        case 'medium': return { bg: 'bg-blue-50', text: 'text-blue-600', dot: 'bg-blue-400' };
+        case 'low': return { bg: 'bg-green-50', text: 'text-green-600', dot: 'bg-green-400' };
+        default: return { bg: 'bg-gray-50', text: 'text-gray-500', dot: 'bg-gray-400' };
     }
 };
 
@@ -43,28 +40,30 @@ export function TaskCard({ task, profiles }) {
     const isDone = task.status === 'done';
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: task.id, data: { type: 'Task', task } });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-        touchAction: 'none' // Prevent pull-to-refresh and native scroll on touch
+    
+    const handleDelete = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDeleteOpen(true);
     };
 
-    // A simple window object check ensures we don't disable pointer listeners entirely,
-    // but rather leverage CSS and pointer down stoppers for touch screens.
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const handleCheckboxChange = async (checked) => {
+        const updatePromise = async () => {
+            const formData = new FormData();
+            formData.append('id', task.id);
+            formData.append('status', checked ? 'done' : 'yet_to_do');
+            const result = await updateTask(formData);
+            if (result?.error) throw new Error(result.error);
+        };
 
-    const handleDelete = () => {
-        setIsDeleteOpen(true);
+        toast.promise(updatePromise(), {
+            loading: 'Updating task status...',
+            success: () => {
+                router.refresh();
+                return 'Status updated';
+            },
+            error: (err) => err.message
+        });
     };
 
     const confirmDelete = async () => {
@@ -84,58 +83,84 @@ export function TaskCard({ task, profiles }) {
         setIsDeleteOpen(false);
     };
 
+    const priorityStyle = getPriorityStyle(task.priority);
+
     return (
         <>
-            <div ref={setNodeRef} style={style} {...attributes} {...(!isMobile ? listeners : {})}>
-                <Card className="group relative">
-                    <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                        <div className="flex flex-col gap-2">
-                            <Badge className={getPriorityBadgeClass(task.priority)}><Settings size={16} /> {task.priority}</Badge>
-                            <CardTitle className="text-sm">{task.title}</CardTitle>
+            <AccordionItem value={task.id} className="border-b border-gray-100 py-1 border-x-0 border-t-0 bg-white">
+                <div className="flex items-center w-full gap-4 px-2">
+                    <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-center shrink-0">
+                        <Checkbox 
+                            checked={isDone} 
+                            onCheckedChange={handleCheckboxChange} 
+                            className="w-5 h-5 rounded border-gray-300 data-[state=checked]:bg-black data-[state=checked]:border-black"
+                        />
+                    </div>
+                    
+                    <AccordionTrigger className="flex-1 hover:no-underline py-4 items-center min-w-0 [&[data-state=open]>svg]:rotate-180">
+                        <div className="flex items-center justify-between w-full pr-4 min-w-0">
+                            <div className="flex flex-col items-start gap-1 min-w-0 pr-4">
+                                <div className="flex items-center text-xs text-gray-400 gap-1.5 font-medium shrink-0">
+                                    <AlignLeft className="w-3.5 h-3.5" />
+                                    <span>{task.category || 'General Task'}</span>
+                                </div>
+                                <span className={`text-[15px] font-semibold truncate w-full text-left ${isDone ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                                    {task.title}
+                                </span>
+                            </div>
+                            
+                            <div className="flex items-center justify-end w-[100px] shrink-0">
+                                <div className={`flex items-center justify-center gap-2 px-3 py-1 rounded-full border border-gray-50 w-full ${priorityStyle.bg}`}>
+                                    <div className={`w-2 h-2 rounded-full shrink-0 ${priorityStyle.dot}`}></div>
+                                    <span className={`text-xs font-semibold ${priorityStyle.text}`}>
+                                        {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Normal'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div onPointerDown={(e) => e.stopPropagation()}>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-32 p-0" align="end">
-                                    <div className="flex flex-col">
-                                        <Button variant="ghost" size="sm" className="justify-start font-normal" onClick={() => setIsEditOpen(true)} disabled={isDone} title={isDone ? "Cannot edit a completed task" : "Edit task"}>
-                                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                                        </Button>
-                                        <Button variant="ghost" size="sm" className="justify-start font-normal text-red-600 hover:text-red-600 hover:bg-red-50" onClick={handleDelete}>
-                                            <Trash className="mr-2 h-4 w-4" /> Delete
-                                        </Button>
+                    </AccordionTrigger>
+                    
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg shrink-0 -ml-2"
+                        onClick={handleDelete}
+                    >
+                        <Trash className="w-4 h-4" />
+                    </Button>
+                </div>
+
+                <AccordionContent className="pt-2 pb-4 pl-12 pr-14">
+                    <div className="bg-gray-50/50 rounded-2xl p-5 border border-gray-100">
+                        <p className="text-sm text-gray-600 mb-6 leading-relaxed">{task.description || "No description provided."}</p>
+                        
+                        <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-2">
+                            <div className="flex items-center gap-6">
+                                {task.due_date && (
+                                    <div className="flex items-center text-xs text-gray-500 font-medium">
+                                        <CalendarDays className="mr-2 h-4 w-4" />
+                                        <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
                                     </div>
-                                </PopoverContent>
-                            </Popover>
+                                )}
+                                
+                                {task.assigned_to && (
+                                    <div className="flex items-center gap-2">
+                                        <Avatar className="h-6 w-6">
+                                            <AvatarImage src={task.assigned_to.avatar_url} />
+                                            <AvatarFallback>{task.assigned_to.full_name?.[0]}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="text-xs text-gray-500 font-medium">{task.assigned_to.full_name}</span>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <Button variant="outline" size="sm" onClick={() => setIsEditOpen(true)} disabled={isDone} className="rounded-xl font-medium">
+                                Edit Task
+                            </Button>
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-xs text-muted-foreground">{task.description}</p>
-
-                        {task.due_date && (
-                            <div className="mt-2 flex items-center text-xs text-muted-foreground">
-                                <CalendarDays className="mr-1 h-3 w-3" />
-                                <span>Due by {new Date(task.due_date).toLocaleDateString()}</span>
-                            </div>
-                        )}
-
-                        {task.assigned_to && (
-                            <div className="mt-4 flex items-center gap-2">
-                                <Avatar className="h-6 w-6">
-                                    <AvatarImage src={task.assigned_to.avatar_url} />
-                                    <AvatarFallback>{task.assigned_to.full_name?.[0]}</AvatarFallback>
-                                </Avatar>
-                                <span className="text-[10px]">{task.assigned_to.full_name}</span>
-                                <span className="text-[10px]">{task.created_at}</span>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogContent>
@@ -192,6 +217,10 @@ export function TaskCard({ task, profiles }) {
                                     <SelectItem value="high">High</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="category">Category</Label>
+                            <Input id="category" name="category" defaultValue={task.category || ''} placeholder="e.g. Odama Website" />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="assigned_to">Assign To</Label>

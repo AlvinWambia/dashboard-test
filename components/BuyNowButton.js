@@ -25,7 +25,8 @@ function SubmitButton() {
 
 export function BuyNowButton({ product }) {
   // Bind the product's custom ID to the server action. This pre-fills the first argument of createOrder.
-  const createOrderWithId = createOrder.bind(null, product.productId);
+  const productId = product.id || product._id || product.productId;
+  const createOrderWithId = createOrder.bind(null, productId);
 
   return (
     <form action={createOrderWithId} className="w-full">
