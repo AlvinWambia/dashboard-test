@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ListTodo, Calendar, BarChart3, Users,
-  Settings, LifeBuoy, LogOut, Menu, Inbox, 
+  Settings, LifeBuoy, LogOut, Menu, Inbox, Apple
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,8 @@ const menuItems = [
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
   { icon: Users, label: "Members", href: "/admin/members" },
   { icon: Inbox, label: "Programs", href: "/admin/programs" },
-   { icon: Inbox, label: "Applications", href: "/admin/applications" },
+  { icon: Apple, label: "Nutrition", href: "/admin/nutrition" },
+  { icon: Inbox, label: "Applications", href: "/admin/applications" },
 ];
 
 export function Sidebar() {

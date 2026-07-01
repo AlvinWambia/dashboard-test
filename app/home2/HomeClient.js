@@ -543,12 +543,15 @@ export default function HomeClient({ products, programs, testimonials, about, lo
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {[
-                                    { title: "💪Workout Program", bg: workout, delay: 0.1, description: "Personal Training" },
-                                    { title: "🧘Wellness", bg: wellness, delay: 0.2, description: "Personal Therapy" },
-                                    { title: "🥗Nutrition", bg: nutrition, delay: 0.3, description: "Curated Diet" }
+                                    { title: "💪Workout Program", bg: workout, delay: 0.1, description: "Personal Training", href: "/programs" },
+                                    { title: "🧘Wellness", bg: wellness, delay: 0.2, description: "Personal Therapy", href: "#wellness" },
+                                    { title: "🥗Nutrition", bg: nutrition, delay: 0.3, description: "Curated Diet", href: "/nutrition" }
                                 ].map((card, i) => (
                                     <ScrollReveal key={i} delay={card.delay} direction="up">
-                                        <Card className="border-none p-6 rounded-[2rem] relative flex flex-col items-center justify-center text-center aspect-square group overflow-hidden">
+                                        <Card 
+                                            onClick={() => card.href && router.push(card.href)}
+                                            className="border-none p-6 rounded-[2rem] relative flex flex-col items-center justify-center text-center aspect-square group overflow-hidden cursor-pointer"
+                                        >
                                             {/* Background Image */}
                                             <img
                                                 src={card.bg.src || card.bg}
