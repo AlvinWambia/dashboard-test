@@ -160,7 +160,7 @@ function ScrollReveal({ children, delay = 0, direction = "up" }) {
 }
 
 
-function ImageScrollyStep({ image, title, description, badge, buttonText, onInView }) {
+function ImageScrollyStep({ image, title, description, badge, buttonText, link, onInView }) {
 
 
     const ref = React.useRef(null)
@@ -184,7 +184,7 @@ function ImageScrollyStep({ image, title, description, badge, buttonText, onInVi
     }, [onInView])
 
     return (
-        <div ref={ref} className="min-h-[60vh] lg:h-[80vh] w-full flex items-center justify-center p-4">
+        <div ref={ref} className="min-h-[80vh] lg:h-[85vh] w-full flex items-center justify-center p-4">
             <div className="relative w-full h-full rounded-[2rem] overflow-hidden transform transition-transform hover:scale-[1.01] duration-500 shadow-xl">
                 <img
                     src={image}
@@ -204,9 +204,11 @@ function ImageScrollyStep({ image, title, description, badge, buttonText, onInVi
                         {description}
                     </p>
                     {buttonText && (
-                        <Button className="w-full sm:w-fit bg-white text-black hover:bg-slate-100 rounded-full px-6 py-5 font-semibold text-sm shadow-lg transition-all active:scale-95">
-                            {buttonText}
-                        </Button>
+                        <Link href={link || "#"}>
+                            <Button className="w-full sm:w-fit bg-white text-black hover:bg-slate-100 rounded-full px-6 py-5 font-semibold text-sm shadow-lg transition-all active:scale-95">
+                                {buttonText}
+                            </Button>
+                        </Link>
                     )}
                 </div>
 
@@ -254,14 +256,16 @@ export default function HomeClient({ products, programs, testimonials, about, lo
             description: "Started with a simple goal: making elite fitness coaching accessible to everyone. Using a community driven path , We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
             badge: "Our Story",
             image: groupTraining.src,
-            buttonText: "More About MyFit"
+            buttonText: "More About MyFit",
+            link: "/about/myfit"
         },
         {
             title: "Pelesia - Lead Instructor",
             description: "A little bit about the trainer, instructor and the dietor. How she does her things and many more. Expertise in nutrition and physical training for holistic wellness.",
             badge: "Expertise",
             image: pele.src,
-            buttonText: "More About Pelesia"
+            buttonText: "More About Pelesia",
+            link: "/about/pelesia"
         },
     ];
 
@@ -544,11 +548,11 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {[
                                     { title: "💪Workout Program", bg: workout, delay: 0.1, description: "Personal Training", href: "/programs" },
-                                    { title: "🧘Wellness", bg: wellness, delay: 0.2, description: "Personal Therapy", href: "#wellness" },
+                                    { title: "🧘Wellness", bg: wellness, delay: 0.2, description: "Personal Therapy", href: "/wellness" },
                                     { title: "🥗Nutrition", bg: nutrition, delay: 0.3, description: "Curated Diet", href: "/nutrition" }
                                 ].map((card, i) => (
                                     <ScrollReveal key={i} delay={card.delay} direction="up">
-                                        <Card 
+                                        <Card
                                             onClick={() => card.href && router.push(card.href)}
                                             className="border-none p-6 rounded-[2rem] relative flex flex-col items-center justify-center text-center aspect-square group overflow-hidden cursor-pointer"
                                         >
@@ -663,9 +667,11 @@ export default function HomeClient({ products, programs, testimonials, about, lo
 
                                             {aboutSteps[activeAboutStep].buttonText && (
                                                 <div className="mt-8">
-                                                    <Button className="rounded-full px-6 py-4 text-sm shadow-lg hover:scale-105 transition-transform bg-black text-white hover:bg-black/90">
-                                                        {aboutSteps[activeAboutStep].buttonText}
-                                                    </Button>
+                                                    <Link href={aboutSteps[activeAboutStep].link || "#"}>
+                                                        <Button className="rounded-full px-6 py-4 text-sm shadow-lg hover:scale-105 transition-transform bg-black text-white hover:bg-black/90">
+                                                            {aboutSteps[activeAboutStep].buttonText}
+                                                        </Button>
+                                                    </Link>
                                                 </div>
                                             )}
 
@@ -779,23 +785,7 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                                                 <p className="text-xl font-bold tracking-tight">{program.title}</p>
                                                 <p className="text-slate-600 text-sm leading-relaxed">{program.description}</p>
 
-                                                <Card className="border-none rounded-[1.5rem] bg-white overflow-hidden mt-8">
 
-                                                    <CardContent className="p-6 pt-1">
-                                                        <Accordion type="single" collapsible>
-                                                            {program.faqs?.map((faq, i) => (
-                                                                <AccordionItem key={i} value={`item-${i}`} className="border-none">
-                                                                    <AccordionTrigger className="text-left font-medium hover:text-black">
-                                                                        {faq.question}
-                                                                    </AccordionTrigger>
-                                                                    <AccordionContent className="text-slate-500">
-                                                                        {faq.answer}
-                                                                    </AccordionContent>
-                                                                </AccordionItem>
-                                                            ))}
-                                                        </Accordion>
-                                                    </CardContent>
-                                                </Card>
                                             </ScrollReveal>
                                         </div>
 
@@ -937,7 +927,7 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                                 <div className="lg:w-1/3">
                                     <ScrollReveal direction="right">
                                         <p className="text-blue-600 font-bold text-sm tracking-wide uppercase mb-2">FAQ</p>
-                                        <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">Frequently Asked<br/>Questions</h2>
+                                        <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">Frequently Asked<br />Questions</h2>
                                         <p className="text-slate-500 text-lg">
                                             We compiled a list of answers to address your most pressing questions regarding our Services.
                                         </p>
