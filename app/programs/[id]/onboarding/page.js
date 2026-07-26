@@ -6,7 +6,7 @@ import { ClipboardList, CreditCard, Clock, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function ProgramOnboardingPage({ params }) {
-    const supabase = await createAdminClient();
+    const supabase = createAdminClient();
     const { data: program } = await supabase
         .from('programs')
         .select('*')

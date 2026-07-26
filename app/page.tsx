@@ -36,10 +36,8 @@ async function getData() {
     }`;
     console.log("Attempting to fetch data from Sanity and Supabase...");
     try {
-        const [sanityData, supabaseClient] = await Promise.all([
-            client.fetch(query),
-            Promise.resolve(createAdminClient())
-        ]);
+        const supabaseClient = createAdminClient();
+        const sanityData = await client.fetch(query);
         
         // Fetch programs from Supabase
         const { data: supabasePrograms, error } = await supabaseClient

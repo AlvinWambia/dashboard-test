@@ -1,14 +1,115 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
-  Apple, Plus, Trash2, Check, Clock, Flame, Image as ImageIcon, ChevronRight, BookOpen, AlertCircle
+  Apple, Plus, Trash2, Check, Clock, Flame, Image as ImageIcon, ChevronRight, BookOpen, AlertCircle, UploadCloud, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/supabase/client";
 
+// ─── Reusable Image Upload Picker ────────────────────────────────────────────
+function ImageUploadPicker({
+  value,
+  onChange,
+  bucket = "nutrition-images",
+  label = "Photo",
+}: {
+  value: string;
+  onChange: (url: string) => void;
+  bucket?: string;
+  label?: string;
+}) {
+  const supabase = createClient();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError("");
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${ext}`;
+
+      const { data, error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
+
+      onChange(urlData.publicUrl);
+    } catch (err: any) {
+      console.error("Image upload error:", err);
+      setError("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+      // Reset so the same file can be re-selected
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">
+        {label}
+      </label>
+
+      {value ? (
+        /* ── Preview with hover overlay ── */
+        <div className="relative group w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+          <img src={value} alt="Preview" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+            <label className="cursor-pointer bg-white text-gray-900 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+              Change
+              <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={uploading} />
+            </label>
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* ── Upload drop zone ── */
+        <label className={`flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+          uploading ? "border-emerald-300 bg-emerald-50" : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
+        }`}>
+          <div className="flex flex-col items-center gap-2 text-center px-4">
+            {uploading ? (
+              <>
+                <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs font-medium text-emerald-600">Uploading...</span>
+              </>
+            ) : (
+              <>
+                <UploadCloud className="w-7 h-7 text-gray-400" />
+                <span className="text-xs font-semibold text-gray-600">Click to upload image</span>
+                <span className="text-[10px] text-gray-400">JPG, PNG, WEBP</span>
+              </>
+            )}
+          </div>
+          <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={uploading} />
+        </label>
+      )}
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminNutritionClient() {
   const supabase = createClient();
 
@@ -111,7 +212,7 @@ export default function AdminNutritionClient() {
     e.preventDefault();
     setErrorMessage("");
     if (!mealForm.image_url || !mealForm.description) {
-      setErrorMessage("Please fill in the meal photo URL and description.");
+      setErrorMessage("Please upload a meal photo and add a description.");
       return;
     }
     setUploading(true);
@@ -230,7 +331,7 @@ export default function AdminNutritionClient() {
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 flex items-center gap-2">
             <Apple className="w-8 h-8 text-[#081C15]" />
-            <span>Nutrition & Recipes Manager</span>
+            <span>Nutrition &amp; Recipes Manager</span>
           </h1>
           <p className="text-gray-500 text-sm mt-1">Manage public healthy recipes and the daily &quot;What I Ate&quot; Locket feed.</p>
         </div>
@@ -282,32 +383,27 @@ export default function AdminNutritionClient() {
               </div>
 
               <form onSubmit={handleMealSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Meal Category</label>
-                    <select 
-                      value={mealForm.meal_type}
-                      onChange={(e) => setMealForm({ ...mealForm, meal_type: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    >
-                      <option>Breakfast</option>
-                      <option>Lunch</option>
-                      <option>Dinner</option>
-                      <option>Snack</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Meal Photo URL</label>
-                    <input 
-                      type="text" 
-                      placeholder="https://images.unsplash.com/photo-..." 
-                      value={mealForm.image_url}
-                      onChange={(e) => setMealForm({ ...mealForm, image_url: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Meal Category</label>
+                  <select 
+                    value={mealForm.meal_type}
+                    onChange={(e) => setMealForm({ ...mealForm, meal_type: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option>Breakfast</option>
+                    <option>Lunch</option>
+                    <option>Dinner</option>
+                    <option>Snack</option>
+                  </select>
                 </div>
+
+                {/* Image Upload Picker for meal */}
+                <ImageUploadPicker
+                  value={mealForm.image_url}
+                  onChange={(url) => setMealForm({ ...mealForm, image_url: url })}
+                  bucket="nutrition-images"
+                  label="Meal Photo *"
+                />
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
@@ -448,27 +544,23 @@ export default function AdminNutritionClient() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Photo URL</label>
-                    <input 
-                      type="text" 
-                      placeholder="https://images.unsplash.com/photo-..." 
-                      value={recipeForm.image_url}
-                      onChange={(e) => setRecipeForm({ ...recipeForm, image_url: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Short Description</label>
-                    <input 
-                      type="text" 
-                      placeholder="Flavors, macro highlights, or recovery benefits..." 
-                      value={recipeForm.description}
-                      onChange={(e) => setRecipeForm({ ...recipeForm, description: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none"
-                    />
-                  </div>
+                {/* Image Upload Picker for recipe */}
+                <ImageUploadPicker
+                  value={recipeForm.image_url}
+                  onChange={(url) => setRecipeForm({ ...recipeForm, image_url: url })}
+                  bucket="nutrition-images"
+                  label="Recipe Photo (optional)"
+                />
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Short Description</label>
+                  <input 
+                    type="text" 
+                    placeholder="Flavors, macro highlights, or recovery benefits..." 
+                    value={recipeForm.description}
+                    onChange={(e) => setRecipeForm({ ...recipeForm, description: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none"
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -476,7 +568,7 @@ export default function AdminNutritionClient() {
                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Ingredients (one per line)</label>
                     <textarea 
                       rows={4} 
-                      placeholder="1 cup dry oats&#10;1 scoop protein powder&#10;1 tbsp peanut butter" 
+                      placeholder={"1 cup dry oats\n1 scoop protein powder\n1 tbsp peanut butter"} 
                       value={recipeForm.ingredients}
                       onChange={(e) => setRecipeForm({ ...recipeForm, ingredients: e.target.value })}
                       className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-xs text-gray-900 font-mono focus:outline-none"
@@ -486,7 +578,7 @@ export default function AdminNutritionClient() {
                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Instructions (one per line)</label>
                     <textarea 
                       rows={4} 
-                      placeholder="Cook oats in boiling water for 5 minutes.&#10;Stir in protein powder.&#10;Top with peanut butter and fruit." 
+                      placeholder={"Cook oats in boiling water for 5 minutes.\nStir in protein powder.\nTop with peanut butter and fruit."} 
                       value={recipeForm.instructions}
                       onChange={(e) => setRecipeForm({ ...recipeForm, instructions: e.target.value })}
                       className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-xs text-gray-900 font-mono focus:outline-none"

@@ -13,51 +13,117 @@ export default async function ProfilePage() {
         redirect("/auth/login");
     }
 
-    // 3. Fetch the profile
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+    let profile = null;
+    let purchasedPrograms = [];
+    let reviews = [];
+    let subscriptions = [];
+    let fetchError = null;
 
-    // 4. Fetch the programs they have access to
-    const { data: accessData } = await supabase
-        .from('client_programs')
-        .select(`
-            *,
-            programs (
-                id,
-                title,
-                description,
-                image_url,
-                has_digital_downloads,
-                has_dashboard_access,
-                has_online_consultations,
-                has_physical_sessions,
-                booking_url,
-                location_details
-            )
-        `)
-        .eq('client_id', user.id);
+    try {
+        // 3. Fetch the profile
+        const { data: profileData, error: profileErr } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-    // Extract the programs from the access table
-    const purchasedPrograms = accessData?.map(access => ({
-        ...access.programs,
-        access_id: access.id,
-        granted_at: access.granted_at,
-        status: access.status,
-        review_status: access.review_status,
-    })) || [];
+        if (profileErr && profileErr.code !== 'PGRST116') {
+            console.error("Profile fetch error:", profileErr);
+        }
+        profile = profileData || { id: user.id, email: user.email, full_name: user.user_metadata?.full_name };
 
-    // 5. Fetch their existing reviews
-    const { data: reviewsData } = await supabase
-        .from('program_reviews')
-        .select('*')
-        .eq('user_id', user.id);
+        // 4. Fetch the programs they have access to
+        const { data: accessData, error: accessErr } = await supabase
+            .from('client_programs')
+            .select(`
+                *,
+                programs (
+                    id,
+                    title,
+                    description,
+                    image_url,
+                    has_digital_downloads,
+                    has_dashboard_access,
+                    has_online_consultations,
+                    has_physical_sessions,
+                    booking_url,
+                    location_details,
+                    paystack_plan_code
+                )
+            `)
+            .eq('client_id', user.id);
 
-    const reviews = reviewsData || [];
+        if (accessErr) throw accessErr;
+
+        // Item 3: Generate signed URLs for digital downloads
+        if (accessData && accessData.length > 0) {
+            purchasedPrograms = await Promise.all(accessData.map(async (access) => {
+                const program = access.programs || {};
+                let assets = [];
+
+                if (program.has_digital_downloads && program.id) {
+                    const { data: programAssets } = await supabase
+                        .from('program_assets')
+                        .select('*')
+                        .eq('program_id', program.id);
+
+                    if (programAssets && programAssets.length > 0) {
+                        assets = await Promise.all(programAssets.map(async (asset) => {
+                            let signedUrl = asset.file_url;
+                            if (asset.file_url) {
+                                const { data: signedData } = await supabase.storage
+                                    .from('program-documents')
+                                    .createSignedUrl(asset.file_url, 3600);
+                                if (signedData?.signedUrl) {
+                                    signedUrl = signedData.signedUrl;
+                                }
+                            }
+                            return { ...asset, signed_url: signedUrl };
+                        }));
+                    }
+                }
+
+                return {
+                    ...program,
+                    assets,
+                    access_id: access.id,
+                    granted_at: access.granted_at,
+                    status: access.status,
+                    review_status: access.review_status,
+                };
+            }));
+        }
+
+        // 5. Fetch their existing reviews
+        const { data: reviewsData } = await supabase
+            .from('program_reviews')
+            .select('*')
+            .eq('user_id', user.id);
+
+        reviews = reviewsData || [];
+
+        // 6. Fetch their active subscriptions for cancellation UX
+        const { data: subscriptionsData } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('client_id', user.id)
+            .in('status', ['active', 'non-renewing']);
+
+        subscriptions = subscriptionsData || [];
+
+    } catch (err) {
+        console.error("ProfilePage data fetch error:", err);
+        fetchError = err.message || "Failed to load profile data";
+    }
 
     return (
-        <ProfileClient profile={profile} user={user} purchasedPrograms={purchasedPrograms} reviews={reviews} />
+        <ProfileClient 
+            profile={profile} 
+            user={user} 
+            purchasedPrograms={purchasedPrograms} 
+            reviews={reviews} 
+            subscriptions={subscriptions}
+            fetchError={fetchError}
+        />
     );
 }

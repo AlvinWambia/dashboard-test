@@ -1,5 +1,5 @@
 import { createClient } from "@/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import CheckoutClient from "@/components/CheckoutClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -18,6 +18,11 @@ export default async function CheckoutPage({ params }) {
     // Fetch the logged-in user to get their email
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Item 6: Redirect unauthenticated user to login before rendering
+    if (!user) {
+        redirect(`/auth/login?redirect=/checkout/${orderId}`);
+    }
+
     // Fetch the order details from the database
     const { data: order, error } = await supabase
         .from('orders')
@@ -25,9 +30,9 @@ export default async function CheckoutPage({ params }) {
         .eq('id', orderId)
         .single();
 
-    // If the order is not found, or if there was an error, show a 404 page.
-    if (error || !order) {
-        console.error(`Error fetching order with ID ${orderId}.`);
+    // Item 2: Fix IDOR vulnerability - verify order exists and belongs to logged-in user
+    if (error || !order || order.user_id !== user.id) {
+        console.error(`Error or unauthorized access for order ID ${orderId}.`);
         notFound();
     }
 

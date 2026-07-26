@@ -16,6 +16,7 @@ ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS description TEXT;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS image_url TEXT;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS faqs JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS paystack_plan_code TEXT;
+ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS billing_interval TEXT DEFAULT 'monthly';
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS price NUMERIC DEFAULT 0;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
@@ -123,6 +124,10 @@ ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS has_physical_sessions BOOLE
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS booking_url TEXT;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS location_details TEXT;
 
+-- Add payment type to distinguish one-time purchases from subscriptions
+-- 'subscription' = recurring Paystack plan, 'one_time' = single charge
+ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS payment_type TEXT DEFAULT 'subscription';
+
 -- Create Program Assets Table for Digital Downloads
 CREATE TABLE IF NOT EXISTS public.program_assets (
     id TEXT DEFAULT gen_random_uuid()::text PRIMARY KEY,
@@ -154,14 +159,41 @@ ALTER TABLE public.client_programs ENABLE ROW LEVEL SECURITY;
 -- Note: client_programs policies will depend on how client auth is handled, 
 -- but generally clients can read their own access records.
 
--- Insert a storage bucket for program documents/digital downloads
-INSERT INTO storage.buckets (id, name, public) VALUES ('program-documents', 'program-documents', true) ON CONFLICT (id) DO NOTHING;
+-- Insert a storage bucket for program documents/digital downloads (Private)
+INSERT INTO storage.buckets (id, name, public) VALUES ('program-documents', 'program-documents', false) ON CONFLICT (id) DO UPDATE SET public = false;
 
--- Policy to allow public viewing of program documents (if they have the link)
-CREATE POLICY "Public Document Access" 
+-- Policy to allow authenticated users to view program documents
+-- A more robust policy would check client_programs, but for now we restrict to authenticated users
+CREATE POLICY "Authenticated Document Access" 
 ON storage.objects FOR SELECT 
+TO authenticated
 USING (bucket_id = 'program-documents');
 
 -- Add review_status if table already exists
 ALTER TABLE public.client_programs ADD COLUMN IF NOT EXISTS review_status TEXT DEFAULT 'approved';
+
+-- RLS Policies for Form Responses
+CREATE POLICY "Clients can view their own form responses" 
+    ON public.form_responses FOR SELECT 
+    USING (auth.uid()::text = client_id);
+
+CREATE POLICY "Clients can insert their own form responses" 
+    ON public.form_responses FOR INSERT 
+    WITH CHECK (auth.uid()::text = client_id);
+
+CREATE POLICY "Clients can update their own form responses" 
+    ON public.form_responses FOR UPDATE 
+    USING (auth.uid()::text = client_id);
+
+-- RLS Policies for Client Programs
+CREATE POLICY "Clients can view their own program access" 
+    ON public.client_programs FOR SELECT 
+    USING (client_id = auth.uid()::text);
+
+-- RLS Policies for Payment History
+CREATE POLICY "Clients can view their own payment history" 
+    ON public.payment_history FOR SELECT 
+    USING (client_id = auth.uid()::text);
+
+
 

@@ -7,7 +7,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function approveApplication(appId) {
     try {
-        const supabase = await createAdminClient();
+        const supabase = createAdminClient();
 
         // 1. Fetch the application details
         const { data: app, error: fetchError } = await supabase

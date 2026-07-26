@@ -4,7 +4,7 @@ import ApplicationsClient from './ApplicationsClient';
 export const dynamic = 'force-dynamic';
 
 export default async function ApplicationsPage() {
-    const supabase = await createAdminClient();
+    const supabase = createAdminClient();
 
     // Fetch pending applications from client_programs
     const { data: pendingApps, error } = await supabase

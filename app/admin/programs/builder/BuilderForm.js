@@ -21,6 +21,8 @@ export default function BuilderForm({ initialData, programId }) {
     description: initialData.description || '',
     image_url: initialData.image_url || '',
     paystack_plan_code: initialData.paystack_plan_code || '',
+    payment_type: initialData.payment_type || 'subscription',
+    billing_interval: initialData.billing_interval || 'monthly',
     price: initialData.price || 0,
     is_active: initialData.is_active !== false,
     has_digital_downloads: initialData.has_digital_downloads || false,
@@ -31,8 +33,40 @@ export default function BuilderForm({ initialData, programId }) {
     location_details: initialData.location_details || '',
   });
 
+  // Track if the admin changed the interval on an existing subscription program with an existing plan
+  const originalInterval = initialData.billing_interval || 'monthly';
+  const originalPaymentType = initialData.payment_type || 'subscription';
+  const isSubscription = program.payment_type === 'subscription';
+  const intervalChanged = !!programId && !!initialData.paystack_plan_code && isSubscription && originalPaymentType === 'subscription' && program.billing_interval !== originalInterval;
+
   const [faqs, setFaqs] = useState(initialData.faqs || []);
   const [assets, setAssets] = useState(initialData.assets || []);
+
+  // Dynamic location management
+  const defaultLocations = initialData.location_details
+    ? [initialData.location_details]
+    : [];
+  const [locations, setLocations] = useState(defaultLocations);
+  const [newLocationInput, setNewLocationInput] = useState('');
+  const [showAddLocation, setShowAddLocation] = useState(false);
+
+  const handleAddLocation = () => {
+    const trimmed = newLocationInput.trim();
+    if (!trimmed) return;
+    if (!locations.includes(trimmed)) {
+      setLocations(prev => [...prev, trimmed]);
+    }
+    setProgram(prev => ({ ...prev, location_details: trimmed }));
+    setNewLocationInput('');
+    setShowAddLocation(false);
+  };
+
+  const handleRemoveLocation = (locToRemove) => {
+    setLocations(prev => prev.filter(l => l !== locToRemove));
+    if (program.location_details === locToRemove) {
+      setProgram(prev => ({ ...prev, location_details: '' }));
+    }
+  };
 
   const handleAssetUpload = async (e) => {
     const file = e.target.files[0];
@@ -50,13 +84,13 @@ export default function BuilderForm({ initialData, programId }) {
 
       if (error) throw error;
 
-      const { data: publicUrlData } = supabase.storage
-        .from('program-documents')
-        .getPublicUrl(fileName);
+      // We no longer use getPublicUrl since the bucket is private.
+      // We store the path and generate signed URLs for authenticated users when needed.
+      const filePath = data.path;
 
       setAssets(prev => [...prev, {
         file_name: file.name,
-        file_url: publicUrlData.publicUrl,
+        file_url: filePath, // Storing path instead of public url
         file_type: file.type
       }]);
       toast.success("Document uploaded successfully");
@@ -115,7 +149,9 @@ export default function BuilderForm({ initialData, programId }) {
     const dataToSave = {
       ...program,
       faqs,
-      assets
+      assets,
+      // Pass the original so the server action can detect an interval change
+      original_billing_interval: originalInterval,
     };
 
     const result = await saveProgram(programId, dataToSave);
@@ -209,24 +245,82 @@ export default function BuilderForm({ initialData, programId }) {
               />
             </div>
 
+            {/* Purchase Type Toggle */}
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Paystack Plan Code</label>
-              <input 
-                type="text" 
-                value={program.paystack_plan_code}
-                onChange={e => setProgram({...program, paystack_plan_code: e.target.value})}
-                placeholder="PLN_xxxxxxxxxxxx"
-                className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black font-mono"
-              />
-              <p className="text-xs text-gray-400 mt-1">Leave blank if this program does not require a subscription.</p>
+              <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Purchase Type</label>
+              <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setProgram({ ...program, payment_type: 'subscription' })}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold transition-all ${
+                    program.payment_type === 'subscription'
+                      ? 'bg-black text-white shadow-inner'
+                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>🔁</span> Subscription
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProgram({ ...program, payment_type: 'one_time' })}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold transition-all ${
+                    program.payment_type === 'one_time'
+                      ? 'bg-black text-white shadow-inner'
+                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>💳</span> One-Time
+                </button>
+              </div>
             </div>
 
+            {/* Billing Interval — only for subscription programs */}
+            {isSubscription ? (
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Billing Interval</label>
+                <select
+                  value={program.billing_interval}
+                  onChange={e => setProgram({...program, billing_interval: e.target.value})}
+                  className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black bg-white"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly (every 3 months)</option>
+                  <option value="biannually">Biannually (every 6 months)</option>
+                  <option value="annually">Annually (every year)</option>
+                </select>
+                <p className="text-xs text-gray-400 mt-1">How often subscribers will be billed. Set price to 0 for a free program.</p>
+
+                {/* Interval-change warning for existing subscription programs */}
+                {intervalChanged && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-3">
+                    <p className="text-xs font-bold text-amber-700 mb-1">⚠️ Billing Interval Changed</p>
+                    <p className="text-xs text-amber-600">
+                      Changing the billing interval will create a <strong>new Paystack plan</strong> for future subscribers.
+                      Existing subscribers will <strong>remain on the old plan</strong> and billing interval until they cancel and re-subscribe.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+                <span className="text-blue-400 text-lg leading-none mt-0.5">💳</span>
+                <div>
+                  <p className="text-xs font-bold text-blue-700 mb-0.5">One-Time Purchase</p>
+                  <p className="text-xs text-blue-600">
+                    Customers pay a single charge and retain access to this program permanently. No recurring billing.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Price (e.g. KES)</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Price (KES)</label>
               <input 
                 type="number" 
                 value={program.price}
-                onChange={e => setProgram({...program, price: e.target.value})}
+                onChange={e => setProgram({...program, price: parseFloat(e.target.value) || 0})}
                 placeholder="0.00"
                 className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black"
               />
@@ -439,19 +533,77 @@ export default function BuilderForm({ initialData, programId }) {
               </label>
 
               {program.has_physical_sessions && (
-                <div className="pl-9 pr-3 space-y-2">
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide">Select Location</label>
-                  <select 
-                    value={program.location_details}
-                    onChange={e => setProgram({...program, location_details: e.target.value})}
-                    className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black bg-white"
-                  >
-                    <option value="" disabled>-- Choose a location --</option>
-                    <option value="Main Gym - 123 Fitness St">Main Gym - 123 Fitness St</option>
-                    <option value="Downtown Studio - 456 Core Ave">Downtown Studio - 456 Core Ave</option>
-                    <option value="Westside Field - 789 Park Blvd">Westside Field - 789 Park Blvd</option>
-                  </select>
-                  <p className="text-[10px] text-gray-400">Select from the approved locations.</p>
+                <div className="pl-9 pr-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide">Location Details</label>
+                    <button 
+                      type="button"
+                      onClick={() => setShowAddLocation(!showAddLocation)}
+                      className="text-xs font-medium text-blue-600 bg-blue-50 px-2.5 py-1 rounded hover:bg-blue-100 transition-colors flex items-center gap-1"
+                    >
+                      <Plus size={14} /> Add Location
+                    </button>
+                  </div>
+
+                  {showAddLocation && (
+                    <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                      <input 
+                        type="text" 
+                        value={newLocationInput}
+                        onChange={(e) => setNewLocationInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddLocation(); } }}
+                        placeholder="Enter location name or address..."
+                        className="flex-1 p-2 text-xs border border-gray-200 rounded bg-white focus:outline-none focus:border-black"
+                      />
+                      <button 
+                        type="button"
+                        onClick={handleAddLocation}
+                        className="bg-black hover:bg-gray-800 text-white text-xs font-medium px-3 py-2 rounded transition-colors"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  )}
+
+                  {locations.length > 0 ? (
+                    <div className="space-y-2">
+                      <select 
+                        value={program.location_details}
+                        onChange={e => setProgram({...program, location_details: e.target.value})}
+                        className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black bg-white"
+                      >
+                        <option value="" disabled>-- Choose a location --</option>
+                        {locations.map((loc, idx) => (
+                          <option key={idx} value={loc}>{loc}</option>
+                        ))}
+                      </select>
+
+                      {program.location_details && (
+                        <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200 text-xs">
+                          <span className="font-medium text-gray-700 truncate mr-2">{program.location_details}</span>
+                          <button 
+                            type="button"
+                            onClick={() => handleRemoveLocation(program.location_details)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="Remove location"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <input 
+                        type="text" 
+                        value={program.location_details}
+                        onChange={e => setProgram({...program, location_details: e.target.value})}
+                        placeholder="Type location or click + Add Location..."
+                        className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black"
+                      />
+                      <p className="text-[10px] text-gray-400">Click &quot;+ Add Location&quot; to manage custom location options.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

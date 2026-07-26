@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ const PaystackButton = dynamic(() => import("./PaystackButton"), {
 
 export default function CheckoutClient({ email, amount, orderId }) {
   const router = useRouter();
+  const paymentCompletedRef = useRef(false);
 
   const safeAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
 
@@ -22,10 +23,11 @@ export default function CheckoutClient({ email, amount, orderId }) {
     window.history.pushState(null, "", window.location.href);
 
     const handlePopState = (event) => {
-      // Show the cancellation toast instead of navigating back immediately
-      triggerCancelToast();
-      // Re-push state to keep the user on the page until they confirm
-      window.history.pushState(null, "", window.location.href);
+      // Only show cancellation toast if payment was not completed
+      if (!paymentCompletedRef.current) {
+        triggerCancelToast();
+        window.history.pushState(null, "", window.location.href);
+      }
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -58,6 +60,7 @@ export default function CheckoutClient({ email, amount, orderId }) {
   };
 
   const handleSuccess = (response) => {
+    paymentCompletedRef.current = true;
     console.log("PAYSTACK SUCCESS RESPONSE:", response);
     const ref = (typeof response === 'string')
       ? response
@@ -69,7 +72,9 @@ export default function CheckoutClient({ email, amount, orderId }) {
 
   const handleClose = () => {
     console.log("Paystack modal closed by user.");
-    triggerCancelToast(); // Also trigger on modal close
+    if (!paymentCompletedRef.current) {
+      triggerCancelToast();
+    }
   };
 
   return (

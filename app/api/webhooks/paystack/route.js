@@ -66,16 +66,22 @@ export async function POST(req) {
 
       const supabase = createAdminClient();
 
-      // 3. Fetch order details to get user_id, program_id, and program_name
+      // 3. Fetch order details to get user_id, program_id, program_name, and status
       const { data: order, error: orderError } = await supabase
         .from("orders")
-        .select("user_id, program_id, program_name")
+        .select("id, status, user_id, program_id, program_name")
         .eq("id", orderId)
         .single();
 
       if (orderError || !order) {
         console.error("Error fetching order:", orderError);
         return new Response("Order not found", { status: 404 });
+      }
+
+      // Idempotency check: if order is already paid, return 200 immediately
+      if (order.status === "paid") {
+        console.log(`Order ${orderId} is already marked as paid. Returning 200 OK (idempotent).`);
+        return NextResponse.json({ received: true, message: "Order already processed" }, { status: 200 });
       }
 
       // 4. Update the order status in Supabase
@@ -106,14 +112,14 @@ export async function POST(req) {
         console.error("Error creating payment record:", paymentError);
       }
 
-      // 6. Grant program access
+      // 6. Grant program access via client_programs and auto-approve to prevent bottleneck
       const { error: accessError } = await supabase
-        .from("program_access")
+        .from("client_programs")
         .insert({
-          user_id: order.user_id,
+          client_id: order.user_id,
           program_id: order.program_id,
-          order_id: orderId,
-          access_type: "purchase"
+          status: "active",
+          review_status: "approved"
         });
 
       if (accessError) {
@@ -145,6 +151,54 @@ export async function POST(req) {
       }
 
       console.log(`Payment successful for Order ${orderId}. Emails sent and database updated.`);
+    } else if (event === "subscription.create") {
+      const supabase = createAdminClient();
+      const customerEmail = data.customer.email;
+      
+      // Find the user by email (or order metadata if available)
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', customerEmail)
+        .single();
+        
+      if (userProfile) {
+        await supabase.from("subscriptions").insert({
+          client_id: userProfile.id,
+          paystack_subscription_code: data.subscription_code,
+          plan_code: data.plan.plan_code,
+          status: 'active',
+          next_billing_date: data.next_payment_date
+        });
+        console.log(`Subscription created for ${customerEmail}`);
+      }
+    } else if (event === "subscription.disable") {
+      const supabase = createAdminClient();
+      await supabase
+        .from("subscriptions")
+        .update({ status: 'non-renewing' })
+        .eq('paystack_subscription_code', data.subscription_code);
+      console.log(`Subscription ${data.subscription_code} disabled.`);
+    } else if (event === "invoice.payment_failed") {
+      const supabase = createAdminClient();
+      // Mark subscription as past_due
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .update({ status: 'past_due' })
+        .eq('paystack_subscription_code', data.subscription.subscription_code)
+        .select('client_id')
+        .single();
+        
+      if (sub && sub.client_id) {
+        // Find their active client_programs to revoke access (assuming 1 active program per client for now, or match plan)
+        // Ideally we map plan_code to program_id, but revoking all 'active' for safety if failed
+        await supabase
+          .from("client_programs")
+          .update({ status: 'expired' })
+          .eq('client_id', sub.client_id)
+          .eq('status', 'active');
+        console.log(`Access revoked for client ${sub.client_id} due to payment failure.`);
+      }
     }
 
     return NextResponse.json({ received: true }, { status: 200 });

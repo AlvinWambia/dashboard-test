@@ -49,3 +49,18 @@ CREATE POLICY "Allow authenticated users to update wellness_settings" ON public.
 INSERT INTO public.wellness_settings (id, affirmation_quote)
 VALUES (1, 'Take a deep breath. You are capable of amazing things.')
 ON CONFLICT (id) DO NOTHING;
+
+-- Storage bucket for wellness post thumbnail images (public)
+INSERT INTO storage.buckets (id, name, public) VALUES ('wellness-images', 'wellness-images', true) ON CONFLICT (id) DO NOTHING;
+
+-- Allow anyone to view wellness images
+CREATE POLICY "Public Access to wellness images"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'wellness-images');
+
+-- Allow authenticated users (admins) to upload wellness images
+CREATE POLICY "Authenticated users can upload wellness images"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'wellness-images');
+

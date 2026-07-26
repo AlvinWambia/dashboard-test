@@ -1,13 +1,109 @@
 "use client";
 
-import React, { useState } from "react";
-import { Plus, Trash2, Edit, Save, X, Image as ImageIcon } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Plus, Trash2, Edit, Save, X, Image as ImageIcon, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/supabase/client";
 
+// ─── Reusable Image Upload Picker ────────────────────────────────────────────
+function ImageUploadPicker({
+  value,
+  onChange,
+  bucket = "wellness-images",
+}: {
+  value: string;
+  onChange: (url: string) => void;
+  bucket?: string;
+}) {
+  const supabase = createClient();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError("");
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${ext}`;
+
+      const { data, error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
+
+      onChange(urlData.publicUrl);
+    } catch (err: any) {
+      console.error("Image upload error:", err);
+      setError("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-sm font-medium text-gray-700 mb-1">Thumbnail Image</label>
+
+      {value ? (
+        /* ── Preview with hover overlay ── */
+        <div className="relative group w-full h-40 rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+          <img src={value} alt="Thumbnail preview" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+            <label className="cursor-pointer bg-white text-gray-900 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+              Change
+              <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={uploading} />
+            </label>
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* ── Upload drop zone ── */
+        <label className={`flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+          uploading ? "border-purple-300 bg-purple-50" : "border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300"
+        }`}>
+          <div className="flex flex-col items-center gap-2 text-center px-4">
+            {uploading ? (
+              <>
+                <div className="w-6 h-6 border-2 border-[#9c6fbd] border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs font-medium text-[#9c6fbd]">Uploading...</span>
+              </>
+            ) : (
+              <>
+                <UploadCloud className="w-7 h-7 text-gray-400" />
+                <span className="text-xs font-semibold text-gray-600">Click to choose image</span>
+                <span className="text-[10px] text-gray-400">JPG, PNG, WEBP</span>
+              </>
+            )}
+          </div>
+          <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={uploading} />
+        </label>
+      )}
+
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 interface AdminWellnessClientProps {
   initialAffirmation: string;
   initialPosts: any[];
@@ -230,8 +326,8 @@ export default function AdminWellnessClient({ initialAffirmation, initialPosts }
       {/* Modal for Create/Edit */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
               <h2 className="text-2xl font-bold text-gray-900">
                 {editingPost ? "Edit Post" : "Create New Post"}
               </h2>
@@ -240,50 +336,44 @@ export default function AdminWellnessClient({ initialAffirmation, initialPosts }
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                  <Input 
-                    required 
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    placeholder="E.g., The Power of Morning Meditation"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                    <select 
-                      value={formData.category}
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#E3C5EE]"
-                    >
-                      {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Thumbnail Image URL</label>
-                    <Input 
-                      required
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                      placeholder="https://images.unsplash.com/..."
-                    />
-                  </div>
-                </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <Input 
+                  required 
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  placeholder="E.g., The Power of Morning Meditation"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Content (Essay)</label>
-                  <Textarea 
-                    required 
-                    value={formData.content}
-                    onChange={(e) => setFormData({...formData, content: e.target.value})}
-                    placeholder="Write your essay here..."
-                    className="min-h-[200px]"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select 
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  className="w-full h-10 px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#E3C5EE]"
+                >
+                  {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+
+              {/* Image Upload Picker replaces URL text input */}
+              <ImageUploadPicker
+                value={formData.image_url}
+                onChange={(url) => setFormData({...formData, image_url: url})}
+                bucket="wellness-images"
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Content (Essay)</label>
+                <Textarea 
+                  required 
+                  value={formData.content}
+                  onChange={(e) => setFormData({...formData, content: e.target.value})}
+                  placeholder="Write your essay here..."
+                  className="min-h-[200px]"
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">

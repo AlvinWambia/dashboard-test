@@ -28,6 +28,14 @@ export default async function ProgramBuilderPage({ searchParams }) {
     if (!programError && program) {
       initialData = { ...initialData, ...program, steps: [] };
 
+      // Fetch assets
+      const { data: assets } = await supabase
+        .from('program_assets')
+        .select('*')
+        .eq('program_id', id);
+
+      initialData.assets = assets || [];
+
       // Fetch steps
       const { data: steps } = await supabase
         .from('form_steps')
