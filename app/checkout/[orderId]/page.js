@@ -1,16 +1,12 @@
 import { createClient } from "@/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import CheckoutClient from "@/components/CheckoutClient";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { ArrowUpRight, Heart, Activity, MousePointer2, Plus, AlertCircleIcon, Plane, Tag, MessageSquare, Star, Pencil, CreditCard } from "lucide-react";
+import { CreditCard, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
-// This page will be responsible for displaying the order details
-// and handling the payment process.
 export default async function CheckoutPage({ params }) {
     const { orderId } = await params;
     const supabase = await createClient();
@@ -18,107 +14,135 @@ export default async function CheckoutPage({ params }) {
     // Fetch the logged-in user to get their email
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Item 6: Redirect unauthenticated user to login before rendering
     if (!user) {
         redirect(`/auth/login?redirect=/checkout/${orderId}`);
     }
 
-    // Fetch the order details from the database
+    // Fetch order details
     const { data: order, error } = await supabase
         .from('orders')
         .select('*')
         .eq('id', orderId)
         .single();
 
-    // Item 2: Fix IDOR vulnerability - verify order exists and belongs to logged-in user
+    // Verify IDOR ownership
     if (error || !order || order.user_id !== user.id) {
-        console.error(`Error or unauthorized access for order ID ${orderId}.`);
+        console.error(`Unauthorized access for order ID ${orderId}.`);
         notFound();
     }
 
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-            <div className="w-full max-w-md lg:max-w-6xl grid lg:grid-cols-2 lg:h-[40rem] rounded-3xl shadow-2xl bg-white overflow-hidden">
-                <div className="mx-5 my-5">
-                    <h1 className="text-2xl font-semibold mb-2  pb-2 mx-5 mt-4">Checkout</h1>
-                    <Tabs defaultValue="customerInformation" className="mx-5">
-                        <TabsList variant="line">
-                            <TabsTrigger value="customerInformation">Customer Information</TabsTrigger>
-                            <TabsTrigger value="paymentDetails">Payment Details</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="customerInformation">
-                            <h2 className="text-xl font-bold mb-1 mt-5">Check Out Your Items</h2>
-                            <p className="text-sm text-muted-foreground mb-6">For a better experience, check your item and choose your shipping before ordering.</p>
+    const formattedPrice = (typeof order.price === 'number' ? order.price : parseFloat(order.price) || 0)
+        .toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="fullName">Full name</Label>
-                                    <Input id="fullName" placeholder="Name" defaultValue={user?.user_metadata?.full_name || ""} className="bg-white border-2 focus-visible:ring-slate-300" />
-                                </div>
-                                <div className="space-y-2 ">
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input id="email" placeholder="Email" defaultValue={user?.email || ""} className="bg-white border-2 focus-visible:ring-slate-300" />
+    return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+            <div className="w-full max-w-5xl bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden grid lg:grid-cols-12 gap-0">
+                {/* Left Side: Order & Customer Information */}
+                <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between space-y-8">
+                    <div>
+                        <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+                            <span>Step 2 of 2</span>
+                            <span>•</span>
+                            <span className="text-black">Secure Checkout</span>
+                        </div>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Complete Your Purchase</h1>
+                        <p className="text-sm text-slate-500 mb-6">Review your customer account details and select your payment method.</p>
+
+                        <div className="space-y-6">
+                            {/* Account Details Box */}
+                            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/60 space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide">Account Details</h3>
+                                <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <Label className="text-xs text-slate-500">Full Name</Label>
+                                        <Input
+                                            readOnly
+                                            value={user?.user_metadata?.full_name || "Customer"}
+                                            className="bg-white/80 border-slate-200 mt-1 cursor-not-allowed text-slate-700 font-medium"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-slate-500">Email Address</Label>
+                                        <Input
+                                            readOnly
+                                            value={user?.email || ""}
+                                            className="bg-white/80 border-slate-200 mt-1 cursor-not-allowed text-slate-700 font-medium"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            <section className="mt-5">
-                                <div className="flex justify-between items-end mb-4">
-                                    <h3 className="font-bold">Payment Method</h3>
-                                </div>
-
-                                <div className="relative group">
-                                    <div className="flex items-center justify-between p-5 border-1 border-slate-500 rounded-2xl bg-white shadow-sm transition-all">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-10 bg-gray-100 rounded-lg flex items-center justify-center border">
-                                                <CreditCard className="w-6 h-6 text-blue-600" />
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-sm">Paystack</p>
-                                                <p className="text-xs text-muted-foreground italic">Visa, M-Pesa, and Paypal.</p>
-                                            </div>
+                            {/* Payment Method Selector */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide">Payment Gateway</h3>
+                                <div className="border-2 border-black rounded-2xl p-4 bg-slate-900 text-white flex items-center justify-between shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                                            <CreditCard className="w-5 h-5 text-white" />
                                         </div>
-                                        <div className="bg-black text-white rounded-full p-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                <polyline points="20 6 9 17 4 12" />
-                                            </svg>
+                                        <div>
+                                            <p className="font-semibold text-sm">Paystack Checkout</p>
+                                            <p className="text-xs text-slate-400">Supports M-Pesa, Visa, Mastercard & Cards</p>
                                         </div>
                                     </div>
-                                    <p className="text-[11px] text-muted-foreground mt-2 px-1">Your transaction is encrypted and secure.</p>
+                                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                                 </div>
-                            </section>
-                        </TabsContent>
-                    </Tabs>
-                    <p className="text-sm mx-5 my-4">Once you confirm your details are fine, proceed with payment.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Trust Badges Footer */}
+                    <div className="pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
+                        <div className="flex items-center gap-2">
+                            <Lock className="w-4 h-4 text-emerald-600" />
+                            <span>256-Bit SSL Encrypted</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-blue-600" />
+                            <span>Instant Access Guaranteed</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="bg-white p-8 rounded-lg  max-w-md mx-auto">
-                    <Card className="mx-auto w-100 px-5" >
-                        <h2 className="text-2xl font-semibold pb-2">Order Summary</h2>
-                        <p className="text-xs text-muted-foreground  mb-2">The sum of all total payments for goods there</p>
-                        <div className="space-y-2 mb-6">
-                            <p><strong>Product:</strong></p>
-                            <p className="text-lg">{order.program_name}</p>
-                        </div>
-                        <Separator />
-                        <div className="space-y-3 text-sm">
-                            <div className="flex justify-between font-bold text-lg my-1">
-                                <span>Total</span>
-                                <p className="text-lg font-bold">KES {order.price.toFixed(2)}</p>
+                {/* Right Side: Order Summary Card */}
+                <div className="lg:col-span-5 bg-slate-900 p-6 sm:p-10 text-white flex flex-col justify-between space-y-6">
+                    <div>
+                        <h2 className="text-xl font-bold mb-1">Order Summary</h2>
+                        <p className="text-xs text-slate-400 mb-6">Review your order before proceeding to payment.</p>
+
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+                            <div>
+                                <p className="text-xs text-slate-400 uppercase font-semibold">Program Selected</p>
+                                <p className="text-lg font-bold text-white mt-1">{order.program_name || "Fitness Program"}</p>
                             </div>
-                            <div className="flex justify-between text-muted-foreground my-1">
-                                <span>Order id</span>
-                                <p className="text-xs pl-8 pt-1">{order.id}</p>
+
+                            <Separator className="bg-white/10" />
+
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between text-slate-300">
+                                    <span>Subtotal</span>
+                                    <span>KES {formattedPrice}</span>
+                                </div>
+                                <div className="flex justify-between text-slate-300">
+                                    <span>Taxes & Fees</span>
+                                    <span>KES 0.00</span>
+                                </div>
+                                <Separator className="bg-white/10 my-2" />
+                                <div className="flex justify-between text-lg font-bold text-white pt-1">
+                                    <span>Total Due</span>
+                                    <span className="text-emerald-400">KES {formattedPrice}</span>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div className="mt-5">
-                            <CheckoutClient 
-                                email={user?.email || "customer@example.com"} 
-                                amount={order.price} 
-                                orderId={order.id}
-                            />
-                        </div>
-                    </Card>
+                    </div>
+
+                    <div>
+                        <CheckoutClient 
+                            email={user?.email || "customer@example.com"} 
+                            amount={order.price} 
+                            orderId={order.id}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

@@ -161,8 +161,6 @@ function ScrollReveal({ children, delay = 0, direction = "up" }) {
 
 
 function ImageScrollyStep({ image, title, description, badge, buttonText, link, onInView }) {
-
-
     const ref = React.useRef(null)
 
     React.useEffect(() => {
@@ -172,7 +170,7 @@ function ImageScrollyStep({ image, title, description, badge, buttonText, link, 
                     onInView()
                 }
             },
-            { threshold: 0.6 }
+            { threshold: 0.4 }
         )
 
         const currentRef = ref.current
@@ -184,36 +182,37 @@ function ImageScrollyStep({ image, title, description, badge, buttonText, link, 
     }, [onInView])
 
     return (
-        <div ref={ref} className="min-h-[80vh] lg:h-[85vh] w-full flex items-center justify-center p-4">
-            <div className="relative w-full h-full rounded-[2rem] overflow-hidden transform transition-transform hover:scale-[1.01] duration-500 shadow-xl">
-                <img
-                    src={image}
-                    alt={title}
-                    className="w-full h-full object-cover"
-                />
+        <div ref={ref} className="w-full flex flex-col justify-center p-0 lg:p-4 lg:min-h-[80vh] lg:h-[85vh]">
+            <div className="bg-white rounded-3xl lg:rounded-[2rem] overflow-hidden transform transition-all duration-500 shadow-lg border border-slate-100/80 flex flex-col w-full h-full">
+                {/* Image Container */}
+                <div className="relative w-full h-64 sm:h-80 md:h-[420px] lg:h-full overflow-hidden flex-shrink-0">
+                    <img
+                        src={image}
+                        alt={title}
+                        className="w-full h-full object-cover object-top"
+                    />
+                    <div className="hidden lg:block absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                </div>
 
-                {/* Mobile/Tablet Text Overlay (Visible below 'lg' breakpoint) */}
-                <div className="lg:hidden absolute bottom-4 left-4 right-4 bg-black/40 backdrop-blur-xl rounded-3xl p-6 md:p-8 flex flex-col border border-white/20 shadow-2xl">
-                    <Badge variant="outline" className="w-fit rounded-full px-4 py-1 mb-4 text-white border-white/30 bg-white/10 backdrop-blur-md">
+                {/* Mobile & Tablet Dedicated Content Card (Visible below 'lg' breakpoint) */}
+                <div className="lg:hidden p-6 sm:p-8 flex flex-col bg-white">
+                    <Badge variant="outline" className="w-fit rounded-full px-3 py-1 mb-3 text-slate-700 border-slate-200 bg-slate-50">
                         {badge}
                     </Badge>
-                    <h3 className="text-white text-2xl md:text-4xl font-bold mb-3 tracking-tight">
+                    <h3 className="text-slate-900 text-xl sm:text-2xl font-bold mb-3 tracking-tight">
                         {title}
                     </h3>
-                    <p className="text-white/90 text-sm md:text-lg mb-6 leading-relaxed">
+                    <p className="text-slate-600 text-sm sm:text-base mb-6 leading-relaxed">
                         {description}
                     </p>
                     {buttonText && (
                         <Link href={link || "#"}>
-                            <Button className="w-full sm:w-fit bg-white text-black hover:bg-slate-100 rounded-full px-6 py-5 font-semibold text-sm shadow-lg transition-all active:scale-95">
+                            <Button className="w-full sm:w-fit bg-black text-white hover:bg-zinc-800 rounded-full px-6 py-3 font-semibold text-sm shadow-md transition-all active:scale-95">
                                 {buttonText}
                             </Button>
                         </Link>
                     )}
                 </div>
-
-                {/* Subtle desktop-only gradient */}
-                <div className="hidden lg:block absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
         </div>
     )
@@ -261,7 +260,7 @@ export default function HomeClient({ products, programs, testimonials, about, lo
         },
         {
             title: "Pelesia - Lead Instructor",
-            description: "A little bit about the trainer, instructor and the dietor. How she does her things and many more. Expertise in nutrition and physical training for holistic wellness.",
+            description: "Hey there, This is Pelesia Wambia. A certified fitness coach and sports and wellness enthusiasist. I focus mainly on women's strength training, body toning, nutrition goals and overall health",
             badge: "Expertise",
             image: pele.src,
             buttonText: "More About Pelesia",
@@ -341,8 +340,19 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                     .from('profiles')
                     .select('full_name, role')
                     .eq('id', user.id)
-                    .single();
-                setUserProfile(profile);
+                    .maybeSingle();
+
+                const fullName = profile?.full_name
+                    || user.user_metadata?.full_name
+                    || user.user_metadata?.name
+                    || user.email?.split('@')[0]
+                    || "Member";
+
+                setUserProfile({
+                    ...profile,
+                    full_name: fullName,
+                    role: profile?.role || user.user_metadata?.role || 'user'
+                });
             }
         };
         fetchUser();
@@ -628,15 +638,15 @@ export default function HomeClient({ products, programs, testimonials, about, lo
 
 
 
-                    <section id="about" className="relative py-24">
-                        <div className="max-w-7xl mx-auto px-4 md:px-6">
+                    <section id="about" className="relative py-12 md:py-24">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6">
                             <ScrollReveal>
-                                <div className="mb-20 text-center">
-                                    <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200 mx-auto">
+                                <div className="mb-10 md:mb-20 text-center">
+                                    <Badge variant="outline" className="rounded-full px-4 py-1 mb-4 sm:mb-6 bg-white border-slate-200 mx-auto">
                                         <MessageSquare className="w-3 h-3 mr-2" /> About
                                     </Badge>
-                                    <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-8">About MyFit</h2>
-                                    <p className="text-slate-500 text-lg md:text-xl max-w-2xl mx-auto">
+                                    <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 sm:mb-8">About MyFit</h2>
+                                    <p className="text-slate-500 text-sm sm:text-lg md:text-xl max-w-2xl mx-auto">
                                         We take pride in delivering exceptional solutions that deliver great results. Our journey is defined by the success of our clients.
                                     </p>
                                 </div>
@@ -690,7 +700,7 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                                 </div>
 
                                 {/* Right: Scrolling Images (Leader) */}
-                                <div className="w-full lg:w-1/2 space-y-12 lg:space-y-40">
+                                <div className="w-full lg:w-1/2 space-y-8 sm:space-y-12 lg:space-y-40">
                                     {aboutSteps.map((step, i) => (
                                         <ImageScrollyStep
                                             key={i}

@@ -58,3 +58,15 @@ USING (bucket_id = 'nutrition-images');
 CREATE POLICY "Anyone can upload nutrition images" 
 ON storage.objects FOR INSERT 
 WITH CHECK (bucket_id = 'nutrition-images');
+
+-- Policy to allow authenticated users to update nutrition images
+CREATE POLICY "Authenticated users can update nutrition images"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id = 'nutrition-images');
+
+-- Policy to allow authenticated users to delete nutrition images
+CREATE POLICY "Authenticated users can delete nutrition images"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'nutrition-images');

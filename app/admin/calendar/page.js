@@ -62,8 +62,7 @@ export default function CalenderPage() {
                 .eq('id', user.id)
                 .single();
 
-            if (!profileData || profileData.role !== 'admin') {
-                router.push("/home?error=unauthorized");
+            if (!profileData) {
                 return;
             }
             setProfile(profileData);

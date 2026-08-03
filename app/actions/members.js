@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/supabase/server'
+import { createAdminClient } from '@/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 /**
@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache'
  * @param {string} userId - The ID of the user to delete.
  */
 export async function deleteUser(userId) {
-    const supabase = createClient()
+    const supabase = createAdminClient()
 
     const { error } = await supabase.auth.admin.deleteUser(userId)
 

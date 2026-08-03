@@ -79,7 +79,7 @@ export async function approveApplication(appId) {
         if (process.env.RESEND_API_KEY) {
             try {
                 await resend.emails.send({
-                    from: 'MyFit <noreply@resend.dev>', // Update with a verified domain in production
+                    from: 'MyFit <info@myfitraining.com>', // Update with a verified domain in production
                     to: app.profiles.email,
                     subject: `Application Approved: ${app.programs.title}`,
                     html: emailHtml,

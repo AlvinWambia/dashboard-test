@@ -29,7 +29,11 @@ export default function AboutPelesia() {
 
         {/* Bracketed Text */}
         <div className="max-w-4xl mx-auto text-center md:text-right text-2xl md:text-4xl font-medium leading-[1.2] mb-16 md:mb-24 tracking-tight">
-          [ I'm Pelesia. From a love of holistic wellness to a career in fitness instruction, I've grown through helping individuals transform their bodies and minds. ]
+          [  Hi there,
+          How are you? Coach P here.
+          Well my name is Pelesia Wambia, a certified fitness coach and sports and wellness enthusiasist. I specfically work with women and my mission is to help women feel confident and comfortable under their skin without compromising their health.
+          I focus mainly on women's strength training, body toning, nutrition goals and overall health.
+          ]
         </div>
 
         {/* Large Image */}

@@ -64,3 +64,15 @@ ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'wellness-images');
 
+-- Allow authenticated users (admins) to update wellness images
+CREATE POLICY "Authenticated users can update wellness images"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id = 'wellness-images');
+
+-- Allow authenticated users (admins) to delete wellness images
+CREATE POLICY "Authenticated users can delete wellness images"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'wellness-images');
+

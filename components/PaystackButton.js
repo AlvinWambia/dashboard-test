@@ -6,6 +6,8 @@ import { PaystackButton as PaystackButtonComponent } from "react-paystack";
 const PaystackButton = ({ email, amount, currency = "KES", metadata, onSuccess, onClose }) => {
   const displayAmount = typeof amount === 'number' ? amount : 0;
 
+  const formattedAmount = displayAmount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
   // Configuration for Paystack
   const componentProps = {
     email: email || "customer@example.com",
@@ -17,7 +19,7 @@ const PaystackButton = ({ email, amount, currency = "KES", metadata, onSuccess, 
       }
     },
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-    text: `Pay ${currency} ${displayAmount.toFixed(2)} Now`,
+    text: `Pay ${currency} ${formattedAmount} Now`,
     onSuccess: (response) => {
       console.log("PAYSTACK COMPONENT SUCCESS:", response);
       if (onSuccess) onSuccess(response);
@@ -32,8 +34,8 @@ const PaystackButton = ({ email, amount, currency = "KES", metadata, onSuccess, 
 
   if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
     return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center">
-        Paystack Public Key missing
+      <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center text-sm font-medium">
+        Paystack Configuration Error: NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is missing.
       </div>
     );
   }
@@ -42,7 +44,7 @@ const PaystackButton = ({ email, amount, currency = "KES", metadata, onSuccess, 
     <div className="w-full">
       <PaystackButtonComponent
         {...componentProps}
-        className="w-full py-6 text-lg bg-black hover:bg-zinc-800 rounded-2xl text-white font-medium transition-colors"
+        className="w-full py-4 text-base font-semibold bg-black hover:bg-zinc-800 active:scale-[0.99] rounded-2xl text-white shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
       />
     </div>
   );

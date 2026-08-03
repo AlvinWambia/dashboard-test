@@ -22,7 +22,7 @@ export async function createOrder(productId) {
   // to prevent clients from tampering with the price.
   const { data: product, error: productError } = await supabase
     .from('programs')
-    .select('price, name')
+    .select('price, title, name')
     .eq('id', productId)
     .single();
 
@@ -38,7 +38,7 @@ export async function createOrder(productId) {
     .insert({
       user_id: user.id,
       program_id: productId,
-      program_name: product.name, // Use the server-verified name
+      program_name: product.title || product.name || 'Program Order', // Use the server-verified name/title
       price: product.price, // Use the server-verified price
       status: 'pending',
     })

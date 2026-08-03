@@ -100,7 +100,21 @@ CREATE POLICY "Public Access"
 ON storage.objects FOR SELECT 
 USING (bucket_id = 'program-images');
 
--- Note: Admin uploads will be handled via the service role key which bypasses RLS.
+-- Policies to allow authenticated users (specifically admins) to manage program images
+CREATE POLICY "Allow authenticated users to upload program images"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'program-images');
+
+CREATE POLICY "Allow authenticated users to update program images"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id = 'program-images');
+
+CREATE POLICY "Allow authenticated users to delete program images"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'program-images');
 
 -- Create Form Responses Table (Stores user answers)
 CREATE TABLE IF NOT EXISTS public.form_responses (
@@ -166,6 +180,22 @@ INSERT INTO storage.buckets (id, name, public) VALUES ('program-documents', 'pro
 -- A more robust policy would check client_programs, but for now we restrict to authenticated users
 CREATE POLICY "Authenticated Document Access" 
 ON storage.objects FOR SELECT 
+TO authenticated
+USING (bucket_id = 'program-documents');
+
+-- Policies to allow authenticated users (specifically admins) to manage program documents
+CREATE POLICY "Allow authenticated users to upload program documents"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'program-documents');
+
+CREATE POLICY "Allow authenticated users to update program documents"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id = 'program-documents');
+
+CREATE POLICY "Allow authenticated users to delete program documents"
+ON storage.objects FOR DELETE
 TO authenticated
 USING (bucket_id = 'program-documents');
 

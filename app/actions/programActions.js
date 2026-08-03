@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/supabase/server";
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "crypto";
 
 export async function saveProgram(programId, data) {
   try {
@@ -58,6 +59,7 @@ export async function saveProgram(programId, data) {
     // 1. Upsert Program
     const programData = {
       title: data.title,
+      name: data.title, // Map name to title for database schema constraint and legacy compatibility
       description: data.description,
       image_url: data.image_url,
       payment_type: paymentType,
@@ -83,9 +85,12 @@ export async function saveProgram(programId, data) {
         .eq('id', pId);
       if (error) throw new Error("Failed to update program: " + error.message);
     } else {
+      // Generate a new UUID client/server side since the DB lacks a default uuid generator
+      const newId = randomUUID();
+      const insertData = { ...programData, id: newId };
       const { data: newProgram, error } = await supabase
         .from('programs')
-        .insert([programData])
+        .insert([insertData])
         .select()
         .single();
       if (error) throw new Error("Failed to create program: " + error.message);
@@ -118,6 +123,8 @@ export async function saveProgram(programId, data) {
     }
 
     revalidatePath('/admin/programs');
+    revalidatePath('/home2');
+    revalidatePath('/');
     return { success: true, id: pId };
 
   } catch (error) {

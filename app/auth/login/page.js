@@ -66,12 +66,8 @@ export default function LoginPage() {
             return;
         }
 
-        // 3. Redirect based on the database role
-        if (profile?.role === 'admin') {
-            router.replace('/admin/dashboard');
-        } else {
-            router.replace('/?signed_in=true');
-        }
+        // 3. Redirect to the homepage after successful login
+        router.replace('/?signed_in=true');
 
         setLoading(false);
     };

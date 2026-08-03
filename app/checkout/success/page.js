@@ -140,18 +140,14 @@ export default async function SuccessPage({ searchParams }) {
         )}
 
         <div className="space-y-3">
-          {hasIntakeForm ? (
-            <Button asChild className="w-full py-6 rounded-2xl bg-black hover:bg-zinc-800">
-              <Link href="/home2">Go to Dashboard</Link>
-            </Button>
-          ) : (
-            <Button asChild className="w-full py-6 rounded-2xl bg-black hover:bg-zinc-800">
-              <Link href={`/form?orderId=${actualOrderId}`}>Fill Intake Form</Link>
+          <Button asChild className="w-full py-6 rounded-2xl bg-black hover:bg-zinc-800 text-white font-medium text-base shadow-lg transition-all">
+            <Link href="/profile">View Program</Link>
+          </Button>
+          {!hasIntakeForm && (
+            <Button asChild variant="outline" className="w-full py-6 rounded-2xl border-slate-200 hover:bg-slate-50">
+              <Link href={`/form?orderId=${actualOrderId}`}>Complete Intake Form</Link>
             </Button>
           )}
-          <Button asChild variant="ghost" className="w-full py-6 rounded-2xl">
-            <Link href="/home2">Back to Home</Link>
-          </Button>
         </div>
       </div>
     </div>

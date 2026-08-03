@@ -139,7 +139,7 @@ export async function POST(req) {
         `;
 
         await resend.emails.send({
-          from: "myFit <onboarding@resend.dev>", // Replace with your verified domain
+          from: "myFit <info@myfitraining.com>", // Replace with your verified domain
           to: customerEmail,
           subject: emailSubject,
           react: AdminEmailTemplate({ subject: emailSubject, htmlContent: emailHtml }),

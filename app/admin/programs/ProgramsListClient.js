@@ -43,15 +43,15 @@ export default function ProgramsListClient({ initialPrograms }) {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full animate-in fade-in-0 duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full animate-in fade-in-0 duration-500">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Programs</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your subscription programs and forms.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Programs</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Manage your subscription programs and forms.</p>
         </div>
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 flex-1 sm:w-64">
-            <Search size={20} className="text-gray-400 ml-2" />
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 w-full sm:w-64">
+            <Search size={18} className="text-gray-400 ml-2 flex-shrink-0" />
             <input 
               type="text" 
               placeholder="Search programs..." 
@@ -65,8 +65,8 @@ export default function ProgramsListClient({ initialPrograms }) {
               </button>
             )}
           </div>
-          <Link href="/admin/programs/builder">
-            <button className="bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all shadow-sm active:scale-95 whitespace-nowrap">
+          <Link href="/admin/programs/builder" className="w-full sm:w-auto">
+            <button className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95 whitespace-nowrap">
               <Plus size={18} />
               Create Program
             </button>
@@ -74,7 +74,8 @@ export default function ProgramsListClient({ initialPrograms }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -98,20 +99,20 @@ export default function ProgramsListClient({ initialPrograms }) {
                           <BookOpen size={20} className="text-gray-400" />
                         )}
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900 text-sm">{program.title}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 text-sm truncate">{program.title}</p>
                         <p className="text-xs text-gray-500 truncate max-w-xs">{program.description || 'No description'}</p>
                       </div>
                     </div>
                   </td>
                   <td className="p-4">
-                    <div className="text-sm text-gray-600 font-mono">
+                    <div className="text-sm text-gray-600 font-mono truncate">
                       {program.paystack_plan_code || <span className="text-gray-400 italic">Not set</span>}
                     </div>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <Users size={16} className="text-gray-400" />
+                      <Users size={16} className="text-gray-400 flex-shrink-0" />
                       <span className="font-medium">{program.activeSubscribers}</span>
                     </div>
                   </td>
@@ -168,6 +169,89 @@ export default function ProgramsListClient({ initialPrograms }) {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile & Tablet Card Grid View */}
+      <div className="block md:hidden space-y-4">
+        {filteredPrograms.map((program) => (
+          <div key={program.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {program.image_url ? (
+                    <img src={program.image_url} alt={program.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <BookOpen size={20} className="text-gray-400" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-sm">{program.title}</h3>
+                  <p className="text-xs text-gray-500 line-clamp-1">{program.description || 'No description'}</p>
+                </div>
+              </div>
+              {program.is_active ? (
+                <span className="px-2.5 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
+                  Active
+                </span>
+              ) : (
+                <span className="px-2.5 py-1 text-xs font-medium bg-gray-50 text-gray-700 rounded-full border border-gray-200">
+                  Draft
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 text-xs text-gray-600">
+              <div>
+                <span className="text-gray-400 block mb-0.5">Plan Code</span>
+                <span className="font-mono text-gray-800 font-medium">
+                  {program.paystack_plan_code || 'Not set'}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-400 block mb-0.5">Subscribers</span>
+                <span className="font-medium text-gray-800 flex items-center gap-1">
+                  <Users size={12} className="text-gray-400" />
+                  {program.activeSubscribers} Active
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-50">
+              <Link href={`/admin/programs/builder?id=${program.id}`} className="flex-1">
+                <button className="w-full text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 hover:bg-gray-100 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5">
+                  <Edit size={14} />
+                  Edit
+                </button>
+              </Link>
+              <button 
+                onClick={() => setDeleteModalProgram(program)}
+                className="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 border border-red-100 hover:bg-red-100 rounded-xl transition-all flex items-center gap-1.5"
+              >
+                <Trash2 size={14} />
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {filteredPrograms.length === 0 && (
+          <div className="bg-white rounded-2xl p-8 text-center text-gray-500 border border-gray-100">
+            <BookOpen size={40} className="mx-auto text-gray-300 mb-3" />
+            <p className="text-base font-medium text-gray-900">
+              {searchQuery ? `No programs matching "${searchQuery}"` : 'No programs found'}
+            </p>
+            <p className="text-xs text-gray-500 mt-1 mb-4">
+              {searchQuery ? 'Try adjusting your search terms.' : 'Get started by creating your first program.'}
+            </p>
+            {!searchQuery && (
+              <Link href="/admin/programs/builder">
+                <button className="text-xs font-medium text-black bg-white border border-gray-200 shadow-sm hover:bg-gray-50 px-4 py-2 rounded-xl transition-all">
+                  Create Program
+                </button>
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}

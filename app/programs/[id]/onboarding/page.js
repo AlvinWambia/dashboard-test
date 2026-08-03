@@ -6,11 +6,12 @@ import { ClipboardList, CreditCard, Clock, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function ProgramOnboardingPage({ params }) {
+    const { id } = await params;
     const supabase = createAdminClient();
     const { data: program } = await supabase
         .from('programs')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .single();
 
     if (!program) {
