@@ -53,8 +53,8 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
 
   const filteredPosts = posts.filter((post) => {
-    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          post.content.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "All" || post.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -103,10 +103,10 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl md:text-5xl lg:text-[4rem] font-bold tracking-tight text-slate-900 leading-[1.1]"
+            className="text-3xl md:text-4xl lg:text-[3rem] font-bold tracking-tight text-slate-900 leading-[1.1]"
           >
             Nourish Your <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9c6fbd] to-[#E3C5EE]">Mind & Body</span>
+            <span className="text-4xl md:text-5xl lg:text-[4rem] text-transparent bg-clip-text bg-gradient-to-r from-[#9c6fbd] to-[#E3C5EE]">Mind & Body</span>
           </motion.h1>
 
           <motion.div
@@ -119,15 +119,15 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
               "{initialAffirmation}"
             </p>
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
             className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-6"
           >
-          
-            <Button variant="outline" className="b-2 border-slate-800 hover:bg-transparent hover:text-slate-900 text-slate-700 font-medium px-6 py-6 text-base gap-2 w-full sm:w-auto">
+
+            <Button variant="outline" className="hover:b-2 hover:border-slate-800 bg-[#9c6fbd] text-[#ffff] hover:bg-transparent hover:text-slate-900  font-medium px-6 py-6 text-base gap-2 w-full sm:w-auto">
               <span></span> Explore articles
             </Button>
           </motion.div>
@@ -136,49 +136,49 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
         {/* Right Collage Content - Mobile/Tablet (Visible on < lg) */}
         <div className="block lg:hidden flex-1 w-full mt-12 max-w-md mx-auto">
           <div className="grid grid-cols-2 gap-4">
-            <motion.div 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.6 }}
-               className="col-span-2 relative aspect-video rounded-3xl overflow-hidden shadow-xl"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="col-span-2 relative aspect-video rounded-3xl overflow-hidden shadow-xl"
             >
               <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=800" alt="Fitness" className="w-full h-full object-cover mix-blend-multiply bg-[#E3C5EE]" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
               <div className="absolute bottom-3 left-3 right-3">
                 <div className="bg-white/95 backdrop-blur-md p-3 rounded-2xl flex items-center justify-between shadow-lg border border-white/50">
-                   <div>
-                     <p className="text-[10px] text-gray-500 mb-0.5 font-medium uppercase tracking-wider">Total Readers</p>
-                     <span className="text-xl font-black text-slate-900 leading-none">3,580</span>
-                   </div>
-                   <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white shadow-md">
-                     <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                   </div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 mb-0.5 font-medium uppercase tracking-wider">Wellness articles</p>
+                    <span className="text-xl font-black text-slate-900 leading-none">Find Yourself</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white shadow-md">
+                    <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                  </div>
                 </div>
               </div>
             </motion.div>
-            
-            <motion.div 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.6, delay: 0.2 }}
-               className="relative aspect-square rounded-3xl overflow-hidden shadow-lg border-4 border-white bg-slate-100"
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative aspect-square rounded-3xl overflow-hidden shadow-lg border-4 border-white bg-slate-100"
             >
-               <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800" alt="Meditation" className="w-full h-full object-cover mix-blend-multiply opacity-90" />
+              <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800" alt="Meditation" className="w-full h-full object-cover mix-blend-multiply opacity-90" />
             </motion.div>
-            
-            <motion.div 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.6, delay: 0.4 }}
-               className="bg-[#7A4B86] rounded-3xl p-5 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden border-4 border-white"
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="bg-[#7A4B86] rounded-3xl p-5 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden border-4 border-white"
             >
-               <div className="absolute top-2 right-2 opacity-20">
-                 <svg viewBox="0 0 120 80" fill="none" className="w-12 h-12">
+              <div className="absolute top-2 right-2 opacity-20">
+                <svg viewBox="0 0 120 80" fill="none" className="w-12 h-12">
                   <path d="M10 15 L 110 15 L 50 40 L 110 40 L 30 65 L 100 65" stroke="#E3C5EE" strokeWidth="14" strokeLinejoin="miter" strokeLinecap="square" />
-                 </svg>
-               </div>
-               <span className="text-3xl font-black text-white relative z-10 leading-none mb-1">500+</span>
-               <span className="text-[10px] font-bold text-[#E3C5EE] relative z-10 uppercase tracking-widest">Articles</span>
+                </svg>
+              </div>
+              <span className="text-3xl font-black text-white relative z-10 leading-none mb-1">New</span>
+              <span className="text-[10px] font-bold text-[#E3C5EE] relative z-10 uppercase tracking-widest">Articles</span>
             </motion.div>
           </div>
         </div>
@@ -198,7 +198,7 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
               className="w-full h-full object-cover mix-blend-multiply opacity-90"
             />
           </motion.div>
-          
+
           {/* Main Image 2 (Right) */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -213,7 +213,7 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
             />
             {/* Badge */}
             <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-[#7A4B86] rounded-full border-4 border-white flex flex-col items-center justify-center text-white text-xs font-bold shadow-lg z-20">
-              <span className="text-lg">500+</span>
+              <span className="text-lg">New</span>
               <span>Articles</span>
               <div className="absolute inset-1 border border-white/30 rounded-full" />
               <div className="absolute -inset-2 border border-[#7A4B86]/40 rounded-full" />
@@ -227,9 +227,9 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
             transition={{ duration: 0.6, delay: 0.5 }}
             className="absolute right-[0%] top-[0%] bg-slate-900 text-white p-5 shadow-2xl z-20 w-56 border-4 border-white"
           >
-            <p className="text-sm text-gray-400 mb-1">Total Readers</p>
+            <p className="text-sm text-gray-400 mb-1">Wellness Articles</p>
             <div className="flex items-end gap-3 mb-4">
-              <span className="text-3xl font-bold">3,580</span>
+              <span className="text-3xl font-bold">Find Yourself</span>
               <span className="text-[10px] text-gray-500 mb-1 uppercase tracking-wider">View more</span>
             </div>
             <div className="flex items-center gap-2 text-xs">
@@ -257,7 +257,7 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
               ))}
             </div>
           </motion.div>
-          
+
           {/* Decorative Zigzag */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -297,11 +297,10 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`text-xs font-bold py-2 px-4 rounded-full border transition-all whitespace-nowrap ${
-                    selectedCategory === cat
-                      ? "bg-[#E3C5EE] border-[#E3C5EE] text-black shadow-md shadow-[#E3C5EE]/30"
-                      : "bg-white border-gray-200 text-gray-600 hover:text-black hover:border-[#E3C5EE]"
-                  }`}
+                  className={`text-xs font-bold py-2 px-4 rounded-full border transition-all whitespace-nowrap ${selectedCategory === cat
+                    ? "bg-[#E3C5EE] border-[#E3C5EE] text-black shadow-md shadow-[#E3C5EE]/30"
+                    : "bg-white border-gray-200 text-gray-600 hover:text-black hover:border-[#E3C5EE]"
+                    }`}
                 >
                   {cat}
                 </button>
@@ -346,7 +345,7 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
                       {post.content}
                     </p>
                   </div>
-                  
+
                   <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-medium text-gray-400">
                     <span>{formatDate(post.created_at)}</span>
                     <span className="text-[#9c6fbd] group-hover:translate-x-1 transition-transform">Read more →</span>

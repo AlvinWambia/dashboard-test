@@ -29,7 +29,7 @@ export async function createOrder(productId) {
   if (productError || !product) {
     console.error('Error fetching program for order creation:', productError);
     // Redirect back to the home page with an error if the product isn't found.
-    return redirect('/home2?error=product_not_found');
+    return redirect('/?error=product_not_found');
   }
 
   // Create a new order in the 'orders' table with a 'pending' status.
@@ -47,7 +47,7 @@ export async function createOrder(productId) {
 
   if (insertError) {
     console.error('Error creating order:', insertError);
-    return redirect('/home2?error=order_creation_failed');
+    return redirect('/?error=order_creation_failed');
   }
 
   // On success, redirect the user to the intake form for this order before checkout.

@@ -102,7 +102,7 @@ function IntakeForm() {
                     .single();
 
                 if (!profile) {
-                    router.push('/home2');
+                    router.push('/');
                     return;
                 }
 
@@ -117,7 +117,7 @@ function IntakeForm() {
                     if (orderId) {
                         router.push(`/checkout/${orderId}`);
                     } else {
-                        router.push('/home2?signed_in=true');
+                        router.push('/?signed_in=true');
                     }
                     return;
                 }
@@ -302,7 +302,7 @@ function IntakeForm() {
                     if (orderId) {
                         router.push(`/checkout/${orderId}`);
                     } else {
-                        router.push('/home2?form_submitted=true');
+                        router.push('/?form_submitted=true');
                     }
                 } catch (error) {
                     console.error("Error submitting form:", error);

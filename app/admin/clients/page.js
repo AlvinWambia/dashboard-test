@@ -19,9 +19,12 @@ export default async function ClientsPage() {
   let clients = [];
   if (clientsData && clientsData.length > 0) {
     const orderIds = clientsData.map(c => c.order_id).filter(Boolean);
-    const clientIds = clientsData.map(c => c.id);
+    const userIds = clientsData.map(c => c.user_id).filter(Boolean);
+    
     let ordersMap = {};
+    let userOrdersMap = {};
     let subscriptionsMap = {};
+    let clientProgramsMap = {};
     
     if (orderIds.length > 0) {
       const { data: orders } = await supabase
@@ -34,22 +37,54 @@ export default async function ClientsPage() {
       }
     }
 
-    if (clientIds.length > 0) {
+    if (userIds.length > 0) {
+      // 1. Fetch subscriptions by user_id
       const { data: subscriptions } = await supabase
         .from('subscriptions')
         .select('*')
-        .in('client_id', clientIds);
+        .in('client_id', userIds);
         
       if (subscriptions) {
         subscriptionsMap = subscriptions.reduce((acc, sub) => ({ ...acc, [sub.client_id]: sub }), {});
       }
+
+      // 2. Fetch user active programs if order_id was not directly attached to form
+      const { data: userOrders } = await supabase
+        .from('orders')
+        .select('user_id, program_name, created_at')
+        .in('user_id', userIds)
+        .order('created_at', { ascending: false });
+
+      if (userOrders) {
+        userOrders.forEach(o => {
+          if (!userOrdersMap[o.user_id]) userOrdersMap[o.user_id] = o;
+        });
+      }
+
+      const { data: clientProgs } = await supabase
+        .from('client_programs')
+        .select('client_id, programs(title)')
+        .in('client_id', userIds);
+
+      if (clientProgs) {
+        clientProgs.forEach(cp => {
+          if (cp.programs?.title && !clientProgramsMap[cp.client_id]) {
+            clientProgramsMap[cp.client_id] = cp.programs.title;
+          }
+        });
+      }
     }
 
-    clients = clientsData.map(client => ({
-      ...client,
-      orders: client.order_id ? ordersMap[client.order_id] : null,
-      subscription: subscriptionsMap[client.id] || null
-    }));
+    clients = clientsData.map(client => {
+      const linkedOrder = client.order_id ? ordersMap[client.order_id] : (userOrdersMap[client.user_id] || null);
+      const linkedProgramName = linkedOrder?.program_name || clientProgramsMap[client.user_id] || null;
+
+      return {
+        ...client,
+        orders: linkedOrder ? { ...linkedOrder, program_name: linkedProgramName || linkedOrder.program_name } : (linkedProgramName ? { program_name: linkedProgramName } : null),
+        subscription: subscriptionsMap[client.user_id] || subscriptionsMap[client.id] || null
+      };
+    });
   }
 
   return (

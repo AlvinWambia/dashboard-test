@@ -44,10 +44,10 @@ export default function CheckoutClient({ email, amount, orderId }) {
           const result = await deleteOrder(orderId);
           if (result.success) {
             toast.success("Order cancelled.");
-            router.push("/home2");
+            router.push("/");
           } else {
             toast.error("Failed to delete order, but you can still leave.");
-            router.push("/home2");
+            router.push("/");
           }
         },
       },

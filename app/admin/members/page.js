@@ -33,7 +33,7 @@ export default async function MembersPage() {
         .single();
 
     if (!profile || profile.role !== 'admin') {
-        redirect("/home2?error=unauthorized");
+        redirect("/?error=unauthorized");
     }
 
     // 4. Fetch all profiles AND all auth users to get emails

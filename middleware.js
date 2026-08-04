@@ -39,7 +39,7 @@ export async function middleware(request) {
             .single()
 
         if (profile?.role !== 'admin') {
-            return NextResponse.redirect(new URL('/home2', request.url))
+            return NextResponse.redirect(new URL('/', request.url))
         }
     }
 
@@ -51,7 +51,7 @@ export async function middleware(request) {
             .eq('id', user.id)
             .single()
 
-        const destination = profile?.role === 'admin' ? '/admin/dashboard' : '/home2'
+        const destination = profile?.role === 'admin' ? '/admin/dashboard' : '/'
         return NextResponse.redirect(new URL(destination, request.url))
     }
     return response

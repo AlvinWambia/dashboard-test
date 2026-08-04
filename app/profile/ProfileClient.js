@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Star, AlertTriangle, ArrowLeft, RefreshCcw, BookOpen, Download } from "lucide-react";
+import { Star, AlertTriangle, ArrowLeft, RefreshCcw, BookOpen, Download, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -152,7 +152,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                             <p className="text-slate-500 text-sm max-w-sm mx-auto">
                                 You haven&apos;t enrolled in any fitness or nutrition programs yet.
                             </p>
-                            <Link href="/home2">
+                            <Link href="/">
                                 <Button className="mt-2 rounded-full bg-black text-white px-8 py-3 font-medium hover:bg-zinc-800 transition-colors">
                                     Browse programs &rarr;
                                 </Button>
@@ -199,12 +199,12 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                             {program.has_dashboard_access && (
                                                                 <Link href={`/profile/programs/${program.id}`}>
                                                                     <Button className="w-full rounded-full bg-black text-white hover:bg-slate-800 transition-colors">
-                                                                        Access Dashboard
+                                                                        Access Program
                                                                     </Button>
                                                                 </Link>
                                                             )}
                                                             
-                                                            {/* Item 3: Render signed URL digital download links */}
+                                                            {/* Render signed URL digital download links */}
                                                             {program.has_digital_downloads && program.assets && program.assets.length > 0 && (
                                                                 <div className="space-y-1.5 my-1">
                                                                     <p className="text-xs font-semibold text-slate-700">Digital Downloads:</p>
@@ -242,10 +242,30 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                     </div>
                                                 )}
 
-                                                {/* Subscription Management */}
+                                                {/* Subscription Management & Next Payment Countdown */}
                                                 {(() => {
                                                     const sub = getSubscriptionForProgram(program);
                                                     if (!sub) return null;
+
+                                                    // Calculate days until next payment
+                                                    let nextPaymentText = null;
+                                                    if (sub.next_billing_date) {
+                                                        const nextDate = new Date(sub.next_billing_date);
+                                                        const today = new Date();
+                                                        const diffTime = nextDate.getTime() - today.getTime();
+                                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                        
+                                                        if (diffDays > 1) {
+                                                            nextPaymentText = `Next payment in ${diffDays} days (${nextDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})`;
+                                                        } else if (diffDays === 1) {
+                                                            nextPaymentText = `Next payment due tomorrow (${nextDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})`;
+                                                        } else if (diffDays === 0) {
+                                                            nextPaymentText = `Next payment due today!`;
+                                                        } else {
+                                                            nextPaymentText = `Payment due (${nextDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})`;
+                                                        }
+                                                    }
+
                                                     if (sub.status === 'non-renewing') {
                                                         return (
                                                             <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center mt-1">
@@ -258,13 +278,21 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                     }
                                                     if (sub.status === 'active') {
                                                         return (
-                                                            <Button
-                                                                variant="ghost"
-                                                                className="w-full rounded-full mt-1 text-red-500 hover:text-red-700 hover:bg-red-50 text-xs"
-                                                                onClick={() => openCancelModal(sub.paystack_subscription_code || sub.id)}
-                                                            >
-                                                                Cancel Subscription
-                                                            </Button>
+                                                            <div className="space-y-2 mt-1">
+                                                                {nextPaymentText && (
+                                                                    <div className="bg-blue-50/80 border border-blue-100 rounded-xl p-2.5 flex items-center justify-center gap-2 text-center">
+                                                                        <Clock size={14} className="text-blue-600 flex-shrink-0" />
+                                                                        <span className="text-xs font-medium text-blue-700">{nextPaymentText}</span>
+                                                                    </div>
+                                                                )}
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    className="w-full rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 text-xs"
+                                                                    onClick={() => openCancelModal(sub.paystack_subscription_code || sub.id)}
+                                                                >
+                                                                    Cancel Subscription
+                                                                </Button>
+                                                            </div>
                                                         );
                                                     }
                                                     return null;

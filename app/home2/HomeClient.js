@@ -252,7 +252,7 @@ export default function HomeClient({ products, programs, testimonials, about, lo
     const aboutSteps = [
         {
             title: "The Vision Behind MyFit",
-            description: "Started with a simple goal: making elite fitness coaching accessible to everyone. Using a community driven path , We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
+            description: "Started with a simple goal: making elite fitness coaching accessible to all women. Using a community driven path , We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
             badge: "Our Story",
             image: groupTraining.src,
             buttonText: "More About MyFit",
@@ -440,15 +440,15 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                     {/* --- Navigation --- */}
 
                     {/* --- Navigation --- */}
-                    <nav className="flex items-center justify-between mb-12 sticky top-0 z-50 bg-white/80 backdrop-blur-md py-4 transition-all">
+                    <nav className="flex items-center justify-between mb-8 sm:mb-12 sticky top-0 z-50 bg-white/90 backdrop-blur-md py-3 px-2 sm:px-4 rounded-2xl  transition-all">
 
-                        {/* Mobile Left: Hamburger Menu */}
-                        <div className="md:hidden flex-1 flex justify-start pl-2">
-                            {userProfile && (
+                        {/* Mobile Left: Menu / Profile Trigger */}
+                        <div className="md:hidden flex items-center">
+                            {userProfile ? (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="text-black">
-                                            <Menu className="w-6 h-6" />
+                                        <Button variant="ghost" size="icon" className="text-black h-9 w-9 p-0">
+                                            <Menu className="w-5 h-5" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start">
@@ -469,11 +469,11 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                                         }}>Log out</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                            )}
+                            ) : null}
                         </div>
 
-                        {/* Desktop Left / Mobile Center: Logo */}
-                        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex justify-center md:justify-start items-center font-bold text-xl cursor-pointer md:w-1/4">
+                        {/* Brand Logo */}
+                        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center font-bold text-lg sm:text-xl cursor-pointer md:w-1/4">
                             {userProfile ? (
                                 <div className="hidden md:block">
                                     <DropdownMenu>
@@ -508,7 +508,7 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                             )}
 
                             {/* Mobile Logo */}
-                            <div className="md:hidden flex items-center gap-2">
+                            <div className="md:hidden flex items-center gap-1 text-base sm:text-lg font-bold">
                                 ⠿myFit
                             </div>
                         </motion.div>
@@ -536,9 +536,9 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                         </div>
 
                         {/* Right: Join Now / Welcome */}
-                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex-1 md:w-1/4 flex justify-end pr-2 md:pr-0">
+                        <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center justify-end md:w-1/4">
                             <Link href={userProfile ? "/profile" : "/auth/login"}>
-                                <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-6 py-4 text-sm transition-all whitespace-nowrap">
+                                <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-3 py-1.5 sm:px-6 sm:py-4 text-xs sm:text-sm font-medium transition-all whitespace-nowrap max-w-[140px] sm:max-w-none truncate">
                                     {userProfile?.full_name ? `Welcome ${userProfile.full_name.split(' ')[0]}` : 'Join Now!'}
                                 </Button>
                             </Link>

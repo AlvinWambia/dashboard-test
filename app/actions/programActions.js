@@ -123,7 +123,6 @@ export async function saveProgram(programId, data) {
     }
 
     revalidatePath('/admin/programs');
-    revalidatePath('/home2');
     revalidatePath('/');
     return { success: true, id: pId };
 

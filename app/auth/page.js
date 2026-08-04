@@ -131,7 +131,7 @@ export default function UpdatePasswordPage() {
                         className="object-cover brightness-[0.7]"
                     />
                     <div className="absolute top-4 left-4 sm:top-10 sm:left-10 flex items-center gap-4">
-                        <Link href="/home2">
+                        <Link href="/">
                             <Button variant="outline">Homepage</Button>
                         </Link>
                     </div>

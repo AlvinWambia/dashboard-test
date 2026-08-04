@@ -34,7 +34,7 @@ export async function deleteOrder(orderId) {
 
   // 3. Revalidate paths if necessary
   revalidatePath('/orders');
-  revalidatePath('/home2');
+  revalidatePath('/');
 
   return { success: true };
 }

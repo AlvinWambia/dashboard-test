@@ -60,8 +60,8 @@ export default function LoginPage() {
 
         if (profileError) {
             console.error("Error fetching profile:", profileError);
-            // Fallback to home2 if profile lookup fails
-            router.replace('/home2');
+            // Fallback to home if profile lookup fails
+            router.replace('/');
             setLoading(false);
             return;
         }
@@ -77,7 +77,7 @@ export default function LoginPage() {
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${origin}/auth/callback?next=/home2?signed_in=true`,
+                redirectTo: `${origin}/auth/callback?next=/?signed_in=true`,
             },
         });
     };
