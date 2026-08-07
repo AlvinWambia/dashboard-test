@@ -2,10 +2,19 @@ import { createAdminClient } from "@/supabase/server";
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
 import { AdminEmailTemplate } from "@/components/emails/AdminEmailTemplate";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req) {
+  // Rate limit: Max 20 requests per minute per IP
+  const rateLimitError = checkRateLimit(req, {
+    limit: 20,
+    windowMs: 60 * 1000,
+    keyPrefix: "admin-send-email",
+  });
+  if (rateLimitError) return rateLimitError;
+
   console.log("--- Admin Send Email API Hit ---");
   try {
     const supabase = createAdminClient();

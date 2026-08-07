@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { AdminEmailTemplate } from "@/components/emails/AdminEmailTemplate";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 // Initialize Resend lazily to prevent module evaluation errors if the key is missing
 // ... (rest of imports/init)
@@ -16,6 +17,14 @@ try {
 }
 
 export async function POST(req) {
+  // Rate limit: Max 100 webhook requests per minute per IP
+  const rateLimitError = checkRateLimit(req, {
+    limit: 100,
+    windowMs: 60 * 1000,
+    keyPrefix: "webhook-paystack",
+  });
+  if (rateLimitError) return rateLimitError;
+
   console.log("--- Paystack Webhook Received ---");
   console.log("Time:", new Date().toISOString());
 

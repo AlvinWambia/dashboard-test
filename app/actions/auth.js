@@ -22,3 +22,20 @@ export async function loginWithCookieAction(formData) {
         })
     }
 }
+
+export async function signOutAction() {
+    try {
+        const supabase = await createClient()
+        await supabase.auth.signOut()
+    } catch (e) {
+        console.error('Server sign out error:', e)
+    }
+
+    try {
+        const cookieStore = await cookies()
+        cookieStore.delete('last_login_type')
+        cookieStore.delete('auth_verified')
+    } catch (e) {
+        console.error('Error clearing cookies:', e)
+    }
+}

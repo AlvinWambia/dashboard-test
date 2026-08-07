@@ -224,7 +224,7 @@ function ImageScrollyStep({ image, title, description, badge, buttonText, link, 
 
 
 
-export default function HomeClient({ products, programs, testimonials, about, loungewear }) {
+export default function HomeClient({ initialProfile, products, programs, testimonials, about, loungewear }) {
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
@@ -247,7 +247,7 @@ export default function HomeClient({ products, programs, testimonials, about, lo
     const [count, setCount] = React.useState(0)
     const [isCommentsOpen, setIsCommentsOpen] = React.useState(false);
     const [activeAboutStep, setActiveAboutStep] = React.useState(0);
-    const [userProfile, setUserProfile] = React.useState(null);
+    const [userProfile, setUserProfile] = React.useState(initialProfile || null);
 
     const aboutSteps = [
         {
@@ -332,8 +332,10 @@ export default function HomeClient({ products, programs, testimonials, about, lo
     }, [api]);
 
     React.useEffect(() => {
+        const supabase = createClient();
+
+        // Fetch the current session immediately on mount
         const fetchUser = async () => {
-            const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const { data: profile } = await supabase
@@ -353,35 +355,50 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                     full_name: fullName,
                     role: profile?.role || user.user_metadata?.role || 'user'
                 });
+            } else {
+                setUserProfile(null);
             }
         };
+
         fetchUser();
+
+        // Subscribe to auth state changes so the navbar updates immediately
+        // on sign-in, sign-out, and token refresh — no page reload needed.
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                if (session?.user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('full_name, role')
+                        .eq('id', session.user.id)
+                        .maybeSingle();
+
+                    const fullName = profile?.full_name
+                        || session.user.user_metadata?.full_name
+                        || session.user.user_metadata?.name
+                        || session.user.email?.split('@')[0]
+                        || "Member";
+
+                    setUserProfile({
+                        ...profile,
+                        full_name: fullName,
+                        role: profile?.role || session.user.user_metadata?.role || 'user'
+                    });
+                } else if (event === 'SIGNED_OUT') {
+                    setUserProfile(null);
+                }
+            }
+        );
+
+        return () => subscription.unsubscribe();
     }, []);
 
     React.useEffect(() => {
         if (signedIn) {
-            const showWelcomeToast = async () => {
-                const supabase = createClient();
-                const { data: { user } } = await supabase.auth.getUser();
-
-                let welcomeMessage = "Welcome back!";
-                if (user) {
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('full_name')
-                        .eq('id', user.id)
-                        .single();
-
-                    if (profile?.full_name) {
-                        welcomeMessage = `Welcome back, ${profile.full_name.split(' ')[0]}!`;
-                        setUserProfile(profile);
-                    }
-                }
-
-                toast.success(welcomeMessage, { description: "You have successfully signed in." });
-                router.replace('/', { scroll: false });
-            };
-            showWelcomeToast();
+            // The onAuthStateChange listener above already sets userProfile.
+            // We only need to show the toast and clean up the URL param.
+            toast.success("Welcome back! 👋", { description: "You have successfully signed in." });
+            router.replace('/', { scroll: false });
         } else if (formSubmitted) {
             toast.success("Form submitted", { description: "Payment Successful and your intake form has been successfully submitted." });
             router.replace('/', { scroll: false });
@@ -440,7 +457,7 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                     {/* --- Navigation --- */}
 
                     {/* --- Navigation --- */}
-                    <nav className="flex items-center justify-between mb-8 sm:mb-12 sticky top-0 z-50 bg-white/90 backdrop-blur-md py-3 px-2 sm:px-4 rounded-2xl  transition-all">
+                    <nav className="flex items-center justify-between mb-8 sm:mb-12 sticky top-0 z-50 bg-white/90 backdrop-blur-md py-3 px-2 sm:px-4  transition-all">
 
                         {/* Mobile Left: Menu / Profile Trigger */}
                         <div className="md:hidden flex items-center">
@@ -475,42 +492,35 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                         {/* Brand Logo */}
                         <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center font-bold text-lg sm:text-xl cursor-pointer md:w-1/4">
                             {userProfile ? (
-                                <div className="hidden md:block">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                                                ⠿myFit
-                                            </div>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start">
-                                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={() => router.push('/profile')}>Profile</DropdownMenuItem>
-                                            {userProfile?.role === 'admin' && (
-                                                <DropdownMenuItem onClick={() => router.push('/admin/dashboard')}>
-                                                    Admin Dashboard
-                                                </DropdownMenuItem>
-                                            )}
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={async () => {
-                                                const supabase = createClient();
-                                                await supabase.auth.signOut();
-                                                setUserProfile(null);
-                                                router.push('/');
-                                            }}>Log out</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                                            ⠿myFit
+                                        </div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start">
+                                        <DropdownMenuLabel>My Account ({userProfile.full_name || 'User'})</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => router.push('/profile')}>Profile</DropdownMenuItem>
+                                        {userProfile?.role === 'admin' && (
+                                            <DropdownMenuItem onClick={() => router.push('/admin/dashboard')}>
+                                                Admin Dashboard
+                                            </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={async () => {
+                                            const supabase = createClient();
+                                            await supabase.auth.signOut();
+                                            setUserProfile(null);
+                                            router.push('/');
+                                        }}>Log out</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             ) : (
-                                <div className="hidden md:flex items-center gap-2">
+                                <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                                     ⠿myFit
-                                </div>
+                                </Link>
                             )}
-
-                            {/* Mobile Logo */}
-                            <div className="md:hidden flex items-center gap-1 text-base sm:text-lg font-bold">
-                                ⠿myFit
-                            </div>
                         </motion.div>
 
                         {/* Desktop Center: Main Nav Links */}
@@ -539,20 +549,46 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                         <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center justify-end md:w-1/4">
                             <Link href={userProfile ? "/profile" : "/auth/login"}>
                                 <Button className="bg-black hover:bg-white hover:text-black text-white hover:border-black border-2 rounded-full px-3 py-1.5 sm:px-6 sm:py-4 text-xs sm:text-sm font-medium transition-all whitespace-nowrap max-w-[140px] sm:max-w-none truncate">
-                                    {userProfile?.full_name ? `Welcome ${userProfile.full_name.split(' ')[0]}` : 'Join Now!'}
+                                    {userProfile ? `Welcome ${(userProfile.full_name || 'Member').split(' ')[0]}` : 'Join Now!'}
                                 </Button>
                             </Link>
                         </motion.div>
                     </nav>
 
                     {/* --- Main Content Grid --- */}
-                    <section id="home" className="grid grid-cols-12 gap-6 max-w-7xl mx-auto my-5">
+                    <section id="home" className="grid grid-cols-12 gap-6 items-stretch max-w-7xl mx-auto my-5">
                         {/* Left Column: Headline & Small Cards */}
                         <div className="col-span-12 lg:col-span-6 space-y-8">
                             <ScrollReveal>
                                 <h1 className="text-6xl md:text-5xl font-semibold leading-[1.1] tracking-tight">
                                     Join the Fitness Revolution, Your Body, Your Rules!
                                 </h1>
+                            </ScrollReveal>
+
+                            {/* --- Primary CTA Row --- */}
+                            <ScrollReveal delay={0.15}>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <motion.button
+                                        onClick={(e) => handleScroll(e, 'products')}
+                                        whileHover={{ scale: 1.04 }}
+                                        whileTap={{ scale: 0.97 }}
+                                        className="group relative flex items-center gap-2 bg-black text-white font-semibold text-sm sm:text-base px-7 py-4 rounded-full shadow-lg hover:shadow-xl transition-shadow overflow-hidden"
+                                    >
+                                        {/* Animated shine sweep */}
+                                        <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                                        <span>Shop Programs</span>
+                                        <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                    </motion.button>
+
+                                    <motion.button
+                                        onClick={(e) => handleScroll(e, 'programs')}
+                                        whileHover={{ scale: 1.04 }}
+                                        whileTap={{ scale: 0.97 }}
+                                        className="flex items-center gap-2 text-slate-700 font-medium text-sm sm:text-base px-7 py-4 rounded-full border border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition-all"
+                                    >
+                                        Learn More
+                                    </motion.button>
+                                </div>
                             </ScrollReveal>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -615,12 +651,12 @@ export default function HomeClient({ products, programs, testimonials, about, lo
                         </div>
 
                         {/* Right Column: Hero Image & Stats */}
-                        <div className="col-span-12 lg:col-span-6 relative mt-6 lg:mt-0">
-                            <div className="bg-slate-100/50 rounded-[4rem] h-full relative overflow-hidden flex items-center justify-center min-h-[400px] lg:min-h-[650px]">
+                        <div className="col-span-12 lg:col-span-6 self-stretch mt-6 lg:mt-0">
+                            <div className="bg-slate-100/50 rounded-[4rem] h-full relative overflow-hidden flex items-center justify-center">
                                 <img
                                     src={groupTraining.src || groupTraining}
                                     alt="Athlete Jumping"
-                                    className="w-full h-full object-contain relative z-20"
+                                    className="w-full h-full object-cover object-top relative z-20"
                                 />
 
                                 {/* Bottom Right White Card */}
@@ -1128,12 +1164,12 @@ export default function HomeClient({ products, programs, testimonials, about, lo
 
                             <div className="flex flex-col gap-3">
                                 <span className="font-bold text-sm">Legal</span>
-                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Privacy Policy</Link>
-                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Terms of Service</Link>
-                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Refund Policy</Link>
-                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Cancellation Policy</Link>
-                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Health Disclaimer</Link>
-                                <Link href="#" className="text-xs text-slate-500 hover:text-black transition">Cookie Policy</Link>
+                                <Link href="/legal/privacy-policy" className="text-xs text-slate-500 hover:text-black transition">Privacy Policy</Link>
+                                <Link href="/legal/terms-of-service" className="text-xs text-slate-500 hover:text-black transition">Terms of Service</Link>
+                                <Link href="/legal/refund-policy" className="text-xs text-slate-500 hover:text-black transition">Refund Policy</Link>
+                                <Link href="/legal/cancellation-policy" className="text-xs text-slate-500 hover:text-black transition">Cancellation Policy</Link>
+                                <Link href="/legal/health-disclaimer" className="text-xs text-slate-500 hover:text-black transition">Health Disclaimer</Link>
+                                <Link href="/legal/cookie-policy" className="text-xs text-slate-500 hover:text-black transition">Cookie Policy</Link>
                             </div>
                         </div>
 

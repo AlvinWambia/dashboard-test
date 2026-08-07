@@ -1,7 +1,6 @@
 "use client";
 
 import { createClient } from "@/supabase/client";
-import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { deleteSchedule, approveMeetingRequest } from "@/app/actions/calendar";
@@ -21,17 +20,15 @@ export default function RequestsPage() {
     // Track which request is showing the meet URL input, and the URL value per request
     const [approvingId, setApprovingId] = useState(null);
     const [meetUrls, setMeetUrls] = useState({});
-    const router = useRouter();
 
     useEffect(() => {
         const fetchData = async () => {
             const supabase = createClient();
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-            if (authError || !user) {
-                router.push("/auth/login");
-                return;
-            }
+            // Middleware already verified this is an authenticated admin.
+            // We just need the profile for display purposes.
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return; // Middleware handles redirect; this is a safety net only.
             setUser(user);
 
             const { data: profileData } = await supabase
@@ -40,9 +37,7 @@ export default function RequestsPage() {
                 .eq('id', user.id)
                 .single();
 
-            if (!profileData) {
-                return;
-            }
+            if (!profileData) return;
             setProfile(profileData);
 
             // Fetch schedules that are meeting related
@@ -58,7 +53,7 @@ export default function RequestsPage() {
         };
 
         fetchData();
-    }, [router, refreshKey]);
+    }, [refreshKey]);
 
     const handleApprove = async (scheduleId) => {
         // First click: reveal the meet URL input

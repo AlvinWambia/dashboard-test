@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/supabase/server";
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 // This route is called daily by Supabase pg_cron as a safety net.
 // It finds subscriptions that are past their next_billing_date + grace period
@@ -9,6 +10,14 @@ import { NextResponse } from "next/server";
 const GRACE_PERIOD_HOURS = 48; // 2-day grace period
 
 export async function GET(req) {
+  // Rate limit: Max 10 requests per hour per IP
+  const rateLimitError = checkRateLimit(req, {
+    limit: 10,
+    windowMs: 60 * 60 * 1000,
+    keyPrefix: "cron-verify-subs",
+  });
+  if (rateLimitError) return rateLimitError;
+
   // Secure this endpoint with a secret token to prevent unauthorized calls
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;

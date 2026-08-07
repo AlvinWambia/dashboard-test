@@ -2,10 +2,19 @@ import { Resend } from "resend";
 import { NextResponse } from "next/server";
 import { WelcomeEmailTemplate } from "@/components/emails/WelcomeEmailTemplate";
 import { createClient } from "@/supabase/server";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req) {
+  // Rate limit: Max 5 requests per 5 minutes per IP
+  const rateLimitError = checkRateLimit(req, {
+    limit: 5,
+    windowMs: 5 * 60 * 1000,
+    keyPrefix: "auth-welcome",
+  });
+  if (rateLimitError) return rateLimitError;
+
   try {
     // Auth Check: Ensure caller is authenticated or has valid user session
     const supabase = await createClient();

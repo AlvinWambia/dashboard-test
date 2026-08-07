@@ -1,10 +1,19 @@
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
 import { NewsletterWelcomeTemplate } from "@/components/emails/NewsletterWelcomeTemplate";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req) {
+  // Rate limit: Max 5 requests per 10 minutes per IP
+  const rateLimitError = checkRateLimit(req, {
+    limit: 5,
+    windowMs: 10 * 60 * 1000,
+    keyPrefix: "newsletter",
+  });
+  if (rateLimitError) return rateLimitError;
+
   try {
     const { name, email } = await req.json();
 

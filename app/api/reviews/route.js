@@ -1,7 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/supabase/server';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request) {
+    const rateLimitError = checkRateLimit(request, {
+        limit: 10,
+        windowMs: 60 * 60 * 1000,
+        keyPrefix: 'reviews',
+    });
+    if (rateLimitError) return rateLimitError;
+
     try {
         const supabase = await createClient();
         

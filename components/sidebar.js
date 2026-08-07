@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { SignOutButton } from "@/components/signOutButton";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
@@ -67,11 +68,14 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="mt-auto bg-[#081C15] rounded-2xl p-4 text-white">
-        <p className="font-semibold text-sm justify-left text-align-left">Welcome to Admin Page</p>
-        <Button variant="secondary" size="sm" className="mt-3 w-full bg-white text-black border-2none">
-          See more
-        </Button>
+      <div className="mt-auto flex flex-col gap-4">
+        <SignOutButton showText={true} />
+        <div className="bg-[#081C15] rounded-2xl p-4 text-white">
+          <p className="font-semibold text-sm justify-left text-align-left">Welcome to Admin Page</p>
+          <Button variant="secondary" size="sm" className="mt-3 w-full bg-white text-black border-2none">
+            See more
+          </Button>
+        </div>
       </div>
     </>
   );

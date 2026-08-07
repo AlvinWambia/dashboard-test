@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/supabase/client";
-import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import {
     Select,
@@ -25,17 +24,14 @@ export default function TasksPage() {
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState('recent');
     const [filterPriority, setFilterPriority] = useState('all');
-    const router = useRouter();
 
     useEffect(() => {
         const fetchData = async () => {
             const supabase = createClient();
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-            if (authError || !user) {
-                router.push("/auth/login");
-                return;
-            }
+            // Middleware already verified this is an authenticated admin.
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return; // Middleware handles redirect; this is a safety net only.
             setUser(user);
 
             const { data: profileData } = await supabase
@@ -44,9 +40,7 @@ export default function TasksPage() {
                 .eq('id', user.id)
                 .single();
 
-            if (!profileData) {
-                return;
-            }
+            if (!profileData) return;
             setProfile(profileData);
 
             const { data: allProfilesData } = await supabase
@@ -71,7 +65,7 @@ export default function TasksPage() {
         };
 
         fetchData();
-    }, [router]);
+    }, []);
 
     const filteredAndSortedTasks = useMemo(() => {
         if (!tasks) return [];

@@ -51,19 +51,14 @@ export default function LoginPage() {
         }
 
         // 2. Fetch the user's role from your custom profiles table
-        // We use .single() because we expect exactly one profile per user ID
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', data.user.id)
-            .single();
+            .maybeSingle();
 
         if (profileError) {
             console.error("Error fetching profile:", profileError);
-            // Fallback to home if profile lookup fails
-            router.replace('/');
-            setLoading(false);
-            return;
         }
 
         // 3. Redirect to the homepage after successful login

@@ -1,8 +1,16 @@
 // app/auth/callback/route.js
 import { NextResponse } from 'next/server'
 import { createClient } from '@/supabase/server' // Updated path to your server client
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export async function GET(request) {
+    const rateLimitError = checkRateLimit(request, {
+        limit: 20,
+        windowMs: 15 * 60 * 1000,
+        keyPrefix: 'auth-callback',
+    })
+    if (rateLimitError) return rateLimitError
+
     const requestUrl = new URL(request.url)
     const code = requestUrl.searchParams.get('code')
     // Extract the "next" parameter or default to /dashboard

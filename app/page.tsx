@@ -1,7 +1,36 @@
 import { client } from "@/lib/sanity";
 import HomeClient from "./home2/HomeClient";
 import { Suspense } from "react";
-import { createAdminClient } from "@/supabase/server";
+import { createClient, createAdminClient } from "@/supabase/server";
+
+async function getInitialUser() {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, role')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        const fullName = profile?.full_name
+            || user.user_metadata?.full_name
+            || user.user_metadata?.name
+            || user.email?.split('@')[0]
+            || "Member";
+
+        return {
+            ...profile,
+            full_name: fullName,
+            role: profile?.role || user.user_metadata?.role || 'user'
+        };
+    } catch (e) {
+        console.error("Error getting initial user:", e);
+        return null;
+    }
+}
 
 async function getData() {
     // Fetch products and programs in one go
@@ -84,10 +113,21 @@ async function getData() {
 }
 
 export default async function MyFitLandingPage() {
-    const { products, programs, testimonials, about, loungewear } = await getData();
+    const [initialProfile, { products, programs, testimonials, about, loungewear }] = await Promise.all([
+        getInitialUser(),
+        getData()
+    ]);
+
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <HomeClient products={products} programs={programs} testimonials={testimonials} about={about} loungewear={loungewear} />
+            <HomeClient 
+                initialProfile={initialProfile}
+                products={products} 
+                programs={programs} 
+                testimonials={testimonials} 
+                about={about} 
+                loungewear={loungewear} 
+            />
         </Suspense>
     );
 }

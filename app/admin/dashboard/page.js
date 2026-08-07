@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { UserChart } from "@/components/admin/userChart";
 import { ProfileForm } from "@/components/admin/profileForm";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { SignOutButton } from "@/components/signOutButton";
 import React from 'react';
 
 /** Maps a notification `type` to an icon element and badge background color. */
@@ -116,14 +117,15 @@ export default async function DashboardPage() {
                         <p className="text-gray-500 text-sm">Update your administrative profile and view notifications.</p>
                     </div>
                     <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-                        
-                            <Button className="bg-black text-white hover:bg-white hover:text-black hover:border hover:border-black rounded-xl h-10">
-                                <Plus className="mr-2" size={18} /> Create Content
-                            </Button>
+                        <Button className="bg-black text-white hover:bg-white hover:text-black hover:border hover:border-black rounded-xl h-10">
+                            <Plus className="mr-2" size={18} /> Create Content
+                        </Button>
                         
                         <Button variant="outline" className="bg-white rounded-xl h-10">
                             <Import className="mr-2" size={18} /> Import Data
                         </Button>
+
+                        <SignOutButton showText={true} />
                     </div>
                 </div>
 

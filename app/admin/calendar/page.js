@@ -3,7 +3,6 @@
 import { Plus, Import, ChevronLeft, ChevronRight, Trash } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/supabase/client";
-import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from 'react';
 import {
     Card,
@@ -32,7 +31,6 @@ export default function CalenderPage() {
     const [scheduledDates, setScheduledDates] = useState([]);
     const [taskDates, setTaskDates] = useState([]);
     const [refreshKey, setRefreshKey] = useState(0); // To trigger re-fetch
-    const router = useRouter();
 
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -48,12 +46,10 @@ export default function CalenderPage() {
     useEffect(() => {
         const fetchData = async () => {
             const supabase = createClient();
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-            if (authError || !user) {
-                router.push("/auth/login");
-                return;
-            }
+            // Middleware already verified this is an authenticated admin.
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return; // Middleware handles redirect; this is a safety net only.
             setUser(user);
 
             const { data: profileData } = await supabase
@@ -62,9 +58,7 @@ export default function CalenderPage() {
                 .eq('id', user.id)
                 .single();
 
-            if (!profileData) {
-                return;
-            }
+            if (!profileData) return;
             setProfile(profileData);
             setLoading(false);
 
