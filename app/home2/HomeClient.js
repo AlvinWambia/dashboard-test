@@ -499,7 +499,7 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                                         </div>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start">
-                                        <DropdownMenuLabel>My Account ({userProfile.full_name || 'User'})</DropdownMenuLabel>
+                                        <DropdownMenuLabel>My Accounts ({userProfile.full_name || 'User'})</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={() => router.push('/profile')}>Profile</DropdownMenuItem>
                                         {userProfile?.role === 'admin' && (
