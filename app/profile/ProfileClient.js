@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function ProfileClient({ profile, user, purchasedPrograms = [], reviews = [], subscriptions = [], fetchError = null }) {
+export default function ProfileClient({ profile, user, purchasedPrograms = [], reviews = [], subscriptions = [], userBookings = [], fetchError = null }) {
     const router = useRouter();
     const [isReviewOpen, setIsReviewOpen] = useState(false);
     const [isCancelOpen, setIsCancelOpen] = useState(false);
@@ -313,6 +313,58 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                         </div>
                     )}
                 </div>
+
+                {/* Consultation Bookings Section */}
+                {userBookings && userBookings.length > 0 && (
+                    <div>
+                        <h2 className="text-2xl font-bold mb-6">My Consultation Bookings</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {userBookings.map(b => (
+                                <Card key={b.id} className="bg-white border-none rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h3 className="font-bold text-lg">{b.programs?.title || "Consultation Call"}</h3>
+                                            <p className="text-xs text-slate-500 font-mono mt-0.5">Ref: {b.consultation_payment_ref || b.id.slice(0, 8)}</p>
+                                        </div>
+                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                                            b.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                            b.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                            b.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-100' :
+                                            'bg-amber-50 text-amber-700 border-amber-100'
+                                        }`}>
+                                            {b.status.toUpperCase()}
+                                        </span>
+                                    </div>
+
+                                    {b.notes && (
+                                        <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-2xl italic">
+                                            "{b.notes}"
+                                        </p>
+                                    )}
+
+                                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                        <div className="text-xs text-slate-500">
+                                            <span>Fee Paid: </span>
+                                            <span className="font-bold text-slate-900">Kshs {(b.programs?.consultation_fee || 0).toLocaleString()}</span>
+                                        </div>
+
+                                        {b.unlocked_purchase && b.program_id ? (
+                                            <Link href={`/programs/${b.program_id}/onboarding`}>
+                                                <Button className="rounded-full bg-black text-white hover:bg-zinc-800 text-xs px-5 py-2 font-semibold shadow-md">
+                                                    Buy Full Program &rarr;
+                                                </Button>
+                                            </Link>
+                                        ) : (
+                                            <span className="text-[11px] text-slate-400 font-medium">
+                                                {b.status === 'completed' ? 'Purchase Unlocked' : 'Awaiting Consultation Call'}
+                                            </span>
+                                        )}
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Review Modal */}

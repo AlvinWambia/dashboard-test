@@ -22,7 +22,7 @@ export async function createOrder(productId) {
   // to prevent clients from tampering with the price.
   const { data: product, error: productError } = await supabase
     .from('programs')
-    .select('price, title, name')
+    .select('price, title, name, service_type')
     .eq('id', productId)
     .single();
 
@@ -50,6 +50,11 @@ export async function createOrder(productId) {
     return redirect('/?error=order_creation_failed');
   }
 
-  // On success, redirect the user to the intake form for this order before checkout.
+  // For downloadable programs (or default downloadable), skip intake form & go directly to Paystack checkout page
+  if (product.service_type === 'downloadable' || !product.service_type) {
+    redirect(`/checkout/${newOrder.id}`);
+  }
+
+  // For session / coaching programs, complete the intake form first
   redirect(`/form?orderId=${newOrder.id}`);
 }

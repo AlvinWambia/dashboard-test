@@ -85,7 +85,10 @@ async function getData() {
             title: p.title,
             description: p.description,
             image: p.image_url,
-            faqs: p.faqs || []
+            faqs: p.faqs || [],
+            service_type: p.service_type || 'downloadable',
+            consultation_fee: p.consultation_fee || 0,
+            price: p.price || 0
         }));
 
         // Map Supabase data to match the expected format for HomeClient products
@@ -97,7 +100,9 @@ async function getData() {
             desc: p.description,
             rating: 5, // Hardcoded for now to retain UI
             reviews: 12, // Hardcoded for now to retain UI
-            image: p.image_url
+            image: p.image_url,
+            service_type: p.service_type || 'downloadable',
+            consultation_fee: p.consultation_fee || 0
         }));
 
         console.log(`Successfully fetched data.`);

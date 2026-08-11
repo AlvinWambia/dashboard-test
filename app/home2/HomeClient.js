@@ -4,6 +4,7 @@
 import "@/app/globals.css";
 import React from 'react';
 import { Button } from "@/components/ui/button";
+import { BuyNowButton } from "@/components/BuyNowButton";
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "framer-motion";
 
 
@@ -59,8 +60,12 @@ import {
 } from "@/components/ui/dialog";
 import CommentsSection from "@/components/admin/commentsSection";
 import { urlFor } from "@/lib/sanity";
-import { BuyNowButton } from "@/components/BuyNowButton";
+import dynamic from "next/dynamic";
 import { createClient } from "@/supabase/client";
+
+const BookingModal = dynamic(() => import("@/components/BookingModal"), {
+  ssr: false,
+});
 
 import { toast } from "sonner";
 
@@ -248,6 +253,7 @@ export default function HomeClient({ initialProfile, products, programs, testimo
     const [isCommentsOpen, setIsCommentsOpen] = React.useState(false);
     const [activeAboutStep, setActiveAboutStep] = React.useState(0);
     const [userProfile, setUserProfile] = React.useState(initialProfile || null);
+    const [selectedBookingProgram, setSelectedBookingProgram] = React.useState(null);
 
     const aboutSteps = [
         {
@@ -569,7 +575,7 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                             <ScrollReveal delay={0.15}>
                                 <div className="flex flex-wrap items-center gap-4">
                                     <motion.button
-                                        onClick={(e) => handleScroll(e, 'products')}
+                                        onClick={(e) => handleScroll(e, 'programs')}
                                         whileHover={{ scale: 1.04 }}
                                         whileTap={{ scale: 0.97 }}
                                         className="group relative flex items-center gap-2 bg-black text-white font-semibold text-sm sm:text-base px-7 py-4 rounded-full shadow-lg hover:shadow-xl transition-shadow overflow-hidden"
@@ -824,20 +830,70 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                             </ScrollReveal>
 
                             {programs?.map((program, index) => {
+                                const product = products?.[index];
                                 return (
-                                    <div key={program._id} className={`flex flex-col lg:flex-row my-24 items-start gap-16`}>
-                                        <div className="flex-1 space-y-8">
+                                    <div key={program._id} className="flex flex-col lg:flex-row my-16 items-center gap-10 lg:gap-14">
+                                        {/* Text column — flex-col so price+button always sit at the bottom */}
+                                        <div className="flex-1 flex flex-col gap-4 min-h-[220px]">
                                             <ScrollReveal direction="right">
                                                 <p className="text-xl font-bold tracking-tight">{program.title}</p>
-                                                <p className="text-slate-600 text-sm leading-relaxed">{program.description}</p>
+                                                <p className="text-slate-600 text-sm leading-relaxed mt-2">{program.description}</p>
+                                            </ScrollReveal>
 
-
+                                            {/* Price + CTA — type aware */}
+                                            <ScrollReveal direction="right">
+                                                <div className="mt-auto pt-4 flex items-center gap-4 flex-wrap border-t border-slate-100">
+                                                    {program.service_type === 'session' ? (
+                                                        <>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs text-slate-400 font-semibold uppercase">Consultation Fee</span>
+                                                                <span className="text-xl font-bold text-slate-900">
+                                                                    Kshs {(program.consultation_fee || product?.consultation_fee || 0).toLocaleString()}
+                                                                </span>
+                                                                <span className="text-xs text-slate-500 mt-0.5">
+                                                                    Full Session: Kshs {(program.price || product?.price || 0).toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                            <Button
+                                                                onClick={() => setSelectedBookingProgram(program)}
+                                                                className="rounded-full bg-black text-white hover:bg-zinc-800 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg ml-auto"
+                                                            >
+                                                                Book Consultation
+                                                                <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
+                                                            </Button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {(program.price > 0 || product?.price > 0) && (
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs text-slate-400 font-semibold uppercase">Program Price</span>
+                                                                    <span className="text-xl font-bold text-slate-900">
+                                                                        Kshs {(program.price || product?.price || 0).toLocaleString()}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            {program.service_type === 'downloadable' || !program.service_type ? (
+                                                                <div className="ml-auto min-w-[140px]">
+                                                                    <BuyNowButton product={program} />
+                                                                </div>
+                                                            ) : (
+                                                                <Link href={`/programs/${program._id || program.id}/onboarding`} className="ml-auto">
+                                                                    <Button className="rounded-full bg-black text-white hover:bg-zinc-800 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg">
+                                                                        Buy Program
+                                                                        <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
+                                                                    </Button>
+                                                                </Link>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
                                             </ScrollReveal>
                                         </div>
 
-                                        <div className="flex-1 w-full">
+                                        {/* Smaller image column */}
+                                        <div className="w-full lg:w-[42%] flex-shrink-0">
                                             <ScrollReveal direction="left">
-                                                <div className="relative aspect-video lg:aspect-square rounded-[3rem] overflow-hidden group">
+                                                <div className="relative h-64 lg:h-72 rounded-[2rem] overflow-hidden group">
                                                     {program.image && (
                                                         <ParallaxImage
                                                             src={typeof program.image === 'string' ? program.image : urlFor(program.image).url()}
@@ -846,124 +902,13 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                                                             speed={0.2}
                                                         />
                                                     )}
-                                                    <div className="absolute  transition-colors group-hover:bg-transparent" />
+                                                    <div className="absolute inset-0 transition-colors group-hover:bg-transparent" />
                                                 </div>
                                             </ScrollReveal>
                                         </div>
-
-
                                     </div>
                                 );
                             })}
-                        </div>
-                    </section>
-
-                    <section id="products" className="py-24">
-                        <div className="max-w-7xl mx-auto px-4 md:px-6">
-                            <ScrollReveal>
-                                <div className="text-center mb-20">
-                                    <Badge variant="outline" className="rounded-full px-4 py-1 mb-6 bg-white border-slate-200">
-                                        <Tag className="w-3 h-3 mr-2" /> Store
-                                    </Badge>
-                                    <p className="text-5xl font-bold tracking-tight mb-6">Our Premium Products</p>
-                                    <p className="text-slate-500 text-lg max-w-2xl mx-auto">
-                                        Gear and supplements curated to support your fitness journey and maximize performance.
-                                    </p>
-                                </div>
-                            </ScrollReveal>
-
-
-                            <p className="text-lg font-bold ml-10  mb-5">Training programs</p>
-                            <div className="flex flex-wrap justify-center gap-8">
-                                {products?.map((product, i) => (
-                                    <ScrollReveal key={product._id} delay={i * 0.1} direction="up">
-
-                                        <div className="group w-full max-w-[300px]">
-
-                                            <Card className="bg-slate-50 border-none rounded-[2.5rem] overflow-hidden relative mb-4 aspect-square flex items-center justify-center p-8 transition-all hover:bg-slate-100 hover:shadow-2xl">
-                                                <motion.div whileHover={{ scale: 1.1 }} className="absolute top-4 right-4 z-10">
-                                                    <Button size="icon" variant="ghost" className="bg-white/80 backdrop-blur-md rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all">
-                                                        <Heart className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
-                                                    </Button>
-                                                </motion.div>
-                                                {product.image && (
-                                                    <motion.img
-                                                        src={typeof product.image === 'string' ? product.image : urlFor(product.image).width(400).height(400).url()}
-                                                        alt={product.name || 'Product Image'}
-                                                        whileHover={{ scale: 1.05, rotate: 2 }}
-                                                        className="object-contain w-full h-full mix-blend-multiply"
-                                                    />
-                                                )}
-                                            </Card>
-                                            <div className="px-2">
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <h3 className="font-bold text-sm uppercase tracking-wider">{product.name || product.title}</h3>
-                                                    <span className="font-bold text-sm">Kshs {product.price?.toLocaleString()}</span>
-                                                </div>
-                                                <p className="text-slate-500 text-sm mb-3 line-clamp-2">{product.desc}</p>
-                                                <div className="flex items-center gap-1 mb-5">
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <Star key={i} className={`w-3.5 h-3.5 ${i < (product.rating || 5) ? "fill-black text-black" : "text-slate-200"}`} />
-                                                    ))}
-                                                    <span className="text-xs text-slate-400 font-medium ml-1">({product.reviews || 0})</span>
-                                                </div>
-                                                <Link href={`/programs/${product._id}/onboarding`}>
-                                                    <Button variant="outline" className="w-full rounded-full border-slate-900 px-6 font-bold hover:bg-slate-900 hover:text-white transition-all">
-                                                        Select Program
-                                                    </Button>
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </ScrollReveal>
-                                ))}
-                            </div>
-
-                            {loungewear && loungewear.length > 0 && (
-                                <>
-                                    <p className="text-lg font-bold ml-10 mt-16 mb-5">Loungewear</p>
-                                    <div className="flex flex-wrap justify-center gap-8">
-                                        {loungewear?.map((product, i) => (
-                                            <ScrollReveal key={product._id || i} delay={i * 0.1} direction="up">
-                                                <div className="group w-full max-w-[300px]">
-                                                    <Card className="bg-slate-50 border-none rounded-[2.5rem] overflow-hidden relative mb-4 aspect-square flex items-center justify-center p-8 transition-all hover:bg-slate-100 hover:shadow-2xl">
-                                                        <motion.div whileHover={{ scale: 1.1 }} className="absolute top-4 right-4 z-10">
-                                                            <Button size="icon" variant="ghost" className="bg-white/80 backdrop-blur-md rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all">
-                                                                <Heart className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
-                                                            </Button>
-                                                        </motion.div>
-                                                        {product.image && (
-                                                            <motion.img
-                                                                src={urlFor(product.image).width(400).height(400).url()}
-                                                                alt={product.name}
-                                                                whileHover={{ scale: 1.05, rotate: 2 }}
-                                                                className="object-contain w-full h-full mix-blend-multiply"
-                                                            />
-                                                        )}
-                                                    </Card>
-                                                    <div className="px-2">
-                                                        <div className="flex justify-between items-start mb-1">
-                                                            <h3 className="font-bold text-sm uppercase tracking-wider">{product.name}</h3>
-                                                            <span className="font-bold text-sm">Kshs {product.price?.toLocaleString()}</span>
-                                                        </div>
-                                                        <p className="text-slate-500 text-sm mb-3 line-clamp-2">{product.desc}</p>
-                                                        <div className="flex items-center gap-1 mb-5">
-                                                            {[...Array(5)].map((_, i) => (
-                                                                <Star key={i} className={`w-3.5 h-3.5 fill-black text-black`} />
-                                                            ))}
-                                                            <span className="text-xs text-slate-400 font-medium ml-1">({product.reviews || 0})</span>
-                                                        </div>
-                                                        <Link href={`/programs/${product._id}/onboarding`}>
-                                                            <Button variant="outline" className="w-full rounded-full border-slate-900 px-6 font-bold hover:bg-slate-900 hover:text-white transition-all">
-                                                                Select Program
-                                                            </Button>
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                            </ScrollReveal>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
                         </div>
                     </section>
 
@@ -1175,6 +1120,13 @@ export default function HomeClient({ initialProfile, products, programs, testimo
 
 
                     </div>
+
+                    <BookingModal
+                        isOpen={!!selectedBookingProgram}
+                        onClose={() => setSelectedBookingProgram(null)}
+                        program={selectedBookingProgram}
+                        userProfile={userProfile}
+                    />
                 </motion.div>
             )
             }

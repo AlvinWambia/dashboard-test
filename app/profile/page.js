@@ -111,6 +111,25 @@ export default async function ProfilePage() {
 
         subscriptions = subscriptionsData || [];
 
+        // 7. Fetch consultation bookings
+        const { data: bookingsData } = await supabase
+            .from('bookings')
+            .select(`
+                *,
+                programs (
+                    id,
+                    title,
+                    price,
+                    consultation_fee,
+                    service_type,
+                    image_url
+                )
+            `)
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        var userBookings = bookingsData || [];
+
     } catch (err) {
         console.error("ProfilePage data fetch error:", err);
         fetchError = err.message || "Failed to load profile data";
@@ -123,6 +142,7 @@ export default async function ProfilePage() {
             purchasedPrograms={purchasedPrograms} 
             reviews={reviews} 
             subscriptions={subscriptions}
+            userBookings={userBookings || []}
             fetchError={fetchError}
         />
     );

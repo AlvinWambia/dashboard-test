@@ -31,6 +31,8 @@ export default function BuilderForm({ initialData, programId }) {
     has_physical_sessions: initialData.has_physical_sessions || false,
     booking_url: initialData.booking_url || '',
     location_details: initialData.location_details || '',
+    service_type: initialData.service_type || 'downloadable',
+    consultation_fee: initialData.consultation_fee || 0,
   });
 
   // Track if the admin changed the interval on an existing subscription program with an existing plan
@@ -244,6 +246,51 @@ export default function BuilderForm({ initialData, programId }) {
                 className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black resize-none"
               />
             </div>
+
+            {/* Service Delivery Mode */}
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Service Delivery Mode</label>
+              <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setProgram({ ...program, service_type: 'downloadable' })}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold transition-all ${
+                    program.service_type === 'downloadable' || !program.service_type
+                      ? 'bg-black text-white shadow-inner'
+                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>📥</span> Downloadable Plan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProgram({ ...program, service_type: 'session' })}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold transition-all ${
+                    program.service_type === 'session'
+                      ? 'bg-black text-white shadow-inner'
+                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>🤝</span> Consultation / Session
+                </button>
+              </div>
+            </div>
+
+            {/* Consultation Fee (if Session) */}
+            {program.service_type === 'session' && (
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Consultation Fee (Kshs)</label>
+                <input 
+                  type="number"
+                  min="0"
+                  value={program.consultation_fee}
+                  onChange={e => setProgram({...program, consultation_fee: parseFloat(e.target.value) || 0})}
+                  placeholder="e.g. 500"
+                  className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black"
+                />
+                <p className="text-xs text-gray-400 mt-1">Amount charged upfront to book the initial consultation call before buying full sessions.</p>
+              </div>
+            )}
 
             {/* Purchase Type Toggle */}
             <div>

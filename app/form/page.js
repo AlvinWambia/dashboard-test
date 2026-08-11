@@ -56,11 +56,9 @@ function IntakeForm() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
     const [currentStep, setCurrentStep] = useState(1);
-    const totalSteps = 6;
+    const totalSteps = 5;
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [bookingUrl, setBookingUrl] = useState(null);
-    const [isScheduled, setIsScheduled] = useState(false);
     const supabase = createClient();
 
     const methods = useForm({
@@ -80,8 +78,6 @@ function IntakeForm() {
             goalDescription: "",
             injuries: "",
             medicalConditions: "",
-            meetingDate: "",
-            meetingTime: "",
         },
     });
 
@@ -124,46 +120,6 @@ function IntakeForm() {
 
                 methods.setValue('fullName', profile.full_name || '');
                 methods.setValue('email', user.email || '');
-
-                // Fetch program's booking_url based on orderId or active client programs
-                let programId = null;
-                if (orderId) {
-                    const { data: order } = await supabase
-                        .from('orders')
-                        .select('program_id')
-                        .eq('id', orderId)
-                        .maybeSingle();
-                    if (order?.program_id) {
-                        programId = order.program_id;
-                    }
-                }
-
-                if (!programId) {
-                    const { data: clientProg } = await supabase
-                        .from('client_programs')
-                        .select('program_id')
-                        .eq('client_id', user.id)
-                        .eq('status', 'active')
-                        .order('granted_at', { ascending: false })
-                        .limit(1)
-                        .maybeSingle();
-                    if (clientProg?.program_id) {
-                        programId = clientProg.program_id;
-                    }
-                }
-
-                if (programId) {
-                    const { data: program } = await supabase
-                        .from('programs')
-                        .select('booking_url')
-                        .eq('id', programId)
-                        .maybeSingle();
-                        
-                    if (program?.booking_url) {
-                        setBookingUrl(program.booking_url);
-                    }
-                }
-
             } catch (error) {
                 console.error("Error checking user:", error);
             } finally {
@@ -179,14 +135,13 @@ function IntakeForm() {
         "Great! Now tell us about your body and activity level.",
         "What are your fitness goals?",
         "Any medical conditions we should be aware of?",
-        "How do you prefer to train?",
         "Almost there! Please review your information.",
     ];
 
     // Handle step transitions with validation
     const handleNext = async () => {
-        // On the review step, validate all fields. Otherwise, just the current step's fields.
-        const fieldsToValidate = currentStep === 6 ? undefined : getFieldsByStep(currentStep);
+        // On step 5 (review), validate all fields. Otherwise, just the current step's fields.
+        const fieldsToValidate = currentStep === 5 ? undefined : getFieldsByStep(currentStep);
         const isValid = await methods.trigger(fieldsToValidate);
 
         if (isValid) {
@@ -200,52 +155,6 @@ function IntakeForm() {
             }
 
             if (currentStep === 5) {
-                const meetingDate = methods.getValues("meetingDate");
-                const meetingTime = methods.getValues("meetingTime");
-                
-                if (!bookingUrl) {
-                    if (!meetingDate) {
-                        toast.error("Required Field", { description: "Please select a meeting date." });
-                        return;
-                    }
-                    if (!meetingTime) {
-                        toast.error("Required Field", { description: "Please select a meeting time." });
-                        return;
-                    }
-
-                    // Restriction: Can't be on the same day. Must be tomorrow or later.
-                    const selectedDate = new Date(meetingDate);
-                    const today = new Date();
-                    today.setHours(0,0,0,0);
-                    if (selectedDate <= today) {
-                        toast.error("Invalid Date", { description: "Meetings must be scheduled for a future date (not today)." });
-                        return;
-                    }
-                    
-                    // Restriction: Can't be after 6 PM
-                    const [hours, minutes] = meetingTime.split(':').map(Number);
-                    if (hours > 18 || (hours === 18 && minutes > 0)) {
-                        toast.error("Invalid Time", { description: "Meetings cannot be scheduled after 6:00 PM." });
-                        return;
-                    }
-
-                    setIsSubmitting(true);
-                    const { available, error } = await checkAvailability(meetingDate, meetingTime);
-                    setIsSubmitting(false);
-
-                    if (!available) {
-                        toast.error("Time Unavailable", { description: "The admin is already booked for this time. Please select another time." });
-                        return;
-                    }
-                } else {
-                    if (!isScheduled) {
-                        toast.error("Action Required", { description: "Please select a date and time on the scheduler to book your consultation." });
-                        return;
-                    }
-                }
-            }
-
-            if (currentStep === 6) {
                 setIsSubmitting(true);
                 try {
                     const formData = methods.getValues();
@@ -255,7 +164,7 @@ function IntakeForm() {
 
                     const { error } = await supabase.from('client_intake_forms').insert({
                         user_id: user?.id || null,
-                        order_id: orderId || null, // Capture the order ID!
+                        order_id: orderId || null,
                         full_name: formData.fullName,
                         email: formData.email,
                         phone_number: formData.phoneNumber,
@@ -274,30 +183,9 @@ function IntakeForm() {
 
                     if (error) throw error;
 
-                    // Send Meeting Request to admin_schedules if not using Calendly
-                    if (!bookingUrl) {
-                        const { error: scheduleError } = await supabase.from('admin_schedules').insert({
-                            schedule_date: formData.meetingDate,
-                            start_time: formData.meetingTime,
-                            title: `Meeting Request: ${formData.fullName}`,
-                            type: 'Pending Meeting',
-                            color: 'bg-orange-50 text-orange-600',
-                            description: `Pending meeting request from ${formData.fullName}.`,
-                            created_by: user?.id || null,
-                        });
-
-                        if (scheduleError) {
-                            console.error("Error creating schedule:", scheduleError);
-                        }
-
-                        toast.success("Meeting Requested", {
-                            description: "The instructor will approve the scheduled meeting and you will receive an email once done."
-                        });
-                    } else {
-                        toast.success("Intake Form Submitted", {
-                            description: "Your registration details have been saved."
-                        });
-                    }
+                    toast.success("Intake Form Submitted", {
+                        description: "Your registration details have been saved."
+                    });
 
                     if (orderId) {
                         router.push(`/checkout/${orderId}`);
@@ -346,21 +234,7 @@ function IntakeForm() {
                         {currentStep === 2 && <PersonalInfoStep2 />}
                         {currentStep === 3 && <PersonalInfoStep3 />}
                         {currentStep === 4 && <MedicalInfoStep />}
-                        {currentStep === 5 && (
-                            <TrainingPreferencesStep
-                                bookingUrl={bookingUrl}
-                                isScheduled={isScheduled}
-                                setIsScheduled={setIsScheduled}
-                                fullName={methods.watch('fullName')}
-                                email={methods.watch('email')}
-                            />
-                        )}
-                        {currentStep === 6 && (
-                            <ReviewStep
-                                bookingUrl={bookingUrl}
-                                isScheduled={isScheduled}
-                            />
-                        )}
+                        {currentStep === 5 && <ReviewStep />}
 
                         {currentStep <= totalSteps && (
                             <div className="flex items-center justify-between pt-6">
@@ -373,7 +247,7 @@ function IntakeForm() {
                                         Back
                                     </button>
                                 ) : (
-                                    <div /> // Placeholder to keep Continue button on the right
+                                    <div />
                                 )}
                                 <button
                                     type="button"
@@ -381,7 +255,7 @@ function IntakeForm() {
                                     disabled={isSubmitting}
                                     className="bg-black hover:bg-white text-white hover:text-black border-1 border-black font-bold py-2 px-6 rounded-3xl shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {currentStep === 6 ? (isSubmitting ? "Submitting..." : "Submit") : "Continue"}
+                                    {currentStep === 5 ? (isSubmitting ? "Submitting..." : "Submit") : "Continue"}
                                 </button>
                             </div>
                         )}
@@ -403,7 +277,7 @@ export default function IntakePage() {
 // --- Sub-Components ---
 
 function StepperHeader({ currentStep, totalSteps }) {
-    const icons = [User, MapPin, Layers, Users, Bookmark, ClipboardList];
+    const icons = [User, MapPin, Layers, Bookmark, ClipboardList];
     const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
 
     return (
@@ -777,24 +651,6 @@ function ReviewStep({ bookingUrl, isScheduled }) {
                         </div>
                     </div>
                 </details>
-
-                {/* Section for Preferences */}
-                <details className="p-4 border rounded-lg" open>
-                    <summary className="text-lg font-semibold cursor-pointer">Meeting Setup</summary>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-4 text-sm">
-                        {bookingUrl ? (
-                            <p className="col-span-2 text-green-600 font-medium flex items-center gap-2">
-                                <Check size={16} /> Consultation successfully scheduled on Calendly. Details and Google Meet link will be emailed to you.
-                            </p>
-                        ) : (
-                            <>
-                                <p><strong>Meeting Date:</strong> {formatDisplayValue(formData.meetingDate)}</p>
-                                <p><strong>Meeting Time:</strong> {formatDisplayValue(formData.meetingTime)}</p>
-                                <p className="col-span-2 text-orange-600 font-medium">Your meeting request will be sent to the instructor for approval.</p>
-                            </>
-                        )}
-                    </div>
-                </details>
             </div>
         </div>
     );
@@ -810,8 +666,6 @@ function getFieldsByStep(step) {
             return ["goal", "targetWeight", "goalDescription"];
         case 4:
             return ["injuries", "medicalConditions"];
-        case 5:
-            return ["meetingDate", "meetingTime"];
         default:
             return [];
     }
