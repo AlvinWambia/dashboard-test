@@ -3,6 +3,8 @@ import HomeClient from "./home2/HomeClient";
 import { Suspense } from "react";
 import { createClient, createAdminClient } from "@/supabase/server";
 
+export const dynamic = 'force-dynamic';
+
 async function getInitialUser() {
     try {
         const supabase = await createClient();

@@ -102,7 +102,7 @@ export default function CalenderPage() {
         };
 
         fetchData();
-    }, [router, date, refreshKey]);
+    }, [date, refreshKey]);
 
     const handleScheduleAdded = () => setRefreshKey(prev => prev + 1);
 
