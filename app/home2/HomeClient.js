@@ -837,6 +837,29 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                                         <div className="flex-1 flex flex-col gap-4 min-h-[220px]">
                                             <ScrollReveal direction="right">
                                                 <p className="text-xl font-bold tracking-tight">{program.title}</p>
+                                                {/* Deliverables / Service Badges */}
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {program.has_online_one_on_one && (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                                            💻 Online 1-on-1
+                                                        </span>
+                                                    )}
+                                                    {program.has_online_group && (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                                                            👥 Online Group
+                                                        </span>
+                                                    )}
+                                                    {program.has_physical_sessions && (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            🏋️ Physical Sessions
+                                                        </span>
+                                                    )}
+                                                    {program.has_digital_downloads && (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                                            📄 Digital Downloads
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <p className="text-slate-600 text-sm leading-relaxed mt-2">{program.description}</p>
                                             </ScrollReveal>
 

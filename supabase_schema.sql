@@ -134,6 +134,8 @@ ALTER TABLE public.form_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS has_digital_downloads BOOLEAN DEFAULT false;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS has_dashboard_access BOOLEAN DEFAULT false;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS has_online_consultations BOOLEAN DEFAULT false;
+ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS has_online_one_on_one BOOLEAN DEFAULT false;
+ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS has_online_group BOOLEAN DEFAULT false;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS has_physical_sessions BOOLEAN DEFAULT false;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS booking_url TEXT;
 ALTER TABLE public.programs ADD COLUMN IF NOT EXISTS location_details TEXT;
@@ -224,6 +226,27 @@ CREATE POLICY "Clients can view their own program access"
 CREATE POLICY "Clients can view their own payment history" 
     ON public.payment_history FOR SELECT 
     USING (client_id = auth.uid()::text);
+
+-- Create Consultation Settings Table
+CREATE TABLE IF NOT EXISTS public.consultation_settings (
+    id TEXT PRIMARY KEY DEFAULT 'default',
+    booking_url TEXT,
+    admin_email TEXT,
+    admin_whatsapp TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.consultation_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can view consultation settings"
+    ON public.consultation_settings FOR SELECT
+    USING (true);
+
+CREATE POLICY "Admin can modify consultation settings"
+    ON public.consultation_settings FOR ALL
+    USING (true);
+
 
 
 

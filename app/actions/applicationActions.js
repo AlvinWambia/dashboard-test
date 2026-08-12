@@ -53,12 +53,21 @@ export async function approveApplication(appId) {
             <p>You can now access your program dashboard to view your materials.</p>
         `;
 
-        if (app.programs.has_online_consultations && app.programs.booking_url) {
+        // Fetch global consultation settings for booking URL fallback
+        const { data: globalSettings } = await supabase
+            .from('consultation_settings')
+            .select('booking_url')
+            .eq('id', 'default')
+            .maybeSingle();
+
+        const bookingUrl = app.programs.booking_url || globalSettings?.booking_url;
+        const isOnlineConsultation = app.programs.has_online_one_on_one || app.programs.has_online_group || app.programs.has_online_consultations;
+        if (isOnlineConsultation && bookingUrl) {
             emailHtml += `
                 <div style="margin-top: 20px; padding: 15px; border-left: 4px solid #000; background: #f9f9f9;">
                     <h3>Book Your Consultation</h3>
                     <p>Please use the link below to schedule your online consultation at your earliest convenience:</p>
-                    <a href="${app.programs.booking_url}" style="display: inline-block; padding: 10px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 5px;">Book Consultation</a>
+                    <a href="${bookingUrl}" style="display: inline-block; padding: 10px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 5px;">Book Consultation</a>
                 </div>
             `;
         }

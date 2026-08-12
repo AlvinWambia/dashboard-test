@@ -102,6 +102,20 @@ export default function ProgramsListClient({ initialPrograms }) {
                       <div className="min-w-0">
                         <p className="font-medium text-gray-900 text-sm truncate">{program.title}</p>
                         <p className="text-xs text-gray-500 truncate max-w-xs">{program.description || 'No description'}</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {program.has_online_one_on_one && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-50 text-blue-700 rounded border border-blue-100">1-on-1</span>
+                          )}
+                          {program.has_online_group && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-50 text-purple-700 rounded border border-purple-100">Group</span>
+                          )}
+                          {program.has_physical_sessions && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-700 rounded border border-emerald-100">Physical</span>
+                          )}
+                          {program.has_digital_downloads && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-50 text-amber-700 rounded border border-amber-100">Download</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>

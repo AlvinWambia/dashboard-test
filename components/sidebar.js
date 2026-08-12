@@ -22,6 +22,7 @@ const menuItems = [
   { icon: Inbox, label: "Programs", href: "/admin/programs" },
   { icon: Apple, label: "Nutrition", href: "/admin/nutrition" },
   { icon: LifeBuoy, label: "Wellness", href: "/admin/wellness" },
+  { icon: Settings, label: "Settings", href: "/admin/settings" },
 ];
 
 export function Sidebar() {

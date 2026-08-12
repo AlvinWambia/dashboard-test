@@ -32,7 +32,14 @@ export default async function ProfilePage() {
         }
         profile = profileData || { id: user.id, email: user.email, full_name: user.user_metadata?.full_name };
 
-        // 4. Fetch the programs they have access to
+        // 4. Fetch global consultation settings for booking URL fallback
+        const { data: globalSettings } = await supabase
+            .from('consultation_settings')
+            .select('booking_url')
+            .eq('id', 'default')
+            .maybeSingle();
+
+        // 5. Fetch the programs they have access to
         const { data: accessData, error: accessErr } = await supabase
             .from('client_programs')
             .select(`
@@ -45,6 +52,8 @@ export default async function ProfilePage() {
                     has_digital_downloads,
                     has_dashboard_access,
                     has_online_consultations,
+                    has_online_one_on_one,
+                    has_online_group,
                     has_physical_sessions,
                     booking_url,
                     location_details,
@@ -58,7 +67,10 @@ export default async function ProfilePage() {
         // Item 3: Generate signed URLs for digital downloads
         if (accessData && accessData.length > 0) {
             purchasedPrograms = await Promise.all(accessData.map(async (access) => {
-                const program = access.programs || {};
+                const rawProg = access.programs;
+                if (!rawProg) return null;
+                const effectiveBookingUrl = rawProg.booking_url || globalSettings?.booking_url || '';
+                const program = { ...rawProg, booking_url: effectiveBookingUrl };
                 let assets = [];
 
                 if (program.has_digital_downloads && program.id) {

@@ -90,7 +90,12 @@ async function getData() {
             faqs: p.faqs || [],
             service_type: p.service_type || 'downloadable',
             consultation_fee: p.consultation_fee || 0,
-            price: p.price || 0
+            price: p.price || 0,
+            has_digital_downloads: p.has_digital_downloads || false,
+            has_online_consultations: p.has_online_consultations || false,
+            has_online_one_on_one: p.has_online_one_on_one || (p.has_online_consultations && !p.has_online_group) || false,
+            has_online_group: p.has_online_group || false,
+            has_physical_sessions: p.has_physical_sessions || false,
         }));
 
         // Map Supabase data to match the expected format for HomeClient products
@@ -104,7 +109,12 @@ async function getData() {
             reviews: 12, // Hardcoded for now to retain UI
             image: p.image_url,
             service_type: p.service_type || 'downloadable',
-            consultation_fee: p.consultation_fee || 0
+            consultation_fee: p.consultation_fee || 0,
+            has_digital_downloads: p.has_digital_downloads || false,
+            has_online_consultations: p.has_online_consultations || false,
+            has_online_one_on_one: p.has_online_one_on_one || (p.has_online_consultations && !p.has_online_group) || false,
+            has_online_group: p.has_online_group || false,
+            has_physical_sessions: p.has_physical_sessions || false,
         }));
 
         console.log(`Successfully fetched data.`);

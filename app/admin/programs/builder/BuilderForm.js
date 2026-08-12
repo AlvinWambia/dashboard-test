@@ -28,8 +28,9 @@ export default function BuilderForm({ initialData, programId }) {
     has_digital_downloads: initialData.has_digital_downloads || false,
     has_dashboard_access: initialData.has_dashboard_access || false,
     has_online_consultations: initialData.has_online_consultations || false,
+    has_online_one_on_one: initialData.has_online_one_on_one || (initialData.has_online_consultations && !initialData.has_online_group) || false,
+    has_online_group: initialData.has_online_group || false,
     has_physical_sessions: initialData.has_physical_sessions || false,
-    booking_url: initialData.booking_url || '',
     location_details: initialData.location_details || '',
     service_type: initialData.service_type || 'downloadable',
     consultation_fee: initialData.consultation_fee || 0,
@@ -528,37 +529,42 @@ export default function BuilderForm({ initialData, programId }) {
               )}
             </div>
 
-            {/* Online Consultations */}
+            {/* Online One-on-One */}
             <div className="space-y-3">
               <label className="flex items-start gap-3 p-3 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                 <input 
                   type="checkbox" 
-                  checked={program.has_online_consultations}
-                  onChange={(e) => setProgram({...program, has_online_consultations: e.target.checked})}
+                  checked={program.has_online_one_on_one}
+                  onChange={(e) => setProgram({...program, has_online_one_on_one: e.target.checked})}
                   className="mt-1 rounded border-gray-300 text-black focus:ring-black"
                 />
                 <div>
                   <div className="flex items-center gap-2">
-                    <Video size={16} className="text-gray-600" />
-                    <span className="font-semibold text-sm">Online Consultations</span>
+                    <Video size={16} className="text-blue-600" />
+                    <span className="font-semibold text-sm">Online One-on-One</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Clients can book 1-on-1 video calls.</p>
+                  <p className="text-xs text-gray-500 mt-1">Clients get private 1-on-1 virtual sessions.</p>
                 </div>
               </label>
+            </div>
 
-              {program.has_online_consultations && (
-                <div className="pl-9 pr-3 space-y-2">
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide">Booking URL</label>
-                  <input 
-                    type="url" 
-                    value={program.booking_url}
-                    onChange={e => setProgram({...program, booking_url: e.target.value})}
-                    placeholder="https://calendly.com/your-link"
-                    className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black"
-                  />
-                  <p className="text-[10px] text-gray-400">Enter your Calendly or Acuity scheduling link.</p>
+            {/* Online Group */}
+            <div className="space-y-3">
+              <label className="flex items-start gap-3 p-3 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={program.has_online_group}
+                  onChange={(e) => setProgram({...program, has_online_group: e.target.checked})}
+                  className="mt-1 rounded border-gray-300 text-black focus:ring-black"
+                />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Video size={16} className="text-purple-600" />
+                    <span className="font-semibold text-sm">Online Group</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Group coaching, webinars, or live group calls.</p>
                 </div>
-              )}
+              </label>
             </div>
 
             {/* Physical Sessions */}

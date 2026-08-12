@@ -223,11 +223,11 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                                 </div>
                                                             )}
 
-                                                            {program.has_online_consultations && program.booking_url && (
-                                                                <Button variant="outline" className="w-full rounded-full" onClick={() => window.open(program.booking_url, '_blank')}>
-                                                                    Book Consultation
-                                                                </Button>
-                                                            )}
+                                                            {(program.has_online_one_on_one || program.has_online_group || program.has_online_consultations) && program.booking_url && (
+                                                                 <Button variant="outline" className="w-full rounded-full" onClick={() => window.open(program.booking_url, '_blank')}>
+                                                                     Book Consultation
+                                                                 </Button>
+                                                             )}
                                                             {program.has_physical_sessions && program.location_details && (
                                                                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mt-2">
                                                                     <p className="text-xs font-semibold text-slate-700 mb-1">Physical Location:</p>
