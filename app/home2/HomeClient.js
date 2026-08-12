@@ -64,7 +64,7 @@ import dynamic from "next/dynamic";
 import { createClient } from "@/supabase/client";
 
 const BookingModal = dynamic(() => import("@/components/BookingModal"), {
-  ssr: false,
+    ssr: false,
 });
 
 import { toast } from "sonner";
@@ -1046,8 +1046,8 @@ export default function HomeClient({ initialProfile, products, programs, testimo
 
                                         <div className="space-y-8 mt-12">
                                             {[
-                                                { label: "General Inquiries", value: "myfit@gmail.com", type: "email" },
-                                                { label: "Instagram", value: "@myfit_training", link: "https://www.instagram.com/myfit_training" },
+                                                { label: "General Inquiries", value: "myfitrainingg@gmail.com", type: "email" },
+                                                { label: "Instagram", value: "@myfit.training", link: "https://www.instagram.com/myfit.training" },
                                                 { label: "Facebook", value: "MyFit Training", link: "https://www.facebook.com/myfit_training" }
                                             ].map((contact, i) => (
                                                 <div key={i}>

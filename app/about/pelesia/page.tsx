@@ -50,11 +50,11 @@ export default function AboutPelesia() {
         {/* Stats Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
           <div className="flex flex-col">
-            <span className="text-4xl md:text-5xl font-bold mb-2">10</span>
+            <span className="text-4xl md:text-5xl font-bold mb-2">5</span>
             <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Years of experience</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-4xl md:text-5xl font-bold mb-2">500+</span>
+            <span className="text-4xl md:text-5xl font-bold mb-2">LOTS</span>
             <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Lives transformed</span>
           </div>
           <div className="flex flex-col">

@@ -29,7 +29,7 @@ export default function AboutMyFit() {
 
         {/* Bracketed Text */}
         <div className="max-w-4xl mx-auto text-center md:text-right text-2xl md:text-4xl font-medium leading-[1.2] mb-16 md:mb-24 tracking-tight">
-          [ We started with a simple goal: making elite fitness coaching accessible to everyone. Through community and dedication, we provide a system of support that empowers you. ]
+          [ We started with a simple goal: making elite fitness coaching accessible to all women. Through community and dedication, we provide a system of support that empowers you. ]
         </div>
 
         {/* Large Image */}
@@ -46,11 +46,11 @@ export default function AboutMyFit() {
         {/* Stats Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
           <div className="flex flex-col">
-            <span className="text-4xl md:text-5xl font-bold mb-2">5+</span>
+            <span className="text-4xl md:text-5xl font-bold mb-2">3+</span>
             <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Years in business</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-4xl md:text-5xl font-bold mb-2">10k+</span>
+            <span className="text-4xl md:text-5xl font-bold mb-2">20+</span>
             <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Active members</span>
           </div>
           <div className="flex flex-col">
@@ -58,7 +58,7 @@ export default function AboutMyFit() {
             <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Satisfied clients</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-4xl md:text-5xl font-bold mb-2">20+</span>
+            <span className="text-4xl md:text-5xl font-bold mb-2">5+</span>
             <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Programs created</span>
           </div>
         </div>

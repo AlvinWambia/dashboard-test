@@ -220,6 +220,7 @@ export default function ClientDetailView({ client, initialNotes, paymentHistory 
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
                       <th className="p-3 font-semibold text-gray-600">Date</th>
+                      <th className="p-3 font-semibold text-gray-600">Type</th>
                       <th className="p-3 font-semibold text-gray-600">Amount</th>
                       <th className="p-3 font-semibold text-gray-600">Reference</th>
                       <th className="p-3 font-semibold text-gray-600 text-right">Status</th>
@@ -230,7 +231,19 @@ export default function ClientDetailView({ client, initialNotes, paymentHistory 
                       paymentHistory.map(payment => (
                         <tr key={payment.id} className="hover:bg-gray-50/50">
                           <td className="p-3 text-gray-600">{payment.paid_at ? format(parseISO(payment.paid_at), 'MMM d, yyyy') : 'N/A'}</td>
-                          <td className="p-3 font-medium text-gray-900">{payment.currency} {payment.amount}</td>
+                          <td className="p-3">
+                            {payment.type === 'consultation' ? (
+                              <span className="inline-flex flex-col gap-0.5">
+                                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 w-fit">Consultation</span>
+                                {payment.program_title && (
+                                  <span className="text-xs text-gray-400 truncate max-w-[140px]">{payment.program_title}</span>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-50 text-purple-700">Subscription</span>
+                            )}
+                          </td>
+                          <td className="p-3 font-medium text-gray-900">{payment.currency} {Number(payment.amount).toLocaleString()}</td>
                           <td className="p-3 text-gray-500 font-mono text-xs">{payment.reference}</td>
                           <td className="p-3 text-right">
                             <span className={`px-2 py-1 text-xs font-medium rounded ${
@@ -243,7 +256,7 @@ export default function ClientDetailView({ client, initialNotes, paymentHistory 
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="4" className="p-6 text-center text-gray-500">
+                        <td colSpan="5" className="p-6 text-center text-gray-500">
                           No payment history available.
                         </td>
                       </tr>

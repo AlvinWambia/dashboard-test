@@ -1,16 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Calendar, CheckCircle2, Phone, Mail } from "lucide-react";
-import dynamic from "next/dynamic";
+import { MessageSquare, Calendar, CheckCircle2, Phone, Mail, Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
-
-const PaystackButton = dynamic(() => import("@/components/PaystackButton"), {
-  ssr: false,
-});
+import { usePaystackPayment } from "react-paystack";
 
 export default function BookingModal({ isOpen, onClose, program, userProfile }) {
   const [notes, setNotes] = useState("");
@@ -18,6 +14,7 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
   const [customerName, setCustomerName] = useState(userProfile?.full_name || "");
   const [isSuccess, setIsSuccess] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
+  const [isPaying, setIsPaying] = useState(false);
 
   if (!program) return null;
 
@@ -25,7 +22,26 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
   const adminWhatsApp = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP || "+254700000000";
   const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "myfit@gmail.com";
 
-  const handlePaymentSuccess = async (response) => {
+  const paystackConfig = {
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
+    email: customerEmail || "customer@example.com",
+    amount: Math.round(consultationFee * 100),
+    currency: "KES",
+    reference: `consult_${program._id || program.id}_${Date.now()}`,
+    metadata: {
+      programId: program._id || program.id,
+      programTitle: program.title || program.name,
+      customerName,
+      notes,
+      type: "consultation_booking",
+    },
+  };
+
+  // usePaystackPayment hook — must be called at top level (not inside handler)
+  const initializePayment = usePaystackPayment(paystackConfig);
+
+  const handlePaymentSuccess = useCallback(async (response) => {
+    setIsPaying(false);
     try {
       const res = await fetch("/api/bookings", {
         method: "POST",
@@ -53,6 +69,36 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
       console.error("Booking recording error:", err);
       toast.error("Booking Error", { description: err.message });
     }
+  }, [program, userProfile, notes, customerEmail, customerName]);
+
+  const handlePayNow = () => {
+    if (!customerEmail || !customerName) {
+      toast.error("Missing Details", { description: "Please fill in your name and email before paying." });
+      return;
+    }
+    if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
+      toast.error("Configuration Error", { description: "Payment is not configured. Please contact support." });
+      return;
+    }
+
+    setIsPaying(true);
+
+    // Close the dialog FIRST to release the Radix focus trap, then open Paystack
+    onClose();
+
+    // Small timeout to let the dialog unmount before Paystack injects its iframe
+    setTimeout(() => {
+      initializePayment({
+        onSuccess: (response) => {
+          handlePaymentSuccess(response);
+        },
+        onClose: () => {
+          // User closed Paystack without paying — re-open the booking modal
+          setIsPaying(false);
+          setIsSuccess(false);
+        },
+      });
+    }, 150);
   };
 
   const resetAndClose = () => {
@@ -61,8 +107,13 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
     onClose();
   };
 
+  const formattedAmount = consultationFee.toLocaleString("en-KE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
   return (
-    <Dialog open={isOpen} onOpenChange={resetAndClose}>
+    <Dialog open={isOpen || isSuccess} onOpenChange={(open) => { if (!open) resetAndClose(); }}>
       <DialogContent className="sm:max-w-lg rounded-3xl bg-white p-6 sm:p-8">
         {!isSuccess ? (
           <>
@@ -124,19 +175,23 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
               </div>
 
               <div className="pt-2">
-                <PaystackButton
-                  email={customerEmail || "customer@example.com"}
-                  amount={consultationFee}
-                  currency="KES"
-                  metadata={{
-                    programId: program._id || program.id,
-                    programTitle: program.title || program.name,
-                    customerName,
-                    notes,
-                    type: "consultation_booking",
-                  }}
-                  onSuccess={handlePaymentSuccess}
-                />
+                <button
+                  onClick={handlePayNow}
+                  disabled={isPaying}
+                  className="w-full py-4 text-base font-semibold bg-black hover:bg-zinc-800 active:scale-[0.99] rounded-2xl text-white shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isPaying ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Opening Payment...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-5 h-5" />
+                      Pay KES {formattedAmount} Now
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </>

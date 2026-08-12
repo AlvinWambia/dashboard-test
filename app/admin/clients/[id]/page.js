@@ -84,14 +84,54 @@ export default async function ClientProfilePage({ params }) {
     client.subscription = subscription;
   }
 
-  // Fetch payment history
-  const { data: payments } = await supabase
-    .from('payment_history')
-    .select('*')
-    .eq('client_id', targetId)
-    .order('paid_at', { ascending: false });
+  // Fetch payment history from two sources in parallel:
+  // 1. payment_history — subscription / one-time program payments recorded by webhook
+  // 2. bookings — consultation payments (stored with consultation_payment_ref)
+  const [{ data: payments }, { data: consultationBookings }] = await Promise.all([
+    supabase
+      .from('payment_history')
+      .select('*')
+      .eq('client_id', targetId)
+      .order('paid_at', { ascending: false }),
+
+    supabase
+      .from('bookings')
+      .select(`
+        id,
+        consultation_payment_ref,
+        consultation_paid,
+        created_at,
+        programs ( title, consultation_fee )
+      `)
+      .eq('consultation_paid', true)
+      .or(
+        userId
+          ? `user_id.eq.${userId}`
+          : `customer_email.eq.${clientData.email}`
+      )
+      .order('created_at', { ascending: false }),
+  ]);
+
+  // Normalise consultation bookings into the same shape as payment_history rows
+  const consultationPayments = (consultationBookings || []).map((b) => ({
+    id: `booking_${b.id}`,
+    client_id: targetId,
+    amount: b.programs?.consultation_fee ?? 0,
+    currency: 'KES',
+    status: 'success',
+    reference: b.consultation_payment_ref || `BOOK-${b.id}`,
+    paid_at: b.created_at,
+    type: 'consultation',
+    program_title: b.programs?.title || 'Consultation',
+  }));
+
+  // Merge and sort all payments newest-first
+  const allPayments = [
+    ...(payments || []).map((p) => ({ ...p, type: p.type || 'subscription' })),
+    ...consultationPayments,
+  ].sort((a, b) => new Date(b.paid_at) - new Date(a.paid_at));
 
   return (
-    <ClientDetailView client={client} initialNotes={notes || []} paymentHistory={payments || []} />
+    <ClientDetailView client={client} initialNotes={notes || []} paymentHistory={allPayments} />
   );
 }

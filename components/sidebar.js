@@ -16,6 +16,7 @@ import { SignOutButton } from "@/components/signOutButton";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
   { icon: Users, label: "Clients", href: "/admin/clients" },
+  { icon: LayoutDashboard, label: "Analytics", href: "/admin/analytics" },
   { icon: ListTodo, label: "Tasks", href: "/admin/tasks", badge: "12+" },
   { icon: Calendar, label: "Bookings", href: "/admin/bookings" },
   { icon: Users, label: "Members", href: "/admin/members" },

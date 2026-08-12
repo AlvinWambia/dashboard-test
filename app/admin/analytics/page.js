@@ -1,54 +1,45 @@
 import { Plus, Import } from 'lucide-react';
 import { createClient } from "@/supabase/server";
+import { createAdminClient } from "@/supabase/server";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Dashboard from "@/components/admin/analytics";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import React from 'react';
 
-
-
-
-
 export default async function DashboardPage() {
     const supabase = await createClient();
 
-    // Inside your async DashboardPage()
-    const { data: users } = await supabase.from('profiles').select('created_at').eq('role', 'user');
-
-    // Simple logic to count users per day of the week
-    const counts = new Array(7).fill(0);
-    users?.forEach((u) => {
-        const day = new Date(u.created_at).getDay();
-        counts[day] += 1;
-    });
-
-    // 1. Get the authenticated user from the session
+    // 1. Auth check
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/auth/login");
 
-    // 2. If no user exists, send them to login
-    if (!user) {
-        redirect("/auth/login");
-    }
-
-    // 3. Fetch the role from the 'profiles' table (the source of truth)
     const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
+    if (!profile || profile.role !== 'admin') redirect("/home?error=unauthorized");
 
-    console.log("Fetched Profile Data:", profile); // Check your terminal (not browser console)
+    // Use admin client so RLS doesn't filter out other users' rows
+    const adminSupabase = createAdminClient();
 
+    // User signup trend (count per day-of-week)
+    const { data: users } = await adminSupabase
+        .from('profiles')
+        .select('created_at')
+        .eq('role', 'user');
 
-    // 4. Redirect if they are NOT an admin
-    if (!profile || profile.role !== 'admin') {
-        redirect("/home?error=unauthorized");
-    }
+    const counts = new Array(7).fill(0);
+    users?.forEach((u) => {
+        const day = new Date(u.created_at).getDay();
+        counts[day] += 1;
+    });
 
-    // --- REAL ANALYTICS FETCHING ---
+    // --- Date range helpers ---
     const today = new Date();
+
     const currentPeriodStart = new Date();
     currentPeriodStart.setDate(today.getDate() - 30);
 
@@ -56,52 +47,96 @@ export default async function DashboardPage() {
     previousPeriodStart.setDate(today.getDate() - 60);
     const previousPeriodEnd = new Date(currentPeriodStart);
 
-    // Fetch data for both periods in parallel
+    // --- Parallel fetches for both periods ---
+    // Sources:
+    //   payment_history → subscription / one-time program payments (written by Paystack webhook)
+    //   bookings        → consultation payments (consultation_paid=true)
     const [
-        { data: currentPayments },
+        { data: currentPayHist },
+        { data: currentBookings },
+        { data: previousPayHist },
+        { data: previousBookings },
         { data: currentOrders },
-        { data: previousPayments },
-        { data: previousOrders }
+        { data: previousOrders },
     ] = await Promise.all([
-        supabase
-            .from('payments')
+        // Current period — payment_history
+        adminSupabase
+            .from('payment_history')
             .select('amount, created_at')
             .eq('status', 'success')
             .gte('created_at', currentPeriodStart.toISOString()),
-        supabase
-            .from('orders')
-            .select('program_name, price, created_at')
-            .eq('status', 'paid')
+
+        // Current period — consultation bookings
+        adminSupabase
+            .from('bookings')
+            .select('created_at, programs ( consultation_fee, title )')
+            .eq('consultation_paid', true)
             .gte('created_at', currentPeriodStart.toISOString()),
-        supabase
-            .from('payments')
+
+        // Previous period — payment_history
+        adminSupabase
+            .from('payment_history')
             .select('amount')
             .eq('status', 'success')
             .gte('created_at', previousPeriodStart.toISOString())
             .lt('created_at', previousPeriodEnd.toISOString()),
-        supabase
+
+        // Previous period — consultation bookings
+        adminSupabase
+            .from('bookings')
+            .select('programs ( consultation_fee )')
+            .eq('consultation_paid', true)
+            .gte('created_at', previousPeriodStart.toISOString())
+            .lt('created_at', previousPeriodEnd.toISOString()),
+
+        // Current period — orders (for program performance leaderboard)
+        adminSupabase
+            .from('orders')
+            .select('program_name, price, created_at')
+            .eq('status', 'paid')
+            .gte('created_at', currentPeriodStart.toISOString()),
+
+        // Previous period — orders count
+        adminSupabase
             .from('orders')
             .select('id')
             .eq('status', 'paid')
             .gte('created_at', previousPeriodStart.toISOString())
-            .lt('created_at', previousPeriodEnd.toISOString())
+            .lt('created_at', previousPeriodEnd.toISOString()),
     ]);
 
-    // Calculate stats for the current period (last 30 days)
-    const totalRevenue = currentPayments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0;
-    const totalOrders = currentOrders?.length || 0;
+    // --- Merge payment sources ---
+
+    // Build unified current-period payment list (amount + created_at)
+    const currentPayments = [
+        ...(currentPayHist || []),
+        ...(currentBookings || []).map((b) => ({
+            amount: b.programs?.consultation_fee ?? 0,
+            created_at: b.created_at,
+        })),
+    ];
+
+    // Previous period total
+    const previousPaymentsAmount =
+        (previousPayHist || []).reduce((acc, p) => acc + (p.amount || 0), 0) +
+        (previousBookings || []).reduce((acc, b) => acc + (b.programs?.consultation_fee ?? 0), 0);
+
+    // --- Merge order counts (orders + consultation bookings) ---
+    const currentOrderCount = (currentOrders?.length || 0) + (currentBookings?.length || 0);
+    const previousOrderCount = (previousOrders?.length || 0) + (previousBookings?.length || 0);
+
+    // --- Current period stats ---
+    const totalRevenue = currentPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const totalOrders = currentOrderCount;
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-    // Calculate stats for the previous period (30-60 days ago)
-    const previousTotalRevenue = previousPayments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0;
-    const previousTotalOrders = previousOrders?.length || 0;
+    const previousTotalRevenue = previousPaymentsAmount;
+    const previousTotalOrders = previousOrderCount;
     const previousAvgOrderValue = previousTotalOrders > 0 ? previousTotalRevenue / previousTotalOrders : 0;
 
-    // Calculate percentage changes
+    // --- % changes ---
     const calculateChange = (current, previous) => {
-        if (previous === 0) {
-            return current > 0 ? 100 : 0; // If previous is 0, any increase is a 100% change
-        }
+        if (previous === 0) return current > 0 ? 100 : 0;
         return ((current - previous) / previous) * 100;
     };
 
@@ -109,37 +144,49 @@ export default async function DashboardPage() {
     const ordersChange = calculateChange(totalOrders, previousTotalOrders);
     const avgOrderValueChange = calculateChange(avgOrderValue, previousAvgOrderValue);
 
-    // Program Performance (Sales per Program in the last 30 days)
+    // --- Program Performance leaderboard (orders + consultation bookings) ---
     const programStatsMap = {};
-    currentOrders?.forEach(order => {
+
+    // From orders table
+    (currentOrders || []).forEach(order => {
         const name = order.program_name || 'Unknown';
-        if (!programStatsMap[name]) {
-            programStatsMap[name] = { name, revenue: 0, count: 0 };
-        }
+        if (!programStatsMap[name]) programStatsMap[name] = { name, revenue: 0, count: 0 };
         programStatsMap[name].revenue += (order.price || 0);
         programStatsMap[name].count += 1;
     });
+
+    // From consultation bookings
+    (currentBookings || []).forEach(booking => {
+        const name = booking.programs?.title || 'Consultation';
+        if (!programStatsMap[name]) programStatsMap[name] = { name, revenue: 0, count: 0 };
+        programStatsMap[name].revenue += (booking.programs?.consultation_fee ?? 0);
+        programStatsMap[name].count += 1;
+    });
+
     const programStats = Object.values(programStatsMap).sort((a, b) => b.revenue - a.revenue);
 
-    // Weekly Revenue Trend (Last 7 days)
+    // --- Weekly Revenue Trend (last 7 days) — subscription + consultation ---
     const last7Days = [...Array(7)].map((_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
         d.setHours(0, 0, 0, 0);
         return d;
     });
+
     const revenueTrend = last7Days.map(day => {
         const dayEnd = new Date(day);
         dayEnd.setHours(23, 59, 59, 999);
 
-        const dayRevenue = currentPayments?.filter(p => {
-            const pDate = new Date(p.created_at);
-            return pDate >= day && pDate <= dayEnd;
-        }).reduce((acc, p) => acc + (p.amount || 0), 0) || 0;
+        const dayRevenue = currentPayments
+            .filter(p => {
+                const pDate = new Date(p.created_at);
+                return pDate >= day && pDate <= dayEnd;
+            })
+            .reduce((acc, p) => acc + (p.amount || 0), 0);
 
         return {
             date: day.toLocaleDateString('en-US', { weekday: 'short' }),
-            revenue: dayRevenue
+            revenue: dayRevenue,
         };
     });
 
@@ -151,10 +198,8 @@ export default async function DashboardPage() {
         ordersChange,
         avgOrderValueChange,
         programStats,
-        revenueTrend
+        revenueTrend,
     };
-
-
 
     return (
         <div className="p-4 md:p-8 bg-white min-h-screen">
@@ -181,7 +226,6 @@ export default async function DashboardPage() {
                 <div className="">
                     <Dashboard data={analyticsData} />
                 </div>
-
             </div>
         </div>
     );
