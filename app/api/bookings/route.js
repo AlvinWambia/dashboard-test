@@ -12,6 +12,9 @@ export async function POST(request) {
       consultation_payment_ref,
       customer_email,
       customer_name,
+      customer_phone,
+      parent_booking_id,
+      consultation_round,
     } = body;
 
     if (!program_id) {
@@ -45,6 +48,9 @@ export async function POST(request) {
           consultation_payment_ref: consultation_payment_ref || null,
           status: "pending",
           unlocked_purchase: false,
+          customer_phone: customer_phone || null,
+          parent_booking_id: parent_booking_id || null,
+          consultation_round: consultation_round || 1,
         },
       ])
       .select()
@@ -65,8 +71,10 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     const supabaseAdmin = createAdminClient();
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('user_id');
 
-    const { data: bookings, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("bookings")
       .select(`
         *,
@@ -84,8 +92,13 @@ export async function GET(request) {
           email,
           phone
         )
-      `)
-      .order("created_at", { ascending: false });
+    `);
+    
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
+    
+    const { data: bookings, error } = await query.order("created_at", { ascending: false });
 
     if (error) {
       console.error("Database Error fetching bookings:", error);

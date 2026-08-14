@@ -12,10 +12,11 @@ const CALENDLY_URL =
   process.env.NEXT_PUBLIC_CALENDLY_URL ||
   "https://calendly.com/wambialvin/program-set-up-meeting";
 
-export default function BookingModal({ isOpen, onClose, program, userProfile }) {
+export default function BookingModal({ isOpen, onClose, program, userProfile, mode = 'initial', parentBookingId = null, consultationRound = 1 }) {
   const [notes, setNotes] = useState("");
   const [customerEmail, setCustomerEmail] = useState(userProfile?.email || "");
   const [customerName, setCustomerName] = useState(userProfile?.full_name || "");
+  const [customerPhone, setCustomerPhone] = useState(userProfile?.phone || "");
   const [isSuccess, setIsSuccess] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
   const [isPaying, setIsPaying] = useState(false);
@@ -31,7 +32,9 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
 
   // ── All hooks above early returns (Rules of Hooks) ───────────────────────
 
-  const consultationFee = activeProgram?.consultation_fee || 0;
+  const isFollowup = mode === 'followup';
+  const consultationFee = isFollowup ? (activeProgram?.followup_fee || 0) : (activeProgram?.consultation_fee || 0);
+  const isFree = consultationFee === 0;
 
   const paystackConfig = {
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
@@ -65,6 +68,9 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
             consultation_payment_ref: response.reference || response.trxref,
             customer_email: customerEmail,
             customer_name: customerName,
+            customer_phone: customerPhone,
+            parent_booking_id: parentBookingId,
+            consultation_round: consultationRound
           }),
         });
 
@@ -84,26 +90,29 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
     [activeProgram, userProfile, notes, customerEmail, customerName]
   );
 
+  const confirmBooking = useCallback(async () => {
+    setIsScheduled(true);
+    if (bookingId) {
+      try {
+        await fetch(`/api/bookings/${bookingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "confirmed" }),
+        });
+        toast.success("Consultation Scheduled!", {
+          description: "Your session has been successfully booked and confirmed.",
+        });
+      } catch (err) {
+        console.error("Error updating booking status:", err);
+      }
+    }
+  }, [bookingId]);
+
   useEffect(() => {
     const handleCalendlyMessage = async (e) => {
       if (e.data && e.data.event === "calendly.event_scheduled") {
         console.log("Calendly event scheduled:", e.data);
-        setIsScheduled(true);
-
-        if (bookingId) {
-          try {
-            await fetch(`/api/bookings/${bookingId}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status: "confirmed" }),
-            });
-            toast.success("Consultation Scheduled!", {
-              description: "Your session has been successfully booked and confirmed.",
-            });
-          } catch (err) {
-            console.error("Error updating booking status:", err);
-          }
-        }
+        await confirmBooking();
       }
     };
 
@@ -111,18 +120,53 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
     return () => {
       window.removeEventListener("message", handleCalendlyMessage);
     };
-  }, [bookingId]);
+  }, [confirmBooking]);
 
   // ── Early return after all hooks ─────────────────────────────────────────
   if (!activeProgram) return null;
 
-  const handlePayNow = () => {
-    if (!customerEmail || !customerName) {
+  const handlePayNow = async () => {
+    if (!customerEmail || !customerName || !customerPhone) {
       toast.error("Missing Details", {
-        description: "Please fill in your name and email before paying.",
+        description: "Please fill in your name, email, and phone number before proceeding.",
       });
       return;
     }
+
+    if (isFree) {
+      setIsPaying(true);
+      try {
+        const res = await fetch("/api/bookings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            program_id: activeProgram?._id || activeProgram?.id,
+            user_id: userProfile?.id || null,
+            notes,
+            consultation_paid: false,
+            consultation_payment_ref: null,
+            customer_email: customerEmail,
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            parent_booking_id: parentBookingId,
+            consultation_round: consultationRound
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to record booking");
+        
+        if (data.booking && data.booking.id) {
+          setBookingId(data.booking.id);
+        }
+        setIsSuccess(true);
+      } catch(err) {
+        toast.error("Booking Error", { description: err.message });
+      } finally {
+        setIsPaying(false);
+      }
+      return;
+    }
+
     if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
       toast.error("Configuration Error", {
         description: "Payment is not configured. Please contact support.",
@@ -179,13 +223,15 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
           <>
             <DialogHeader className="space-y-2">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <Calendar className="w-4 h-4 text-blue-600" /> Book Consultation
+                <Calendar className="w-4 h-4 text-blue-600" /> {isFollowup ? "Book Follow-Up Consultation" : "Book Consultation"}
               </div>
               <DialogTitle className="text-2xl font-bold text-slate-900">
                 {activeProgram.title || activeProgram.name}
               </DialogTitle>
               <DialogDescription className="text-slate-500 text-sm">
-                Pay the consultation fee to secure an initial consultation call with our team.
+                {isFollowup 
+                  ? `Round ${consultationRound} — pick a new time below${isFree ? '' : ' after payment'}.`
+                  : "Pay the consultation fee to secure an initial consultation call with our team."}
               </DialogDescription>
             </DialogHeader>
 
@@ -233,6 +279,19 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
 
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">
+                  Your Phone Number
+                </label>
+                <Input
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">
                   Your Goals / Message (Optional)
                 </label>
                 <textarea
@@ -253,12 +312,12 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
                   {isPaying ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Opening Payment...
+                      {isFree ? "Confirming..." : "Opening Payment..."}
                     </>
                   ) : (
                     <>
-                      <CreditCard className="w-5 h-5" />
-                      Pay KES {formattedAmount} Now
+                      {!isFree && <CreditCard className="w-5 h-5" />}
+                      {isFree ? "Confirm & Continue to Schedule" : `Pay KES ${formattedAmount} Now`}
                     </>
                   )}
                 </button>
@@ -301,18 +360,18 @@ export default function BookingModal({ isOpen, onClose, program, userProfile }) 
               </p>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
-                  onClick={() => setIsScheduled(true)}
+                  onClick={confirmBooking}
                   variant="outline"
-                  className="text-xs rounded-xl w-full sm:w-auto"
+                  className="text-xs rounded-xl w-full sm:w-auto cursor-pointer"
                 >
-                  I&apos;ve Scheduled Already
+                  Done scheduling
                 </Button>
                 <Button
                   onClick={resetAndClose}
                   variant="ghost"
-                  className="text-xs rounded-xl text-slate-400 hover:text-slate-600 w-full sm:w-auto"
+                  className="text-xs rounded-xl text-slate-400 hover:text-slate-600 w-full sm:w-auto cursor-pointer"
                 >
-                  Close & Do Later
+                  I&apos;ll schedule later
                 </Button>
               </div>
             </div>

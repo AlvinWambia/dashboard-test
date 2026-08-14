@@ -78,6 +78,7 @@ export async function saveProgram(programId, data) {
       location_details: data.location_details || null,
       service_type: data.service_type || 'downloadable',
       consultation_fee: data.consultation_fee ? parseFloat(data.consultation_fee) : 0,
+      followup_fee: data.followup_fee ? parseFloat(data.followup_fee) : 0,
     };
 
     let pId = programId;

@@ -253,7 +253,23 @@ export default function HomeClient({ initialProfile, products, programs, testimo
     const [isCommentsOpen, setIsCommentsOpen] = React.useState(false);
     const [activeAboutStep, setActiveAboutStep] = React.useState(0);
     const [userProfile, setUserProfile] = React.useState(initialProfile || null);
-    const [selectedBookingProgram, setSelectedBookingProgram] = React.useState(null);
+    const [bookingModalProps, setBookingModalProps] = React.useState({ program: null });
+    const [userBookings, setUserBookings] = React.useState([]);
+
+    const fetchBookings = React.useCallback(async () => {
+        try {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { setUserBookings([]); return; }
+            const { data, error } = await supabase
+                .from('bookings')
+                .select('program_id, consultation_paid, status, unlocked_purchase, created_at, id, consultation_round')
+                .eq('user_id', user.id);
+            if (!error && data) setUserBookings(data);
+        } catch (e) {
+            console.error('fetchBookings error:', e);
+        }
+    }, []);
 
     const aboutSteps = [
         {
@@ -358,6 +374,7 @@ export default function HomeClient({ initialProfile, products, programs, testimo
 
                 setUserProfile({
                     ...profile,
+                    id: user.id,
                     full_name: fullName,
                     role: profile?.role || user.user_metadata?.role || 'user'
                 });
@@ -387,6 +404,7 @@ export default function HomeClient({ initialProfile, products, programs, testimo
 
                     setUserProfile({
                         ...profile,
+                        id: session.user.id,
                         full_name: fullName,
                         role: profile?.role || session.user.user_metadata?.role || 'user'
                     });
@@ -398,6 +416,11 @@ export default function HomeClient({ initialProfile, products, programs, testimo
 
         return () => subscription.unsubscribe();
     }, []);
+
+    // Fetch user bookings whenever the logged-in profile changes
+    React.useEffect(() => {
+        fetchBookings();
+    }, [userProfile, fetchBookings]);
 
     React.useEffect(() => {
         if (signedIn) {
@@ -867,27 +890,88 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                                             <ScrollReveal direction="right">
                                                 <div className="mt-auto pt-4 flex items-center gap-4 flex-wrap border-t border-slate-100">
                                                     {program.service_type === 'session' ? (
-                                                        <>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-xs text-slate-400 font-semibold uppercase">Consultation Fee</span>
-                                                                <span className="text-xl font-bold text-slate-900">
-                                                                    Kshs {(program.consultation_fee || product?.consultation_fee || 0).toLocaleString()}
-                                                                </span>
-                                                                <span className="text-xs text-slate-500 mt-0.5">
-                                                                    Full Session: Kshs {(program.price || product?.price || 0).toLocaleString()}
-                                                                </span>
-                                                            </div>
-                                                            <Button
-                                                                onClick={() => setSelectedBookingProgram(program)}
-                                                                className="rounded-full bg-black text-white hover:bg-zinc-800 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg ml-auto"
-                                                            >
-                                                                Book Consultation
-                                                                <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
-                                                            </Button>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            {(program.price > 0 || product?.price > 0) && (
+                                                        (() => {
+                                                            const programId = program._id || program.id;
+                                                            const latestBooking = userBookings
+                                                                .filter((b) => b.program_id === programId)
+                                                                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                                                            
+                                                            const status = latestBooking?.status;
+                                                            const unlocked = latestBooking?.unlocked_purchase;
+                                                            
+                                                            let buttonState = 'initial';
+                                                            if (latestBooking && status !== 'cancelled') {
+                                                                if (status === 'pending') buttonState = 'pending';
+                                                                else if (status === 'confirmed') buttonState = 'confirmed';
+                                                                else if (status === 'completed' && unlocked) buttonState = 'purchase';
+                                                                else if (status === 'needs_followup') buttonState = 'followup';
+                                                            }
+
+                                                            return (
+                                                                <>
+                                                                    <div className="flex flex-col">
+                                                                        {buttonState === 'purchase' || buttonState === 'confirmed' || buttonState === 'followup' ? (
+                                                                            <>
+                                                                                <span className="text-xs text-slate-400 font-semibold uppercase">Program Price</span>
+                                                                                <span className="text-xl font-bold text-slate-900">
+                                                                                    Kshs {(program.price || product?.price || 0).toLocaleString()}
+                                                                                </span>
+                                                                                {buttonState === 'confirmed' && <span className="text-xs text-emerald-600 mt-0.5 font-medium">✓ Consultation confirmed</span>}
+                                                                                {buttonState === 'purchase' && <span className="text-xs text-emerald-600 mt-0.5 font-medium">✓ Consultation completed</span>}
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <span className="text-xs text-slate-400 font-semibold uppercase">Consultation Fee</span>
+                                                                                <span className="text-xl font-bold text-slate-900">
+                                                                                    Kshs {(program.consultation_fee || product?.consultation_fee || 0).toLocaleString()}
+                                                                                </span>
+                                                                                <span className="text-xs text-slate-500 mt-0.5">
+                                                                                    Full Session: Kshs {(program.price || product?.price || 0).toLocaleString()}
+                                                                                </span>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="ml-auto">
+                                                                        {buttonState === 'purchase' ? (
+                                                                            <Link href={`/programs/${programId}/onboarding`}>
+                                                                                <Button className="rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg">
+                                                                                    🎉 Purchase Program
+                                                                                    <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
+                                                                                </Button>
+                                                                            </Link>
+                                                                        ) : buttonState === 'confirmed' ? (
+                                                                            <Button disabled className="rounded-full bg-emerald-100 text-emerald-700 opacity-100 px-6 py-4 text-sm font-bold">
+                                                                                ✅ Consultation Booked
+                                                                            </Button>
+                                                                        ) : buttonState === 'pending' ? (
+                                                                            <Button 
+                                                                                onClick={() => setBookingModalProps({ program, mode: 'initial', bookingId: latestBooking.id })}
+                                                                                className="rounded-full bg-amber-500 text-white hover:bg-amber-600 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg animate-pulse"
+                                                                            >
+                                                                                📅 Schedule Your Call
+                                                                            </Button>
+                                                                        ) : buttonState === 'followup' ? (
+                                                                            <Button 
+                                                                                onClick={() => setBookingModalProps({ program, mode: 'followup', parentBookingId: latestBooking.id, consultationRound: (latestBooking.consultation_round || 1) + 1 })}
+                                                                                className="rounded-full bg-blue-600 text-white hover:bg-blue-700 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg"
+                                                                            >
+                                                                                📅 Book Follow-Up
+                                                                            </Button>
+                                                                        ) : (
+                                                                            <Button
+                                                                                onClick={() => setBookingModalProps({ program, mode: 'initial' })}
+                                                                                className="rounded-full bg-black text-white hover:bg-zinc-800 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg"
+                                                                            >
+                                                                                Book Consultation
+                                                                                <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
+                                                                            </Button>
+                                                                        )}
+                                                                    </div>
+                                                                </>
+                                                            );
+                                                        })()
+                                                    ) : (<>
+                                                        {(program.price > 0 || product?.price > 0) && (
                                                                 <div className="flex flex-col">
                                                                     <span className="text-xs text-slate-400 font-semibold uppercase">Program Price</span>
                                                                     <span className="text-xl font-bold text-slate-900">
@@ -1145,10 +1229,13 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                     </div>
 
                     <BookingModal
-                        isOpen={!!selectedBookingProgram}
-                        onClose={() => setSelectedBookingProgram(null)}
-                        program={selectedBookingProgram}
+                        isOpen={!!bookingModalProps.program}
+                        onClose={() => { setBookingModalProps({ program: null }); fetchBookings(); }}
+                        program={bookingModalProps.program}
                         userProfile={userProfile}
+                        mode={bookingModalProps.mode}
+                        parentBookingId={bookingModalProps.parentBookingId}
+                        consultationRound={bookingModalProps.consultationRound}
                     />
                 </motion.div>
             )

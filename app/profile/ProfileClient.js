@@ -323,16 +323,22 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                 <Card key={b.id} className="bg-white border-none rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h3 className="font-bold text-lg">{b.programs?.title || "Consultation Call"}</h3>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-lg">{b.programs?.title || "Consultation Call"}</h3>
+                                                <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded">
+                                                    Round {b.consultation_round || 1}
+                                                </span>
+                                            </div>
                                             <p className="text-xs text-slate-500 font-mono mt-0.5">Ref: {b.consultation_payment_ref || b.id.slice(0, 8)}</p>
                                         </div>
                                         <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
                                             b.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                                             b.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                            b.status === 'needs_followup' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                                             b.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-100' :
                                             'bg-amber-50 text-amber-700 border-amber-100'
                                         }`}>
-                                            {b.status.toUpperCase()}
+                                            {b.status.toUpperCase().replace('_', ' ')}
                                         </span>
                                     </div>
 
@@ -348,7 +354,13 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                             <span className="font-bold text-slate-900">Kshs {(b.programs?.consultation_fee || 0).toLocaleString()}</span>
                                         </div>
 
-                                        {b.unlocked_purchase && b.program_id ? (
+                                        {b.status === 'needs_followup' ? (
+                                            <Link href="/#programs">
+                                                <Button className="rounded-full bg-blue-600 text-white hover:bg-blue-700 text-xs px-5 py-2 font-semibold shadow-md">
+                                                    Book Follow-Up &rarr;
+                                                </Button>
+                                            </Link>
+                                        ) : b.unlocked_purchase && b.program_id ? (
                                             <Link href={`/programs/${b.program_id}/onboarding`}>
                                                 <Button className="rounded-full bg-black text-white hover:bg-zinc-800 text-xs px-5 py-2 font-semibold shadow-md">
                                                     Buy Full Program &rarr;

@@ -34,6 +34,7 @@ export default function BuilderForm({ initialData, programId }) {
     location_details: initialData.location_details || '',
     service_type: initialData.service_type || 'downloadable',
     consultation_fee: initialData.consultation_fee || 0,
+    followup_fee: initialData.followup_fee || 0,
   });
 
   // Track if the admin changed the interval on an existing subscription program with an existing plan
@@ -279,17 +280,31 @@ export default function BuilderForm({ initialData, programId }) {
 
             {/* Consultation Fee (if Session) */}
             {program.service_type === 'session' && (
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Consultation Fee (Kshs)</label>
-                <input 
-                  type="number"
-                  min="0"
-                  value={program.consultation_fee}
-                  onChange={e => setProgram({...program, consultation_fee: parseFloat(e.target.value) || 0})}
-                  placeholder="e.g. 500"
-                  className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black"
-                />
-                <p className="text-xs text-gray-400 mt-1">Amount charged upfront to book the initial consultation call before buying full sessions.</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Consultation Fee (Kshs)</label>
+                  <input 
+                    type="number"
+                    min="0"
+                    value={program.consultation_fee}
+                    onChange={e => setProgram({...program, consultation_fee: parseFloat(e.target.value) || 0})}
+                    placeholder="e.g. 500"
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Amount charged upfront to book the initial consultation call before buying full sessions.</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Follow-Up Consultation Fee (Kshs)</label>
+                  <input 
+                    type="number"
+                    min="0"
+                    value={program.followup_fee}
+                    onChange={e => setProgram({...program, followup_fee: parseFloat(e.target.value) || 0})}
+                    placeholder="e.g. 300"
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Set to 0 to make follow-up consultations free. This applies when a user has already paid for a consultation and needs another meeting.</p>
+                </div>
               </div>
             )}
 

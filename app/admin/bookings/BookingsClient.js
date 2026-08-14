@@ -87,6 +87,7 @@ export default function BookingsClient({ initialBookings }) {
             <option value="pending">Pending</option>
             <option value="confirmed">Confirmed</option>
             <option value="completed">Completed</option>
+            <option value="needs_followup">Needs Follow-Up</option>
             <option value="cancelled">Cancelled</option>
           </select>
 
@@ -110,6 +111,7 @@ export default function BookingsClient({ initialBookings }) {
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               <th className="p-4 pl-6">Client / Contact</th>
+              <th className="p-4">Phone</th>
               <th className="p-4">Program</th>
               <th className="p-4">Payment Ref</th>
               <th className="p-4">Status</th>
@@ -122,25 +124,38 @@ export default function BookingsClient({ initialBookings }) {
               const isPending = b.status === "pending";
               const isConfirmed = b.status === "confirmed";
               const isCompleted = b.status === "completed";
+              const isNeedsFollowup = b.status === "needs_followup";
               const isCancelled = b.status === "cancelled";
 
               return (
                 <tr key={b.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="p-4 pl-6">
                     <p className="font-semibold text-gray-900">
-                      {b.profiles?.full_name || "Guest Customer"}
+                      {b.profiles?.full_name || b.customer_name || "Guest Customer"}
                     </p>
-                    <p className="text-xs text-gray-500">{b.profiles?.email || "No email"}</p>
+                    <p className="text-xs text-gray-500">{b.profiles?.email || b.customer_email || "No email"}</p>
                     {b.notes && (
                       <p className="text-xs text-slate-600 bg-slate-50 p-2 rounded-lg mt-1 italic line-clamp-2 max-w-xs">
                         "{b.notes}"
                       </p>
                     )}
                   </td>
+                  
+                  <td className="p-4">
+                    <p className="text-sm text-gray-900">{b.customer_phone || b.profiles?.phone || "No phone"}</p>
+                  </td>
 
                   <td className="p-4">
-                    <p className="font-medium text-gray-900">{b.programs?.title || "Unknown Program"}</p>
-                    <p className="text-xs text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900">{b.programs?.title || "Unknown Program"}</p>
+                      <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded">
+                        Round {b.consultation_round || 1}
+                      </span>
+                    </div>
+                    {b.parent_booking_id && (
+                      <p className="text-[10px] text-gray-400 mt-0.5">Parent: {b.parent_booking_id.split('-')[0]}</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
                       Fee: Kshs {(b.programs?.consultation_fee || 0).toLocaleString()}
                     </p>
                   </td>
@@ -156,6 +171,8 @@ export default function BookingsClient({ initialBookings }) {
                           ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                           : isConfirmed
                           ? "bg-blue-50 text-blue-700 border-blue-100"
+                          : isNeedsFollowup
+                          ? "bg-indigo-50 text-indigo-700 border-indigo-100"
                           : isCancelled
                           ? "bg-red-50 text-red-700 border-red-100"
                           : "bg-amber-50 text-amber-700 border-amber-100"
@@ -187,14 +204,23 @@ export default function BookingsClient({ initialBookings }) {
                         </button>
                       )}
 
-                      {!isCompleted && !isCancelled && (
-                        <button
-                          onClick={() => updateBooking(b.id, "completed", true)}
-                          disabled={loadingId === b.id}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition"
-                        >
-                          Mark Complete & Unlock
-                        </button>
+                      {!isCompleted && !isNeedsFollowup && !isCancelled && (
+                        <>
+                          <button
+                            onClick={() => updateBooking(b.id, "completed", true)}
+                            disabled={loadingId === b.id}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition"
+                          >
+                            ✅ Complete & Unlock
+                          </button>
+                          <button
+                            onClick={() => updateBooking(b.id, "needs_followup", false)}
+                            disabled={loadingId === b.id}
+                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg shadow-sm transition"
+                          >
+                            🔁 Complete — Needs Follow-Up
+                          </button>
+                        </>
                       )}
 
                       {b.unlocked_purchase && b.program_id && (
@@ -241,9 +267,15 @@ export default function BookingsClient({ initialBookings }) {
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-semibold text-gray-900 text-sm">
-                  {b.profiles?.full_name || "Guest Customer"}
+                  {b.profiles?.full_name || b.customer_name || "Guest Customer"}
                 </h3>
-                <p className="text-xs text-gray-500">{b.programs?.title}</p>
+                <p className="text-xs text-gray-500">{b.customer_phone || b.profiles?.phone || "No phone"}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs font-medium text-gray-700">{b.programs?.title}</p>
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded">
+                    Round {b.consultation_round || 1}
+                  </span>
+                </div>
               </div>
               <span
                 className={`px-2.5 py-1 text-xs font-medium rounded-full border ${
@@ -251,6 +283,8 @@ export default function BookingsClient({ initialBookings }) {
                     ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                     : b.status === "confirmed"
                     ? "bg-blue-50 text-blue-700 border-blue-100"
+                    : b.status === "needs_followup"
+                    ? "bg-indigo-50 text-indigo-700 border-indigo-100"
                     : b.status === "cancelled"
                     ? "bg-red-50 text-red-700 border-red-100"
                     : "bg-amber-50 text-amber-700 border-amber-100"
@@ -281,13 +315,21 @@ export default function BookingsClient({ initialBookings }) {
                   </button>
                 )}
 
-                {b.status !== "completed" && b.status !== "cancelled" && (
-                  <button
-                    onClick={() => updateBooking(b.id, "completed", true)}
-                    className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg"
-                  >
-                    Complete & Unlock
-                  </button>
+                {b.status !== "completed" && b.status !== "needs_followup" && b.status !== "cancelled" && (
+                  <>
+                    <button
+                      onClick={() => updateBooking(b.id, "completed", true)}
+                      className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg"
+                    >
+                      Complete
+                    </button>
+                    <button
+                      onClick={() => updateBooking(b.id, "needs_followup", false)}
+                      className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg"
+                    >
+                      Needs Follow-Up
+                    </button>
+                  </>
                 )}
               </div>
             </div>
