@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { saveProgram } from '@/app/actions/programActions';
+import { saveProgram, uploadProgramFile } from '@/app/actions/programActions';
 import { createClient } from '@/supabase/client';
 import { toast } from 'sonner';
 import { 
@@ -14,7 +14,8 @@ import Link from 'next/link';
 export default function BuilderForm({ initialData, programId }) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingAsset, setIsUploadingAsset] = useState(false);
   
   const [program, setProgram] = useState({
     title: initialData.title || '',
@@ -76,27 +77,23 @@ export default function BuilderForm({ initialData, programId }) {
     const file = e.target.files[0];
     if (!file) return;
 
-    setIsUploading(true);
+    setIsUploadingAsset(true);
     try {
-      const supabase = createClient();
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
       
-      // Convert file to ArrayBuffer to fix Next.js client-side fetch hanging bug with File objects
-      const arrayBuffer = await file.arrayBuffer();
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'program-documents');
+      formData.append('fileName', fileName);
 
-      const { data, error } = await supabase.storage
-        .from('program-documents')
-        .upload(fileName, arrayBuffer, {
-          contentType: file.type,
-          upsert: false
-        });
+      const result = await uploadProgramFile(formData);
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
 
-      // We no longer use getPublicUrl since the bucket is private.
-      // We store the path and generate signed URLs for authenticated users when needed.
-      const filePath = data.path;
+      const filePath = result.path;
 
       setAssets(prev => [...prev, {
         file_name: file.name,
@@ -108,7 +105,7 @@ export default function BuilderForm({ initialData, programId }) {
       console.error(error);
       toast.error("Failed to upload document");
     } finally {
-      setIsUploading(false);
+      setIsUploadingAsset(false);
     }
   };
 
@@ -123,24 +120,23 @@ export default function BuilderForm({ initialData, programId }) {
     const file = e.target.files[0];
     if (!file) return;
 
-    setIsUploading(true);
+    setIsUploadingImage(true);
     try {
-      const supabase = createClient();
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
       
-      // Convert file to ArrayBuffer to fix Next.js client-side fetch hanging bug with File objects
-      const arrayBuffer = await file.arrayBuffer();
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'program-images');
+      formData.append('fileName', fileName);
 
-      const { data, error } = await supabase.storage
-        .from('program-images')
-        .upload(fileName, arrayBuffer, {
-          contentType: file.type,
-          upsert: false
-        });
+      const result = await uploadProgramFile(formData);
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
 
+      const supabase = createClient();
       const { data: publicUrlData } = supabase.storage
         .from('program-images')
         .getPublicUrl(fileName);
@@ -151,7 +147,7 @@ export default function BuilderForm({ initialData, programId }) {
       console.error(error);
       toast.error("Failed to upload image");
     } finally {
-      setIsUploading(false);
+      setIsUploadingImage(false);
     }
   };
 
@@ -415,7 +411,7 @@ export default function BuilderForm({ initialData, programId }) {
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                    <label className="cursor-pointer bg-white text-black px-4 py-2 rounded-lg text-sm font-medium">
                       Change Image
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploadingImage} />
                    </label>
                 </div>
               </div>
@@ -423,10 +419,10 @@ export default function BuilderForm({ initialData, programId }) {
               <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <ImageIcon className="w-10 h-10 mb-3 text-gray-400" />
-                  <p className="mb-2 text-sm text-gray-500 font-semibold">{isUploading ? 'Uploading...' : 'Click to upload'}</p>
+                  <p className="mb-2 text-sm text-gray-500 font-semibold">{isUploadingImage ? 'Uploading...' : 'Click to upload'}</p>
                   <p className="text-xs text-gray-400">SVG, PNG, JPG</p>
                 </div>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploadingImage} />
               </label>
             )}
           </div>
@@ -549,8 +545,8 @@ export default function BuilderForm({ initialData, programId }) {
 
                   <label className="block border-2 border-dashed border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer">
                     <UploadCloud size={24} className="mx-auto text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-500 font-medium">{isUploading ? 'Uploading...' : 'Click to upload PDFs/Files'}</span>
-                    <input type="file" className="hidden" onChange={handleAssetUpload} disabled={isUploading} />
+                    <span className="text-sm text-gray-500 font-medium">{isUploadingAsset ? 'Uploading...' : 'Click to upload PDFs/Files'}</span>
+                    <input type="file" className="hidden" onChange={handleAssetUpload} disabled={isUploadingAsset} />
                   </label>
                 </div>
               )}

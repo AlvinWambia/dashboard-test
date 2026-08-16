@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator"
 import { ArrowUpRight, Heart, Activity, MousePointer2, Plus, AlertCircleIcon, Plane, Tag, MessageSquare, Star, Menu, Loader2, Calendar, CheckCircle2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Image from 'next/image';
 import {
     DropdownMenu,
@@ -898,10 +897,10 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                                                             const latestBooking = userBookings
                                                                 .filter((b) => b.program_id === programId && b.status !== 'cancelled')
                                                                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-                                                            
+
                                                             const status = latestBooking?.status;
                                                             const unlocked = latestBooking?.unlocked_purchase;
-                                                            
+
                                                             let bookingState = 'idle';
                                                             if (bookingInFlight[programId] && bookingModalProps.program && (bookingModalProps.program._id || bookingModalProps.program.id) === programId) {
                                                                 bookingState = 'booking';
@@ -949,14 +948,14 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                                                                                 Booking...
                                                                             </Button>
                                                                         ) : bookingState === 'awaiting' ? (
-                                                                            <Button 
+                                                                            <Button
                                                                                 onClick={() => setSelectedBookingForStatus({ booking: latestBooking, program })}
                                                                                 className="rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-sm hover:shadow"
                                                                             >
                                                                                 Book Consultation
                                                                             </Button>
                                                                         ) : bookingState === 'followup' ? (
-                                                                            <Button 
+                                                                            <Button
                                                                                 onClick={() => {
                                                                                     setBookingInFlight(prev => ({ ...prev, [programId]: true }));
                                                                                     setBookingModalProps({ program, mode: 'followup', parentBookingId: latestBooking.id, consultationRound: (latestBooking.consultation_round || 1) + 1 });
@@ -983,26 +982,26 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                                                         })()
                                                     ) : (<>
                                                         {(program.price > 0 || product?.price > 0) && (
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-xs text-slate-400 font-semibold uppercase">Program Price</span>
-                                                                    <span className="text-xl font-bold text-slate-900">
-                                                                        Kshs {(program.price || product?.price || 0).toLocaleString()}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-                                                            {program.service_type === 'downloadable' || !program.service_type ? (
-                                                                <div className="ml-auto min-w-[140px]">
-                                                                    <BuyNowButton product={program} />
-                                                                </div>
-                                                            ) : (
-                                                                <Link href={`/programs/${program._id || program.id}/onboarding`} className="ml-auto">
-                                                                    <Button className="rounded-full bg-black text-white hover:bg-zinc-800 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg">
-                                                                        Buy Program
-                                                                        <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
-                                                                    </Button>
-                                                                </Link>
-                                                            )}
-                                                        </>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs text-slate-400 font-semibold uppercase">Program Price</span>
+                                                                <span className="text-xl font-bold text-slate-900">
+                                                                    Kshs {(program.price || product?.price || 0).toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {program.service_type === 'downloadable' || !program.service_type ? (
+                                                            <div className="ml-auto min-w-[140px]">
+                                                                <BuyNowButton product={program} />
+                                                            </div>
+                                                        ) : (
+                                                            <Link href={`/programs/${program._id || program.id}/onboarding`} className="ml-auto">
+                                                                <Button className="rounded-full bg-black text-white hover:bg-zinc-800 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg">
+                                                                    Buy Program
+                                                                    <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                    </>
                                                     )}
                                                 </div>
                                             </ScrollReveal>
@@ -1241,12 +1240,12 @@ export default function HomeClient({ initialProfile, products, programs, testimo
 
                     <BookingModal
                         isOpen={!!bookingModalProps.program}
-                        onClose={() => { 
+                        onClose={() => {
                             if (bookingModalProps.program) {
                                 setBookingInFlight(prev => ({ ...prev, [bookingModalProps.program._id || bookingModalProps.program.id]: false }));
                             }
-                            setBookingModalProps({ program: null }); 
-                            fetchBookings(); 
+                            setBookingModalProps({ program: null });
+                            fetchBookings();
                         }}
                         program={bookingModalProps.program}
                         userProfile={userProfile}

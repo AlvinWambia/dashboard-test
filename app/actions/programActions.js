@@ -7,7 +7,7 @@ import { randomUUID } from "crypto";
 export async function saveProgram(programId, data) {
   try {
     const supabase = createAdminClient();
-    
+
     const programPrice = data.price ? parseFloat(data.price) : 0;
     const paymentType = data.payment_type || 'subscription';
     const isOneTime = paymentType === 'one_time';
@@ -106,7 +106,7 @@ export async function saveProgram(programId, data) {
     if (data.assets) {
       // Delete existing assets
       await supabase.from('program_assets').delete().eq('program_id', pId);
-      
+
       // Insert new assets
       if (data.assets.length > 0) {
         const assetsData = data.assets.map(asset => ({
@@ -115,11 +115,11 @@ export async function saveProgram(programId, data) {
           file_url: asset.file_url,
           file_type: asset.file_type
         }));
-        
+
         const { error: assetsError } = await supabase
           .from('program_assets')
           .insert(assetsData);
-          
+
         if (assetsError) {
           console.error("Failed to save program assets:", assetsError);
           // Non-fatal error, but should log it
@@ -155,4 +155,31 @@ export async function deleteProgram(programId) {
   }
 }
 
+export async function uploadProgramFile(formData) {
+  try {
+    const file = formData.get('file');
+    const bucket = formData.get('bucket');
+    const fileName = formData.get('fileName');
 
+    if (!file || !bucket || !fileName) {
+      return { success: false, error: 'Missing parameters for upload' };
+    }
+
+    const supabase = createAdminClient();
+    const arrayBuffer = await file.arrayBuffer();
+
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, arrayBuffer, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (error) throw new Error(error.message);
+
+    return { success: true, path: data.path || fileName };
+  } catch (error) {
+    console.error("Upload Error:", error);
+    return { success: false, error: error.message };
+  }
+}
