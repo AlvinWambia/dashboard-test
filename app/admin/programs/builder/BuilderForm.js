@@ -82,9 +82,15 @@ export default function BuilderForm({ initialData, programId }) {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
       
+      // Convert file to ArrayBuffer to fix Next.js client-side fetch hanging bug with File objects
+      const arrayBuffer = await file.arrayBuffer();
+
       const { data, error } = await supabase.storage
         .from('program-documents')
-        .upload(fileName, file);
+        .upload(fileName, arrayBuffer, {
+          contentType: file.type,
+          upsert: false
+        });
 
       if (error) throw error;
 
@@ -123,9 +129,15 @@ export default function BuilderForm({ initialData, programId }) {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
       
+      // Convert file to ArrayBuffer to fix Next.js client-side fetch hanging bug with File objects
+      const arrayBuffer = await file.arrayBuffer();
+
       const { data, error } = await supabase.storage
         .from('program-images')
-        .upload(fileName, file);
+        .upload(fileName, arrayBuffer, {
+          contentType: file.type,
+          upsert: false
+        });
 
       if (error) throw error;
 

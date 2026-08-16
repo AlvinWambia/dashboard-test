@@ -104,52 +104,85 @@ export default async function SuccessPage({ searchParams }) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 text-center">
-        {fetchError && !paymentVerified ? (
-          <AlertTriangle className="w-20 h-20 text-amber-500 mx-auto mb-6" />
-        ) : (
-          <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-6" />
-        )}
-        
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {fetchError && !paymentVerified ? "Order Lookup Issue" : "Payment Successful!"}
-        </h1>
-        
-        <p className="text-gray-600 mb-8">
-          {fetchError && !paymentVerified 
-            ? "We couldn't find your order details, but your payment might still be processing. Check your email for confirmation."
-            : `Thank you for your purchase${orderData?.program_name ? ` of ${orderData.program_name}` : ""}. We've sent a receipt and a welcome email to your inbox.`}
-        </p>
-
-        {fetchError && !paymentVerified && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-6 text-sm">
-            Diagnostic: {fetchError.message}
-          </div>
-        )}
-
-        <div className="bg-gray-50 rounded-2xl p-4 mb-8 text-left">
-          <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Transaction Reference</p>
-          <p className="text-sm font-mono text-gray-800 break-all">{reference}</p>
-        </div>
-
-        {!hasIntakeForm && (
-          <div className="mb-8">
-            <p className="text-lg font-bold text-center">Click the button below to fill in the intake form to complete your onboarding.</p>
-          </div>
-        )}
-
-        <div className="space-y-3">
-          <Button asChild className="w-full py-6 rounded-2xl bg-black hover:bg-zinc-800 text-white font-medium text-base shadow-lg transition-all">
-            <Link href="/profile">View Program</Link>
-          </Button>
-          {!hasIntakeForm && (
-            <Button asChild variant="outline" className="w-full py-6 rounded-2xl border-slate-200 hover:bg-slate-50">
-              <Link href={`/form?orderId=${actualOrderId}`}>Complete Intake Form</Link>
-            </Button>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4 font-sans">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+        <div className="p-8 sm:p-10 text-center">
+          {fetchError && !paymentVerified ? (
+            <div className="mx-auto w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mb-6">
+              <AlertTriangle className="w-12 h-12 text-amber-500" />
+            </div>
+          ) : (
+            <div className="mx-auto w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-6 animate-in zoom-in duration-500">
+              <CheckCircle2 className="w-12 h-12 text-green-500" />
+            </div>
           )}
+          
+          <h1 className="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">
+            {fetchError && !paymentVerified ? "Payment Processing" : "Payment Successful!"}
+          </h1>
+          
+          <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+            {fetchError && !paymentVerified 
+              ? "We couldn't immediately verify your order details, but your payment might still be processing. Check your email for confirmation."
+              : `Thank you for your purchase${orderData?.program_name ? ` of ${orderData.program_name}` : ""}. We've sent a receipt and a welcome email to your inbox.`}
+          </p>
+
+          {fetchError && !paymentVerified && (
+            <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-6 text-sm text-left border border-red-100">
+              <span className="font-semibold block mb-1">Diagnostic:</span> {fetchError.message}
+            </div>
+          )}
+
+          {/* Transaction Details (Receipt) */}
+          <div className="bg-gray-50/50 rounded-2xl p-5 mb-8 text-left border border-gray-100 space-y-4">
+            <h3 className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-2">Transaction Summary</h3>
+            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+              <span className="text-gray-500 text-sm">Status</span>
+              <span className="font-medium text-green-600 text-sm px-2 py-0.5 bg-green-50 rounded-md">Paid</span>
+            </div>
+            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+              <span className="text-gray-500 text-sm">Reference</span>
+              <span className="font-mono text-sm text-gray-800 break-all w-1/2 text-right">{reference}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 text-sm">Date</span>
+              <span className="text-sm text-gray-800">{new Date().toLocaleDateString()}</span>
+            </div>
+          </div>
+
+          {!hasIntakeForm && (
+            <div className="mb-6 bg-blue-50 border border-blue-100 rounded-xl p-4 text-left">
+              <p className="text-sm text-blue-800 font-medium mb-1">One last step!</p>
+              <p className="text-xs text-blue-600">Please complete your intake form so we can personalize your experience.</p>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {!hasIntakeForm ? (
+              <>
+                <Button asChild className="w-full py-6 rounded-xl bg-black hover:bg-zinc-800 text-white font-semibold text-base shadow-lg shadow-zinc-200 transition-all">
+                  <Link href={`/form?orderId=${actualOrderId}`}>Complete Intake Form</Link>
+                </Button>
+                <Button asChild variant="ghost" className="w-full py-6 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-50 font-medium">
+                  <Link href="/profile">Skip to Dashboard</Link>
+                </Button>
+              </>
+            ) : (
+              <Button asChild className="w-full py-6 rounded-xl bg-black hover:bg-zinc-800 text-white font-semibold text-base shadow-lg shadow-zinc-200 transition-all">
+                <Link href="/profile">Go to Dashboard</Link>
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Support Footer */}
+        <div className="bg-gray-50 p-6 text-center border-t border-gray-100">
+          <p className="text-xs text-gray-500">
+            Need help with your order? <Link href="mailto:support@myfitraining.com" className="font-medium text-black hover:underline">Contact Support</Link>
+          </p>
         </div>
       </div>
     </div>
   );
 }
+

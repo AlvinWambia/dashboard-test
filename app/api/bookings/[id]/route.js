@@ -20,7 +20,20 @@ export async function PATCH(request, { params }) {
       .from("bookings")
       .update(updateData)
       .eq("id", id)
-      .select()
+      .select(`
+        *,
+        programs (
+          id,
+          title,
+          price,
+          consultation_fee,
+          service_type
+        ),
+        profiles (
+          id,
+          full_name
+        )
+      `)
       .single();
 
     if (error) {

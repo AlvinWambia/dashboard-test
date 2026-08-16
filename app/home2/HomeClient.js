@@ -11,7 +11,8 @@ import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "fra
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator"
-import { ArrowUpRight, Heart, Activity, MousePointer2, Plus, AlertCircleIcon, Plane, Tag, MessageSquare, Star, Menu } from "lucide-react";
+import { ArrowUpRight, Heart, Activity, MousePointer2, Plus, AlertCircleIcon, Plane, Tag, MessageSquare, Star, Menu, Loader2, Calendar, CheckCircle2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Image from 'next/image';
 import {
     DropdownMenu,
@@ -254,6 +255,8 @@ export default function HomeClient({ initialProfile, products, programs, testimo
     const [activeAboutStep, setActiveAboutStep] = React.useState(0);
     const [userProfile, setUserProfile] = React.useState(initialProfile || null);
     const [bookingModalProps, setBookingModalProps] = React.useState({ program: null });
+    const [bookingInFlight, setBookingInFlight] = React.useState({});
+    const [selectedBookingForStatus, setSelectedBookingForStatus] = React.useState(null);
     const [userBookings, setUserBookings] = React.useState([]);
 
     const fetchBookings = React.useCallback(async () => {
@@ -893,31 +896,32 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                                                         (() => {
                                                             const programId = program._id || program.id;
                                                             const latestBooking = userBookings
-                                                                .filter((b) => b.program_id === programId)
+                                                                .filter((b) => b.program_id === programId && b.status !== 'cancelled')
                                                                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
                                                             
                                                             const status = latestBooking?.status;
                                                             const unlocked = latestBooking?.unlocked_purchase;
                                                             
-                                                            let buttonState = 'initial';
-                                                            if (latestBooking && status !== 'cancelled') {
-                                                                if (status === 'pending') buttonState = 'pending';
-                                                                else if (status === 'confirmed') buttonState = 'confirmed';
-                                                                else if (status === 'completed' && unlocked) buttonState = 'purchase';
-                                                                else if (status === 'needs_followup') buttonState = 'followup';
+                                                            let bookingState = 'idle';
+                                                            if (bookingInFlight[programId] && bookingModalProps.program && (bookingModalProps.program._id || bookingModalProps.program.id) === programId) {
+                                                                bookingState = 'booking';
+                                                            } else if (latestBooking) {
+                                                                if (status === 'completed' && unlocked) bookingState = 'purchase';
+                                                                else if (status === 'needs_followup') bookingState = 'followup';
+                                                                else if (['pending', 'confirmed'].includes(status)) bookingState = 'awaiting';
                                                             }
 
                                                             return (
                                                                 <>
                                                                     <div className="flex flex-col">
-                                                                        {buttonState === 'purchase' || buttonState === 'confirmed' || buttonState === 'followup' ? (
+                                                                        {['purchase', 'awaiting', 'followup'].includes(bookingState) ? (
                                                                             <>
                                                                                 <span className="text-xs text-slate-400 font-semibold uppercase">Program Price</span>
                                                                                 <span className="text-xl font-bold text-slate-900">
                                                                                     Kshs {(program.price || product?.price || 0).toLocaleString()}
                                                                                 </span>
-                                                                                {buttonState === 'confirmed' && <span className="text-xs text-emerald-600 mt-0.5 font-medium">✓ Consultation confirmed</span>}
-                                                                                {buttonState === 'purchase' && <span className="text-xs text-emerald-600 mt-0.5 font-medium">✓ Consultation completed</span>}
+                                                                                {bookingState === 'awaiting' && status === 'confirmed' && <span className="text-xs text-emerald-600 mt-0.5 font-medium">✓ Consultation confirmed</span>}
+                                                                                {bookingState === 'purchase' && <span className="text-xs text-emerald-600 mt-0.5 font-medium">✓ Consultation completed</span>}
                                                                             </>
                                                                         ) : (
                                                                             <>
@@ -932,34 +936,41 @@ export default function HomeClient({ initialProfile, products, programs, testimo
                                                                         )}
                                                                     </div>
                                                                     <div className="ml-auto">
-                                                                        {buttonState === 'purchase' ? (
+                                                                        {bookingState === 'purchase' ? (
                                                                             <Link href={`/programs/${programId}/onboarding`}>
                                                                                 <Button className="rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg">
                                                                                     🎉 Purchase Program
                                                                                     <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
                                                                                 </Button>
                                                                             </Link>
-                                                                        ) : buttonState === 'confirmed' ? (
-                                                                            <Button disabled className="rounded-full bg-emerald-100 text-emerald-700 opacity-100 px-6 py-4 text-sm font-bold">
-                                                                                ✅ Consultation Booked
+                                                                        ) : bookingState === 'booking' ? (
+                                                                            <Button disabled className="rounded-full bg-black/60 text-white px-6 py-4 text-sm font-bold shadow-md cursor-not-allowed">
+                                                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" inline="true" />
+                                                                                Booking...
                                                                             </Button>
-                                                                        ) : buttonState === 'pending' ? (
+                                                                        ) : bookingState === 'awaiting' ? (
                                                                             <Button 
-                                                                                onClick={() => setBookingModalProps({ program, mode: 'initial', bookingId: latestBooking.id })}
-                                                                                className="rounded-full bg-amber-500 text-white hover:bg-amber-600 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg animate-pulse"
+                                                                                onClick={() => setSelectedBookingForStatus({ booking: latestBooking, program })}
+                                                                                className="rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-sm hover:shadow"
                                                                             >
-                                                                                📅 Schedule Your Call
+                                                                                Book Consultation
                                                                             </Button>
-                                                                        ) : buttonState === 'followup' ? (
+                                                                        ) : bookingState === 'followup' ? (
                                                                             <Button 
-                                                                                onClick={() => setBookingModalProps({ program, mode: 'followup', parentBookingId: latestBooking.id, consultationRound: (latestBooking.consultation_round || 1) + 1 })}
+                                                                                onClick={() => {
+                                                                                    setBookingInFlight(prev => ({ ...prev, [programId]: true }));
+                                                                                    setBookingModalProps({ program, mode: 'followup', parentBookingId: latestBooking.id, consultationRound: (latestBooking.consultation_round || 1) + 1 });
+                                                                                }}
                                                                                 className="rounded-full bg-blue-600 text-white hover:bg-blue-700 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg"
                                                                             >
                                                                                 📅 Book Follow-Up
                                                                             </Button>
                                                                         ) : (
                                                                             <Button
-                                                                                onClick={() => setBookingModalProps({ program, mode: 'initial' })}
+                                                                                onClick={() => {
+                                                                                    setBookingInFlight(prev => ({ ...prev, [programId]: true }));
+                                                                                    setBookingModalProps({ program, mode: 'initial' });
+                                                                                }}
                                                                                 className="rounded-full bg-black text-white hover:bg-zinc-800 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg"
                                                                             >
                                                                                 Book Consultation
@@ -1230,13 +1241,62 @@ export default function HomeClient({ initialProfile, products, programs, testimo
 
                     <BookingModal
                         isOpen={!!bookingModalProps.program}
-                        onClose={() => { setBookingModalProps({ program: null }); fetchBookings(); }}
+                        onClose={() => { 
+                            if (bookingModalProps.program) {
+                                setBookingInFlight(prev => ({ ...prev, [bookingModalProps.program._id || bookingModalProps.program.id]: false }));
+                            }
+                            setBookingModalProps({ program: null }); 
+                            fetchBookings(); 
+                        }}
                         program={bookingModalProps.program}
                         userProfile={userProfile}
                         mode={bookingModalProps.mode}
                         parentBookingId={bookingModalProps.parentBookingId}
                         consultationRound={bookingModalProps.consultationRound}
+                        onBookingCreated={(newBooking) => {
+                            if (bookingModalProps.program) {
+                                setBookingInFlight(prev => ({ ...prev, [bookingModalProps.program._id || bookingModalProps.program.id]: false }));
+                            }
+                            setUserBookings(prev => {
+                                const exists = prev.some(b => b.id === newBooking.id);
+                                if (!exists) {
+                                    return [...prev, newBooking];
+                                }
+                                return prev;
+                            });
+                        }}
                     />
+
+                    <Dialog open={!!selectedBookingForStatus} onOpenChange={(open) => !open && setSelectedBookingForStatus(null)}>
+                        <DialogContent className="sm:max-w-md rounded-2xl bg-white p-6">
+                            <DialogHeader>
+                                <DialogTitle className="text-xl font-bold">Booking Status</DialogTitle>
+                                <DialogDescription className="text-sm text-slate-500">
+                                    Details for your consultation for {selectedBookingForStatus?.program?.title || selectedBookingForStatus?.program?.name}.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4 space-y-4">
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col gap-1 text-sm">
+                                    <span className="text-xs uppercase font-bold tracking-widest text-slate-400">Status</span>
+                                    <span className="font-semibold capitalize text-slate-900">
+                                        {selectedBookingForStatus?.booking?.status?.replace('_', ' ') || 'Unknown'}
+                                    </span>
+                                </div>
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col gap-1 text-sm">
+                                    <span className="text-xs uppercase font-bold tracking-widest text-slate-400">Created On</span>
+                                    <span className="font-semibold text-slate-900">
+                                        {selectedBookingForStatus?.booking?.created_at ? new Date(selectedBookingForStatus.booking.created_at).toLocaleDateString() : 'N/A'}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500">
+                                    Our team will contact you shortly if you haven't yet received an email confirmation or link for your consultation.
+                                </p>
+                            </div>
+                            <Button onClick={() => setSelectedBookingForStatus(null)} className="w-full rounded-xl bg-black text-white hover:bg-zinc-800">
+                                Close
+                            </Button>
+                        </DialogContent>
+                    </Dialog>
                 </motion.div>
             )
             }

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Star, AlertTriangle, ArrowLeft, RefreshCcw, BookOpen, Download, Clock } from "lucide-react";
+import { Star, AlertTriangle, ArrowLeft, RefreshCcw, BookOpen, Download, Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -20,6 +20,9 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
     const [reviewText, setReviewText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
+    const [isRemoveOpen, setIsRemoveOpen] = useState(false);
+    const [programToRemove, setProgramToRemove] = useState(null);
+    const [isRemoving, setIsRemoving] = useState(false);
 
     const openReviewModal = (program) => {
         setSelectedProgram(program);
@@ -75,6 +78,54 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
             s.plan_code === program.paystack_plan_code && 
             (s.status === 'active' || s.status === 'non-renewing')
         ) || null;
+    };
+
+    const openRemoveModal = (program) => {
+        setProgramToRemove(program);
+        setIsRemoveOpen(true);
+    };
+
+    const closeRemoveModal = () => {
+        setIsRemoveOpen(false);
+        setProgramToRemove(null);
+    };
+
+    const removeProgram = async () => {
+        if (!programToRemove) return;
+        setIsRemoving(true);
+        try {
+            // Check for active subscription
+            const sub = getSubscriptionForProgram(programToRemove);
+            if (sub && sub.status === 'active') {
+                // Cancel subscription first
+                const subRes = await fetch('/api/subscriptions/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscription_id: sub.paystack_subscription_code || sub.id })
+                });
+                if (!subRes.ok) {
+                    const data = await subRes.json();
+                    throw new Error(data.error || 'Failed to cancel subscription');
+                }
+            }
+
+            // Remove program access
+            const res = await fetch('/api/programs/remove', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ program_id: programToRemove.id })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to remove program');
+            
+            toast.success("Program removed successfully.");
+            closeRemoveModal();
+            router.refresh();
+        } catch (err) {
+            toast.error(err.message);
+        } finally {
+            setIsRemoving(false);
+        }
     };
 
     const submitReview = async () => {
@@ -164,7 +215,16 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                 const hasReviewed = reviews.some(r => r.program_id === program.id);
 
                                 return (
-                                    <Card key={program.id || program.access_id} className="bg-white border-none rounded-3xl overflow-hidden shadow-sm flex flex-col hover:shadow-md transition-shadow">
+                                    <Card key={program.id || program.access_id} className="bg-white border-none rounded-3xl overflow-hidden shadow-sm flex flex-col hover:shadow-md transition-shadow relative">
+                                        <Button 
+                                            variant="secondary" 
+                                            size="icon" 
+                                            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-red-50 hover:text-red-600 border border-slate-100 transition-colors"
+                                            onClick={() => openRemoveModal(program)}
+                                            title="Remove Program"
+                                        >
+                                            <Trash2 size={14} />
+                                        </Button>
                                         {/* Item 6: Use Next.js Image instead of <img> */}
                                         {program.image_url ? (
                                             <div className="w-full h-48 bg-slate-100 relative">
@@ -458,6 +518,50 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                             disabled={isCancelling}
                         >
                             {isCancelling ? 'Cancelling...' : 'Yes, Cancel'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Remove Program Confirmation Modal */}
+            <Dialog open={isRemoveOpen} onOpenChange={(open) => { if (!open) closeRemoveModal(); }}>
+                <DialogContent className="sm:max-w-[420px] rounded-3xl p-6 bg-white">
+                    <DialogHeader>
+                        <div className="flex justify-center mb-4">
+                            <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
+                                <Trash2 className="w-7 h-7 text-red-500" />
+                            </div>
+                        </div>
+                        <DialogTitle className="text-center">Remove Program?</DialogTitle>
+                        <DialogDescription className="text-center mt-2">
+                            Are you sure you want to permanently remove <strong>{programToRemove?.title}</strong> from your dashboard?
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {programToRemove && getSubscriptionForProgram(programToRemove)?.status === 'active' && (
+                        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mt-2 text-sm text-amber-800">
+                            <p className="font-semibold mb-1 flex items-center gap-1"><AlertTriangle size={14}/> Active Subscription</p>
+                            <p className="text-xs">
+                                Proceeding will <strong>cancel your subscription immediately</strong> and remove your access. You will not be charged again.
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="flex gap-3 mt-4">
+                        <Button
+                            variant="outline"
+                            className="flex-1 rounded-full"
+                            onClick={closeRemoveModal}
+                            disabled={isRemoving}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            className="flex-1 rounded-full bg-red-600 hover:bg-red-700 text-white"
+                            onClick={removeProgram}
+                            disabled={isRemoving}
+                        >
+                            {isRemoving ? 'Removing...' : 'Yes, Remove'}
                         </Button>
                     </div>
                 </DialogContent>

@@ -43,6 +43,8 @@ export async function POST(request) {
         {
           program_id,
           user_id: finalUserId || null,
+          customer_name: customer_name || null,
+          customer_email: customer_email || null,
           notes: notes || null,
           consultation_paid: !!consultation_paid,
           consultation_payment_ref: consultation_payment_ref || null,

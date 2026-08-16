@@ -12,7 +12,7 @@ const CALENDLY_URL =
   process.env.NEXT_PUBLIC_CALENDLY_URL ||
   "https://calendly.com/wambialvin/program-set-up-meeting";
 
-export default function BookingModal({ isOpen, onClose, program, userProfile, mode = 'initial', parentBookingId = null, consultationRound = 1 }) {
+export default function BookingModal({ isOpen, onClose, program, userProfile, mode = 'initial', parentBookingId = null, consultationRound = 1, onBookingCreated }) {
   const [notes, setNotes] = useState("");
   const [customerEmail, setCustomerEmail] = useState(userProfile?.email || "");
   const [customerName, setCustomerName] = useState(userProfile?.full_name || "");
@@ -80,6 +80,7 @@ export default function BookingModal({ isOpen, onClose, program, userProfile, mo
         setBookingRef(response.reference || response.trxref);
         if (data.booking && data.booking.id) {
           setBookingId(data.booking.id);
+          if (onBookingCreated) onBookingCreated(data.booking);
         }
         setIsSuccess(true);
       } catch (err) {
@@ -157,6 +158,7 @@ export default function BookingModal({ isOpen, onClose, program, userProfile, mo
         
         if (data.booking && data.booking.id) {
           setBookingId(data.booking.id);
+          if (onBookingCreated) onBookingCreated(data.booking);
         }
         setIsSuccess(true);
       } catch(err) {

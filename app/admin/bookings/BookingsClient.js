@@ -30,7 +30,16 @@ export default function BookingsClient({ initialBookings }) {
       if (!res.ok) throw new Error(data.error || "Failed to update booking");
 
       setBookings((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, ...data.booking } : b))
+        prev.map((b) => {
+          if (b.id !== id) return b;
+          const updated = { ...b, ...data.booking };
+          // Preserve the email enrichment from the initial server-side load,
+          // since the PATCH API response doesn't go through the auth emailMap.
+          if (b.profiles?.email && updated.profiles && !updated.profiles.email) {
+            updated.profiles = { ...updated.profiles, email: b.profiles.email };
+          }
+          return updated;
+        })
       );
 
       toast.success(`Booking status updated to ${newStatus}`);
