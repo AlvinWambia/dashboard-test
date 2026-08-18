@@ -5,15 +5,21 @@ import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Star, AlertTriangle, ArrowLeft, RefreshCcw, BookOpen, Download, Clock, Trash2 } from "lucide-react";
+import { Star, AlertTriangle, ArrowLeft, RefreshCcw, BookOpen, Download, Clock, Trash2, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const BookingModal = dynamic(() => import("@/components/BookingModal"), { ssr: false });
 
 export default function ProfileClient({ profile, user, purchasedPrograms = [], reviews = [], subscriptions = [], userBookings = [], fetchError = null }) {
     const router = useRouter();
     const [isReviewOpen, setIsReviewOpen] = useState(false);
     const [isCancelOpen, setIsCancelOpen] = useState(false);
+    const [bookingModalState, setBookingModalState] = useState({ isOpen: false, program: null, mode: 'initial', parentBookingId: null, consultationRound: 1 });
+    const [schedulingBookingId, setSchedulingBookingId] = useState(null);
+    const [isSchedulingOpen, setIsSchedulingOpen] = useState(false);
     const [cancellingSubscriptionId, setCancellingSubscriptionId] = useState(null);
     const [selectedProgram, setSelectedProgram] = useState(null);
     const [rating, setRating] = useState(5);
@@ -23,6 +29,38 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
     const [isRemoveOpen, setIsRemoveOpen] = useState(false);
     const [programToRemove, setProgramToRemove] = useState(null);
     const [isRemoving, setIsRemoving] = useState(false);
+
+    React.useEffect(() => {
+        const handleCalendlyMessage = async (e) => {
+            if (e.data && e.data.event === "calendly.event_scheduled") {
+                if (schedulingBookingId) {
+                    try {
+                        await fetch(`/api/bookings/${schedulingBookingId}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ status: "confirmed" }),
+                        });
+                        toast.success("Consultation Scheduled!", {
+                            description: "Your session has been successfully booked and confirmed.",
+                        });
+                        setIsSchedulingOpen(false);
+                        setSchedulingBookingId(null);
+                        router.refresh();
+                    } catch (err) {
+                        console.error("Error updating booking status:", err);
+                        toast.error("Failed to update booking status");
+                    }
+                }
+            }
+        };
+
+        if (isSchedulingOpen) {
+            window.addEventListener("message", handleCalendlyMessage);
+        }
+        return () => {
+            window.removeEventListener("message", handleCalendlyMessage);
+        };
+    }, [schedulingBookingId, isSchedulingOpen, router]);
 
     const openReviewModal = (program) => {
         setSelectedProgram(program);
@@ -71,11 +109,19 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
         }
     };
 
-    // Helper: find a subscription for a given plan_code (matched via program)
+    const isProgramOwned = (programId) => {
+        const isDirectlyPurchased = purchasedPrograms?.some((p) => p.id === programId);
+        const hasActiveSub = subscriptions?.some(
+            (sub) => sub.program_id === programId && (sub.status === 'active' || sub.status === 'non-renewing')
+        );
+        return isDirectlyPurchased || hasActiveSub;
+    };
+
+    // Helper: find a subscription for a given program
     const getSubscriptionForProgram = (program) => {
-        if (!program || !program.paystack_plan_code) return null;
+        if (!program) return null;
         return subscriptions.find(s => 
-            s.plan_code === program.paystack_plan_code && 
+            (s.program_id === program.id || (program.paystack_plan_code && s.plan_code === program.paystack_plan_code)) && 
             (s.status === 'active' || s.status === 'non-renewing')
         ) || null;
     };
@@ -283,10 +329,56 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                                 </div>
                                                             )}
 
+                                                            {/* Render dynamic button based on booking state if it's a consultation */}
                                                             {(program.has_online_one_on_one || program.has_online_group || program.has_online_consultations) && program.booking_url && (
-                                                                 <Button variant="outline" className="w-full rounded-full" onClick={() => window.open(program.booking_url, '_blank')}>
-                                                                     Book Consultation
-                                                                 </Button>
+                                                                (() => {
+                                                                    // Find latest booking for this program
+                                                                    const latestBooking = userBookings?.filter(b => b.program_id === program.id && b.status !== 'cancelled')
+                                                                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                                                                    
+                                                                    if (latestBooking) {
+                                                                        const status = latestBooking.status;
+                                                                        const unlocked = latestBooking.unlocked_purchase;
+                                                                        
+                                                                        if (status === 'completed' && unlocked && !isProgramOwned(program.id)) {
+                                                                            return (
+                                                                                <Link href={`/programs/${program.id}/onboarding`} className="w-full">
+                                                                                    <Button className="w-full rounded-full bg-black text-white hover:bg-zinc-800">
+                                                                                        Purchase Program
+                                                                                    </Button>
+                                                                                </Link>
+                                                                            );
+                                                                        } else if (status === 'needs_followup') {
+                                                                            return (
+                                                                                <Button 
+                                                                                    className="w-full rounded-full bg-blue-600 text-white hover:bg-blue-700"
+                                                                                    onClick={() => setBookingModalState({ isOpen: true, program, mode: 'followup', parentBookingId: latestBooking.id, consultationRound: (latestBooking.consultation_round || 1) + 1 })}
+                                                                                >
+                                                                                    Book Follow-Up
+                                                                                </Button>
+                                                                            );
+                                                                        } else if (status === 'completed' && !unlocked) {
+                                                                            return (
+                                                                                <Button variant="outline" className="w-full rounded-full" disabled>
+                                                                                    ⏳ Awaiting Purchase
+                                                                                </Button>
+                                                                            );
+                                                                        } else if (['pending', 'confirmed'].includes(status)) {
+                                                                            return (
+                                                                                <Button variant="outline" className="w-full rounded-full" disabled>
+                                                                                    ⏳ Awaiting Follow Up
+                                                                                </Button>
+                                                                            );
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    // Default fallback if no booking exists or logic didn't match
+                                                                    return (
+                                                                        <Button variant="outline" className="w-full rounded-full" onClick={() => window.open(program.booking_url, '_blank')}>
+                                                                            Book Consultation
+                                                                        </Button>
+                                                                    );
+                                                                })()
                                                              )}
                                                             {program.has_physical_sessions && program.location_details && (
                                                                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mt-2">
@@ -307,31 +399,15 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                     const sub = getSubscriptionForProgram(program);
                                                     if (!sub) return null;
 
-                                                    // Calculate days until next payment
-                                                    let nextPaymentText = null;
-                                                    if (sub.next_billing_date) {
-                                                        const nextDate = new Date(sub.next_billing_date);
-                                                        const today = new Date();
-                                                        const diffTime = nextDate.getTime() - today.getTime();
-                                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                                        
-                                                        if (diffDays > 1) {
-                                                            nextPaymentText = `Next payment in ${diffDays} days (${nextDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})`;
-                                                        } else if (diffDays === 1) {
-                                                            nextPaymentText = `Next payment due tomorrow (${nextDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})`;
-                                                        } else if (diffDays === 0) {
-                                                            nextPaymentText = `Next payment due today!`;
-                                                        } else {
-                                                            nextPaymentText = `Payment due (${nextDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})`;
-                                                        }
-                                                    }
+                                                    const billingDate = sub.current_period_end || sub.next_billing_date;
+                                                    const nextPaymentText = billingDate ? `Next Billing Date: ${new Date(billingDate).toLocaleDateString()}` : null;
 
                                                     if (sub.status === 'non-renewing') {
                                                         return (
                                                             <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center mt-1">
                                                                 <p className="text-xs font-semibold text-amber-700">Cancellation Scheduled</p>
                                                                 <p className="text-[10px] text-amber-600 mt-0.5">
-                                                                    Access continues until {sub.next_billing_date ? new Date(sub.next_billing_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'end of billing period'}.
+                                                                    Access continues until {billingDate ? new Date(billingDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'end of billing period'}.
                                                                 </p>
                                                             </div>
                                                         );
@@ -386,7 +462,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                             <div className="flex items-center gap-2">
                                                 <h3 className="font-bold text-lg">{b.programs?.title || "Consultation Call"}</h3>
                                                 <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded">
-                                                    Round {b.consultation_round || 1}
+                                                    {(b.consultation_round || 1) > 1 ? 'Follow-Up Session' : 'Initial Consultation'}
                                                 </span>
                                             </div>
                                             <p className="text-xs text-slate-500 font-mono mt-0.5">Ref: {b.consultation_payment_ref || b.id.slice(0, 8)}</p>
@@ -402,6 +478,11 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                         </span>
                                     </div>
 
+                                    {b.status === 'needs_followup' && (
+                                        <p className="text-xs text-indigo-700 bg-indigo-50 p-3 rounded-2xl">
+                                            Trainer recommended a follow-up call to finalize your plan.
+                                        </p>
+                                    )}
                                     {b.notes && (
                                         <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-2xl italic">
                                             "{b.notes}"
@@ -414,18 +495,41 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                             <span className="font-bold text-slate-900">Kshs {(b.programs?.consultation_fee || 0).toLocaleString()}</span>
                                         </div>
 
-                                        {b.status === 'needs_followup' ? (
-                                            <Link href="/#programs">
-                                                <Button className="rounded-full bg-blue-600 text-white hover:bg-blue-700 text-xs px-5 py-2 font-semibold shadow-md">
-                                                    Book Follow-Up &rarr;
-                                                </Button>
-                                            </Link>
+                                        {isProgramOwned(b.program_id) ? (
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                                                    Enrolled in Program
+                                                </span>
+                                                <Link href={`/programs/${b.program_id}`}>
+                                                    <Button className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700 text-xs px-4 py-1.5 font-semibold shadow-md">
+                                                        Access Content &rarr;
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        ) : b.status === 'needs_followup' ? (
+                                            <Button 
+                                                className="rounded-full bg-blue-600 text-white hover:bg-blue-700 text-xs px-5 py-2 font-semibold shadow-md"
+                                                onClick={() => setBookingModalState({ isOpen: true, program: b.programs, mode: 'followup', parentBookingId: b.id, consultationRound: (b.consultation_round || 1) + 1 })}
+                                            >
+                                                Book Follow-Up (Kshs {b.programs?.followup_fee || 'Discounted'}) &rarr;
+                                            </Button>
                                         ) : b.unlocked_purchase && b.program_id ? (
                                             <Link href={`/programs/${b.program_id}/onboarding`}>
                                                 <Button className="rounded-full bg-black text-white hover:bg-zinc-800 text-xs px-5 py-2 font-semibold shadow-md">
                                                     Buy Full Program &rarr;
                                                 </Button>
                                             </Link>
+                                        ) : b.status === 'pending' ? (
+                                            <Button 
+                                                className="rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xs px-5 py-2 font-semibold shadow-md flex items-center gap-2"
+                                                onClick={() => {
+                                                    setSchedulingBookingId(b.id);
+                                                    setIsSchedulingOpen(true);
+                                                }}
+                                            >
+                                                <Calendar className="w-4 h-4" />
+                                                Schedule Call
+                                            </Button>
                                         ) : (
                                             <span className="text-[11px] text-slate-400 font-medium">
                                                 {b.status === 'completed' ? 'Purchase Unlocked' : 'Awaiting Consultation Call'}
@@ -566,6 +670,47 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Inline Scheduling Modal for Pending Bookings */}
+            <Dialog open={isSchedulingOpen} onOpenChange={(open) => {
+                if (!open) {
+                    setIsSchedulingOpen(false);
+                    setSchedulingBookingId(null);
+                }
+            }}>
+                <DialogContent className="sm:max-w-3xl w-full h-[85vh] max-h-[750px] flex flex-col rounded-3xl p-6 bg-white">
+                    <DialogHeader className="space-y-1 pb-2 border-b border-slate-100">
+                        <DialogTitle className="text-xl font-bold text-slate-900">
+                            Schedule Your Consultation
+                        </DialogTitle>
+                        <DialogDescription className="text-slate-500 text-xs">
+                            Pick a slot below to complete your booking. The schedule is synced instantly.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 w-full mt-4 rounded-xl overflow-hidden border border-slate-100 min-h-[400px] relative bg-slate-50">
+                        <iframe
+                            src={`${process.env.NEXT_PUBLIC_CALENDLY_URL || "https://calendly.com/wambialvin/program-set-up-meeting"}?name=${encodeURIComponent(profile?.full_name || '')}&email=${encodeURIComponent(profile?.email || '')}&hide_gdpr_banner=1&embed_domain=${encodeURIComponent(typeof window !== "undefined" ? window.location.origin : "")}`}
+                            width="100%"
+                            height="100%"
+                            style={{ border: "0" }}
+                            className="w-full h-full"
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <BookingModal
+                isOpen={bookingModalState.isOpen}
+                onClose={() => {
+                    setBookingModalState({ isOpen: false, program: null, mode: 'initial', parentBookingId: null, consultationRound: 1 });
+                    router.refresh();
+                }}
+                program={bookingModalState.program}
+                userProfile={profile}
+                mode={bookingModalState.mode}
+                parentBookingId={bookingModalState.parentBookingId}
+                consultationRound={bookingModalState.consultationRound}
+            />
         </div>
     );
 }

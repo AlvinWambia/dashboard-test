@@ -57,7 +57,9 @@ export default async function ProfilePage() {
                     has_physical_sessions,
                     booking_url,
                     location_details,
-                    paystack_plan_code
+                    paystack_plan_code,
+                    consultation_fee,
+                    followup_fee
                 )
             `)
             .eq('client_id', user.id);
@@ -133,6 +135,7 @@ export default async function ProfilePage() {
                     title,
                     price,
                     consultation_fee,
+                    followup_fee,
                     service_type,
                     image_url
                 )

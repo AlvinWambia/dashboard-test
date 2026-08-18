@@ -33,7 +33,7 @@ export default function BookingModal({ isOpen, onClose, program, userProfile, mo
   // ── All hooks above early returns (Rules of Hooks) ───────────────────────
 
   const isFollowup = mode === 'followup';
-  const consultationFee = isFollowup ? (activeProgram?.followup_fee || 0) : (activeProgram?.consultation_fee || 0);
+  const consultationFee = isFollowup ? (activeProgram?.followup_fee ?? activeProgram?.consultation_fee ?? 0) : (activeProgram?.consultation_fee ?? 0);
   const isFree = consultationFee === 0;
 
   const paystackConfig = {

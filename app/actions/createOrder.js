@@ -56,5 +56,15 @@ export async function createOrder(productId) {
   }
 
   // For session / coaching programs, complete the intake form first
+  const { data: existingForm } = await supabase
+    .from('client_intake_forms')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (existingForm) {
+    redirect(`/checkout/${newOrder.id}`);
+  }
+
   redirect(`/form?orderId=${newOrder.id}`);
 }

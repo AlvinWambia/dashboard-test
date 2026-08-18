@@ -25,12 +25,68 @@ async function getInitialUser() {
 
         return {
             ...profile,
+            id: user.id,
+            email: user.email,
             full_name: fullName,
             role: profile?.role || user.user_metadata?.role || 'user'
         };
     } catch (e) {
         console.error("Error getting initial user:", e);
         return null;
+    }
+}
+
+async function getUserBookings(user) {
+    if (!user) return [];
+    try {
+        const supabase = await createClient();
+        let query = supabase.from('bookings').select('program_id, consultation_paid, status, unlocked_purchase, created_at, id, consultation_round');
+        if (user.email) {
+            query = query.or(`user_id.eq.${user.id},customer_email.eq.${user.email}`);
+        } else {
+            query = query.eq('user_id', user.id);
+        }
+        const { data, error } = await query;
+        if (!error && data) return data;
+        return [];
+    } catch (e) {
+        console.error("Error getting user bookings:", e);
+        return [];
+    }
+}
+
+async function getPurchasedPrograms(user) {
+    if (!user) return [];
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('client_programs')
+            .select('program_id')
+            .eq('client_id', user.id);
+        if (!error && data) return data.map(d => ({ id: d.program_id }));
+        return [];
+    } catch (e) {
+        console.error("Error getting purchased programs:", e);
+        return [];
+    }
+}
+
+async function getSubscriptions(user) {
+    if (!user) return [];
+    try {
+        const supabase = await createClient();
+        let query = supabase.from('subscriptions').select('*');
+        if (user.email) {
+            query = query.or(`user_id.eq.${user.id},customer_email.eq.${user.email}`);
+        } else {
+            query = query.eq('user_id', user.id);
+        }
+        const { data, error } = await query;
+        if (!error && data) return data;
+        return [];
+    } catch (e) {
+        console.error("Error getting subscriptions:", e);
+        return [];
     }
 }
 
@@ -130,8 +186,11 @@ async function getData() {
 }
 
 export default async function MyFitLandingPage() {
-    const [initialProfile, { products, programs, testimonials, about, loungewear }] = await Promise.all([
-        getInitialUser(),
+    const initialProfile = await getInitialUser();
+    const [initialUserBookings, purchasedPrograms, subscriptions, { products, programs, testimonials, about, loungewear }] = await Promise.all([
+        getUserBookings(initialProfile),
+        getPurchasedPrograms(initialProfile),
+        getSubscriptions(initialProfile),
         getData()
     ]);
 
@@ -139,6 +198,9 @@ export default async function MyFitLandingPage() {
         <Suspense fallback={<div>Loading...</div>}>
             <HomeClient 
                 initialProfile={initialProfile}
+                initialUserBookings={initialUserBookings}
+                purchasedPrograms={purchasedPrograms}
+                subscriptions={subscriptions}
                 products={products} 
                 programs={programs} 
                 testimonials={testimonials} 
