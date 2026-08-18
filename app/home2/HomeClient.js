@@ -229,6 +229,9 @@ function ImageScrollyStep({ image, title, description, badge, buttonText, link, 
 
 
 
+/**
+ * @param {{ initialProfile?: any, initialUserBookings?: any[], products?: any, programs?: any, testimonials?: any, about?: any, loungewear?: any, purchasedPrograms?: any[], subscriptions?: any[] }} props
+ */
 export default function HomeClient({ initialProfile, initialUserBookings = [], products, programs, testimonials, about, loungewear, purchasedPrograms = [], subscriptions = [] }) {
     const [isLoading, setIsLoading] = React.useState(true);
 
