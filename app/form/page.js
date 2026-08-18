@@ -128,7 +128,7 @@ function IntakeForm() {
         };
 
         checkUser();
-    }, [supabase, router, methods, orderId]);
+    }, [orderId, router]);
 
     const progressComments = [
         "Let's start with your personal details.",
