@@ -1,6 +1,10 @@
 import { createAdminClient } from "@/supabase/server";
 import BookingsClient from "./BookingsClient";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 export default async function AdminBookingsPage() {
   const supabaseAdmin = createAdminClient();
 
