@@ -120,8 +120,8 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
     // Helper: find a subscription for a given program
     const getSubscriptionForProgram = (program) => {
         if (!program) return null;
-        return subscriptions.find(s => 
-            (s.program_id === program.id || (program.paystack_plan_code && s.plan_code === program.paystack_plan_code)) && 
+        return subscriptions.find(s =>
+            (s.program_id === program.id || (program.paystack_plan_code && s.plan_code === program.paystack_plan_code)) &&
             (s.status === 'active' || s.status === 'non-renewing')
         ) || null;
     };
@@ -163,7 +163,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to remove program');
-            
+
             toast.success("Program removed successfully.");
             closeRemoveModal();
             router.refresh();
@@ -238,7 +238,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                 {/* Purchased Programs */}
                 <div>
                     <h2 className="text-2xl font-bold mb-6">My Programs</h2>
-                    
+
                     {/* Item 8: Empty state when purchasedPrograms is empty */}
                     {purchasedPrograms.length === 0 ? (
                         <Card className="bg-white border-dashed border-2 border-slate-200 shadow-none rounded-3xl p-12 text-center space-y-4">
@@ -262,9 +262,9 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
 
                                 return (
                                     <Card key={program.id || program.access_id} className="bg-white border-none rounded-3xl overflow-hidden shadow-sm flex flex-col hover:shadow-md transition-shadow relative">
-                                        <Button 
-                                            variant="secondary" 
-                                            size="icon" 
+                                        <Button
+                                            variant="secondary"
+                                            size="icon"
                                             className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-red-50 hover:text-red-600 border border-slate-100 transition-colors"
                                             onClick={() => openRemoveModal(program)}
                                             title="Remove Program"
@@ -309,7 +309,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                                     </Button>
                                                                 </Link>
                                                             )}
-                                                            
+
                                                             {/* Render signed URL digital download links */}
                                                             {program.has_digital_downloads && program.assets && program.assets.length > 0 && (
                                                                 <div className="space-y-1.5 my-1">
@@ -335,11 +335,11 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                                     // Find latest booking for this program
                                                                     const latestBooking = userBookings?.filter(b => b.program_id === program.id && b.status !== 'cancelled')
                                                                         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-                                                                    
+
                                                                     if (latestBooking) {
                                                                         const status = latestBooking.status;
                                                                         const unlocked = latestBooking.unlocked_purchase;
-                                                                        
+
                                                                         if (status === 'completed' && unlocked && !isProgramOwned(program.id)) {
                                                                             return (
                                                                                 <Link href={`/programs/${program.id}/onboarding`} className="w-full">
@@ -350,7 +350,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                                             );
                                                                         } else if (status === 'needs_followup') {
                                                                             return (
-                                                                                <Button 
+                                                                                <Button
                                                                                     className="w-full rounded-full bg-blue-600 text-white hover:bg-blue-700"
                                                                                     onClick={() => setBookingModalState({ isOpen: true, program, mode: 'followup', parentBookingId: latestBooking.id, consultationRound: (latestBooking.consultation_round || 1) + 1 })}
                                                                                 >
@@ -371,7 +371,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                                             );
                                                                         }
                                                                     }
-                                                                    
+
                                                                     // Default fallback if no booking exists or logic didn't match
                                                                     return (
                                                                         <Button variant="outline" className="w-full rounded-full" onClick={() => window.open(program.booking_url, '_blank')}>
@@ -379,7 +379,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                                         </Button>
                                                                     );
                                                                 })()
-                                                             )}
+                                                            )}
                                                             {program.has_physical_sessions && program.location_details && (
                                                                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mt-2">
                                                                     <p className="text-xs font-semibold text-slate-700 mb-1">Physical Location:</p>
@@ -467,13 +467,12 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                             </div>
                                             <p className="text-xs text-slate-500 font-mono mt-0.5">Ref: {b.consultation_payment_ref || b.id.slice(0, 8)}</p>
                                         </div>
-                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
-                                            b.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                            b.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                            b.status === 'needs_followup' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
-                                            b.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-100' :
-                                            'bg-amber-50 text-amber-700 border-amber-100'
-                                        }`}>
+                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${b.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                b.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                    b.status === 'needs_followup' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                                        b.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-100' :
+                                                            'bg-amber-50 text-amber-700 border-amber-100'
+                                            }`}>
                                             {b.status.toUpperCase().replace('_', ' ')}
                                         </span>
                                     </div>
@@ -500,14 +499,14 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                 <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                                                     Enrolled in Program
                                                 </span>
-                                                <Link href={`/programs/${b.program_id}`}>
-                                                    <Button className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700 text-xs px-4 py-1.5 font-semibold shadow-md">
-                                                        Access Content &rarr;
-                                                    </Button>
-                                                </Link>
+
+                                                <Button className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700 text-xs px-4 py-1.5 font-semibold shadow-md">
+                                                    Owned program &rarr;
+                                                </Button>
+
                                             </div>
                                         ) : b.status === 'needs_followup' ? (
-                                            <Button 
+                                            <Button
                                                 className="rounded-full bg-blue-600 text-white hover:bg-blue-700 text-xs px-5 py-2 font-semibold shadow-md"
                                                 onClick={() => setBookingModalState({ isOpen: true, program: b.programs, mode: 'followup', parentBookingId: b.id, consultationRound: (b.consultation_round || 1) + 1 })}
                                             >
@@ -520,7 +519,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                 </Button>
                                             </Link>
                                         ) : b.status === 'pending' ? (
-                                            <Button 
+                                            <Button
                                                 className="rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xs px-5 py-2 font-semibold shadow-md flex items-center gap-2"
                                                 onClick={() => {
                                                     setSchedulingBookingId(b.id);
@@ -644,7 +643,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
 
                     {programToRemove && getSubscriptionForProgram(programToRemove)?.status === 'active' && (
                         <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mt-2 text-sm text-amber-800">
-                            <p className="font-semibold mb-1 flex items-center gap-1"><AlertTriangle size={14}/> Active Subscription</p>
+                            <p className="font-semibold mb-1 flex items-center gap-1"><AlertTriangle size={14} /> Active Subscription</p>
                             <p className="text-xs">
                                 Proceeding will <strong>cancel your subscription immediately</strong> and remove your access. You will not be charged again.
                             </p>
