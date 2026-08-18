@@ -98,8 +98,7 @@ function IntakeForm() {
                     .single();
 
                 if (!profile) {
-                    router.push('/');
-                    return;
+                    console.warn("No profile found for user, continuing without pre-filling");
                 }
 
                 // CHECK: If user already has an intake form, redirect them away
@@ -118,8 +117,8 @@ function IntakeForm() {
                     return;
                 }
 
-                methods.setValue('fullName', profile.full_name || '');
-                methods.setValue('email', user.email || '');
+                methods.setValue('fullName', profile?.full_name || '');
+                methods.setValue('email', user?.email || '');
             } catch (error) {
                 console.error("Error checking user:", error);
             } finally {
@@ -213,7 +212,7 @@ function IntakeForm() {
     if (isLoading) {
         return (
             <main className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <p className="text-slate-500">Loading...</p>
+                <p className="text-slate-500">Initializing form...</p>
             </main>
         );
     }
@@ -268,7 +267,7 @@ function IntakeForm() {
 
 export default function IntakePage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">Loading...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">Loading Form Data...</div>}>
             <IntakeForm />
         </Suspense>
     );
