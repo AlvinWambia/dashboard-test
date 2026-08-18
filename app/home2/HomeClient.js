@@ -275,7 +275,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
             // Fetch by user_id OR by customer_email so that bookings created
             // before the user had an account (guest bookings) are also included.
             let query = supabase.from('bookings').select('program_id, consultation_paid, status, unlocked_purchase, created_at, id, consultation_round');
-            
+
             if (user.email) {
                 query = query.or(`user_id.eq.${user.id},customer_email.eq.${user.email}`);
             } else {
@@ -686,7 +686,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {[
-                                    { title: "💪Workout Program", bg: workout, delay: 0.1, description: "Personal Training", href: "/programs" },
+                                    { title: "💪Workout Program", bg: workout, delay: 0.1, description: "Personal Training", href: "#programs" },
                                     { title: "🧘Wellness", bg: wellness, delay: 0.2, description: "Personal Therapy", href: "/wellness" },
                                     { title: "🥗Nutrition", bg: nutrition, delay: 0.3, description: "Curated Diet", href: "/nutrition" }
                                 ].map((card, i) => (
@@ -971,7 +971,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
                                                                 bookingState = 'owned';
                                                             } else if (latestBooking) {
                                                                 if (status === 'completed' && unlocked) bookingState = 'purchase';
-                                                                else if (status === 'needs_followup')  bookingState = 'followup';
+                                                                else if (status === 'needs_followup') bookingState = 'followup';
                                                                 else if (status === 'completed' && !unlocked) bookingState = 'awaiting_purchase';
                                                                 else if (['pending', 'confirmed'].includes(status)) bookingState = 'awaiting_followup';
                                                             }

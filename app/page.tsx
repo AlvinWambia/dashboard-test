@@ -36,7 +36,7 @@ async function getInitialUser() {
     }
 }
 
-async function getUserBookings(user) {
+async function getUserBookings(user: any) {
     if (!user) return [];
     try {
         const supabase = await createClient();
@@ -55,7 +55,7 @@ async function getUserBookings(user) {
     }
 }
 
-async function getPurchasedPrograms(user) {
+async function getPurchasedPrograms(user: any) {
     if (!user) return [];
     try {
         const supabase = await createClient();
@@ -71,7 +71,7 @@ async function getPurchasedPrograms(user) {
     }
 }
 
-async function getSubscriptions(user) {
+async function getSubscriptions(user: any) {
     if (!user) return [];
     try {
         const supabase = await createClient();

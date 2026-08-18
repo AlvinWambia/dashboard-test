@@ -16,7 +16,7 @@ export default function FailedPage() {
 
         <div className="space-y-3">
           <Button asChild className="w-full py-6 rounded-2xl bg-black hover:bg-zinc-800">
-            <Link href="/">Back to Dashboard</Link>
+            <Link href="/">Back to Home</Link>
           </Button>
           <Button asChild variant="outline" className="w-full py-6 rounded-2xl">
             <Link href="/contact">Contact Support</Link>

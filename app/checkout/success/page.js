@@ -8,10 +8,10 @@ import { NewsletterWelcomeTemplate } from "@/components/emails/NewsletterWelcome
 export default async function SuccessPage({ searchParams }) {
   const params = await searchParams;
   const reference = params.reference || params.trxref || "Unknown";
-  
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   let orderData = null;
   let fetchError = null;
   let hasIntakeForm = false;
@@ -24,11 +24,11 @@ export default async function SuccessPage({ searchParams }) {
       .eq('user_id', user.id)
       .limit(1)
       .maybeSingle();
-    
+
     hasIntakeForm = !!existingForm;
   }
 
-  const actualOrderId = (reference !== "Unknown") 
+  const actualOrderId = (reference !== "Unknown")
     ? (reference.includes('_') ? reference.split('_')[0] : reference)
     : null;
 
@@ -59,7 +59,7 @@ export default async function SuccessPage({ searchParams }) {
             if (order.status !== 'paid') {
               // Update order to paid
               await adminSupabase.from('orders').update({ status: 'paid' }).eq('id', actualOrderId);
-              
+
               // Grant client program access
               await adminSupabase.from('client_programs').insert({
                 client_id: order.user_id,
@@ -98,7 +98,7 @@ export default async function SuccessPage({ searchParams }) {
       .select('*, program_name')
       .eq('id', actualOrderId)
       .single();
-    
+
     orderData = data;
     fetchError = error;
   }
@@ -116,13 +116,13 @@ export default async function SuccessPage({ searchParams }) {
               <CheckCircle2 className="w-12 h-12 text-green-500" />
             </div>
           )}
-          
+
           <h1 className="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">
             {fetchError && !paymentVerified ? "Payment Processing" : "Payment Successful!"}
           </h1>
-          
+
           <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-            {fetchError && !paymentVerified 
+            {fetchError && !paymentVerified
               ? "We couldn't immediately verify your order details, but your payment might still be processing. Check your email for confirmation."
               : `Thank you for your purchase${orderData?.program_name ? ` of ${orderData.program_name}` : ""}. We've sent a receipt and a welcome email to your inbox.`}
           </p>
@@ -174,11 +174,11 @@ export default async function SuccessPage({ searchParams }) {
             )}
           </div>
         </div>
-        
+
         {/* Support Footer */}
         <div className="bg-gray-50 p-6 text-center border-t border-gray-100">
           <p className="text-xs text-gray-500">
-            Need help with your order? <Link href="mailto:support@myfitraining.com" className="font-medium text-black hover:underline">Contact Support</Link>
+            Need help with your order? <Link href="mailto:myfitrainingg.com" className="font-medium text-black hover:underline">Contact Support</Link>
           </p>
         </div>
       </div>
