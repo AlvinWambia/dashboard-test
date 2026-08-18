@@ -95,13 +95,9 @@ function IntakeForm() {
                     .from('profiles')
                     .select('*')
                     .eq('id', user.id)
-                    .single();
+                    .maybeSingle();
 
-                if (!profile) {
-                    console.warn("No profile found for user, continuing without pre-filling");
-                }
-
-                // CHECK: If user already has an intake form, redirect them away
+                // CHECK: If user already filled intake form, pass through to checkout immediately
                 const { data: existingForm } = await supabase
                     .from('client_intake_forms')
                     .select('id')
@@ -109,6 +105,7 @@ function IntakeForm() {
                     .maybeSingle();
 
                 if (existingForm) {
+                    setIsLoading(false); // Reset loading state prior to routing
                     if (orderId) {
                         router.push(`/checkout/${orderId}`);
                     } else {
