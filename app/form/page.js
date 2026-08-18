@@ -58,8 +58,8 @@ function IntakeForm() {
     const [currentStep, setCurrentStep] = useState(1);
     const totalSteps = 5;
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const supabase = createClient();
+    // Start as false so the form renders immediately; we'll pre-fill in the background
+    const [isLoading, setIsLoading] = useState(false);
 
     const methods = useForm({
         resolver: zodResolver(formSchema),
@@ -83,21 +83,24 @@ function IntakeForm() {
 
     useEffect(() => {
         const checkUser = async () => {
+            // Create client inside the effect to avoid stale closures
+            const supabase = createClient();
             try {
-                const { data: { user } } = await supabase.auth.getUser();
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-                if (!user) {
+                if (userError || !user) {
                     router.push('/auth/login');
                     return;
                 }
 
+                // Use maybeSingle() to safely handle new users with no profile row
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('*')
+                    .select('full_name, email')
                     .eq('id', user.id)
                     .maybeSingle();
 
-                // CHECK: If user already filled intake form, pass through to checkout immediately
+                // CHECK: If user already has an intake form, skip form and go to checkout
                 const { data: existingForm } = await supabase
                     .from('client_intake_forms')
                     .select('id')
@@ -105,7 +108,6 @@ function IntakeForm() {
                     .maybeSingle();
 
                 if (existingForm) {
-                    setIsLoading(false); // Reset loading state prior to routing
                     if (orderId) {
                         router.push(`/checkout/${orderId}`);
                     } else {
@@ -114,12 +116,11 @@ function IntakeForm() {
                     return;
                 }
 
-                methods.setValue('fullName', profile?.full_name || '');
-                methods.setValue('email', user?.email || '');
+                // Pre-fill name/email from profile or auth metadata
+                methods.setValue('fullName', profile?.full_name || user.user_metadata?.full_name || '');
+                methods.setValue('email', user.email || '');
             } catch (error) {
                 console.error("Error checking user:", error);
-            } finally {
-                setIsLoading(false);
             }
         };
 
@@ -156,6 +157,7 @@ function IntakeForm() {
                     const formData = methods.getValues();
 
                     // Get current user session (if exists)
+                    const supabase = createClient();
                     const { data: { user } } = await supabase.auth.getUser();
 
                     const { error } = await supabase.from('client_intake_forms').insert({
