@@ -201,9 +201,9 @@ function IntakeForm() {
                     // Do NOT reset isSubmitting here — keep the button disabled
                     // during navigation so the user cannot double-submit.
                     if (orderId) {
-                        router.push(`/checkout/${orderId}`);
+                        window.location.href = `/checkout/${orderId}`;
                     } else {
-                        router.push('/?form_submitted=true');
+                        window.location.href = '/?form_submitted=true';
                     }
                 } catch (error) {
                     // Surface the real error message so it is actionable
