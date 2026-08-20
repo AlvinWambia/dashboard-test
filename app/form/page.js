@@ -60,6 +60,7 @@ function IntakeForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     // Start as false so the form renders immediately; we'll pre-fill in the background
     const [isLoading, setIsLoading] = useState(false);
+    const [userId, setUserId] = useState(null); // Store user ID to prevent hanging on submit
 
     const methods = useForm({
         resolver: zodResolver(formSchema),
@@ -92,6 +93,8 @@ function IntakeForm() {
                     router.push('/auth/login');
                     return;
                 }
+                
+                setUserId(user.id); // Save it for submission
 
                 // Use maybeSingle() to safely handle new users with no profile row
                 const { data: profile } = await supabase
@@ -161,17 +164,15 @@ function IntakeForm() {
                     console.log("Creating Supabase client...");
                     const supabase = createClient();
                     
-                    console.log("Fetching user session...");
-                    const { data: { user }, error: authError } = await supabase.auth.getUser();
-                    console.log("User fetched:", user ? user.id : "null", "Auth Error:", authError);
-
-                    if (authError || !user) {
+                    console.log("Checking stored user session...");
+                    if (!userId) {
                         throw new Error("Your session has expired. Please refresh the page and log in again.");
                     }
+                    console.log("User fetched:", userId);
 
                     console.log("Preparing data for insert...");
                     const insertData = {
-                        user_id: user.id,
+                        user_id: userId,
                         order_id: orderId || null,
                         full_name: formData.fullName,
                         email: formData.email,
