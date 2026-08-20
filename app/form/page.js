@@ -185,6 +185,8 @@ function IntakeForm() {
                         description: "Your registration details have been saved."
                     });
 
+                    setIsSubmitting(false);
+
                     if (orderId) {
                         router.push(`/checkout/${orderId}`);
                     } else {
@@ -192,7 +194,9 @@ function IntakeForm() {
                     }
                 } catch (error) {
                     console.error("Error submitting form:", error);
-                    alert("There was an error submitting your form. Please try again.");
+                    toast.error("Submission Failed", {
+                        description: "There was an error submitting your form. Please try again."
+                    });
                 } finally {
                     setIsSubmitting(false);
                 }
