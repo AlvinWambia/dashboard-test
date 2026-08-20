@@ -154,17 +154,23 @@ function IntakeForm() {
             if (currentStep === 5) {
                 setIsSubmitting(true);
                 try {
+                    console.log("Submit started. Getting form values...");
                     const formData = methods.getValues();
+                    console.log("Form data:", formData);
 
-                    // Verify the user is still authenticated before submitting
+                    console.log("Creating Supabase client...");
                     const supabase = createClient();
+                    
+                    console.log("Fetching user session...");
                     const { data: { user }, error: authError } = await supabase.auth.getUser();
+                    console.log("User fetched:", user ? user.id : "null", "Auth Error:", authError);
 
                     if (authError || !user) {
                         throw new Error("Your session has expired. Please refresh the page and log in again.");
                     }
 
-                    const { error } = await supabase.from('client_intake_forms').insert({
+                    console.log("Preparing data for insert...");
+                    const insertData = {
                         user_id: user.id,
                         order_id: orderId || null,
                         full_name: formData.fullName,
@@ -181,10 +187,14 @@ function IntakeForm() {
                         goal_description: formData.goalDescription,
                         injuries: formData.injuries,
                         medical_conditions: formData.medicalConditions,
-                    });
+                    };
+                    console.log("Insert data:", insertData);
+
+                    console.log("Sending insert request to Supabase...");
+                    const { error } = await supabase.from('client_intake_forms').insert(insertData);
+                    console.log("Insert response received. Error:", error);
 
                     if (error) {
-                        // Log the full Supabase error so it is visible in DevTools Console
                         console.error("Supabase insert error:", {
                             message: error.message,
                             details: error.details,
@@ -194,17 +204,18 @@ function IntakeForm() {
                         throw error;
                     }
 
+                    console.log("Showing success toast...");
                     toast.success("Intake Form Submitted", {
                         description: "Your registration details have been saved."
                     });
 
-                    // Do NOT reset isSubmitting here — keep the button disabled
-                    // during navigation so the user cannot double-submit.
+                    console.log("Redirecting...");
                     if (orderId) {
                         window.location.href = `/checkout/${orderId}`;
                     } else {
                         window.location.href = '/?form_submitted=true';
                     }
+                    console.log("Redirection triggered.");
                 } catch (error) {
                     // Surface the real error message safely
                     console.error("Form submission failed:", error);
