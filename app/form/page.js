@@ -206,14 +206,21 @@ function IntakeForm() {
                         window.location.href = '/?form_submitted=true';
                     }
                 } catch (error) {
-                    // Surface the real error message so it is actionable
-                    const description =
-                        error?.message ||
-                        error?.details ||
-                        "There was an error submitting your form. Please try again.";
+                    // Surface the real error message safely
                     console.error("Form submission failed:", error);
-                    toast.error("Submission Failed", { description });
-                    // Only re-enable the button on failure
+                    let description = "There was an error submitting your form. Please try again.";
+                    if (error) {
+                        if (typeof error.message === 'string') description = error.message;
+                        else if (typeof error.details === 'string') description = error.details;
+                        else if (typeof error === 'string') description = error;
+                    }
+                    try {
+                        toast.error("Submission Failed", { description });
+                    } catch (toastErr) {
+                        console.error("Failed to show toast:", toastErr);
+                    }
+                } finally {
+                    // ALWAYS reset button state so it doesn't get stuck if navigation or anything else fails
                     setIsSubmitting(false);
                 }
             } else if (currentStep < totalSteps) {
