@@ -122,7 +122,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
         if (!program) return null;
         return subscriptions.find(s =>
             (s.program_id === program.id || (program.paystack_plan_code && s.plan_code === program.paystack_plan_code)) &&
-            (s.status === 'active' || s.status === 'non-renewing')
+            (s.status === 'active' || s.status === 'non-renewing' || s.status === 'past_due')
         ) || null;
     };
 
@@ -389,9 +389,36 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                         </>
                                                     )
                                                 ) : (
-                                                    <div className="bg-red-50 p-3 rounded-xl border border-red-100 text-center mb-2">
-                                                        <p className="text-xs font-semibold text-red-600">Subscription Cancelled / Expired</p>
-                                                    </div>
+                                                    (() => {
+                                                        const sub = getSubscriptionForProgram(program);
+                                                        const renewUrl = program.paystack_plan_code
+                                                            ? `https://paystack.com/pay/${program.paystack_plan_code}`
+                                                            : null;
+
+                                                        if (sub?.status === 'past_due') {
+                                                            return (
+                                                                <div className="bg-red-50 p-3 rounded-xl border border-red-100 text-center mb-2 space-y-2">
+                                                                    <p className="text-xs font-semibold text-red-600">Payment Failed — Access Suspended</p>
+                                                                    {renewUrl && (
+                                                                        <a
+                                                                            href={`${renewUrl}?email=${encodeURIComponent(user?.email || '')}`}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="flex items-center justify-center w-full py-1.5 px-4 rounded-full bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors"
+                                                                        >
+                                                                            🔄 Renew to Restore Access
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        }
+
+                                                        return (
+                                                            <div className="bg-red-50 p-3 rounded-xl border border-red-100 text-center mb-2">
+                                                                <p className="text-xs font-semibold text-red-600">Subscription Cancelled / Expired</p>
+                                                            </div>
+                                                        );
+                                                    })()
                                                 )}
 
                                                 {/* Subscription Management & Next Payment Countdown */}
@@ -402,16 +429,65 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                     const billingDate = sub.current_period_end || sub.next_billing_date;
                                                     const nextPaymentText = billingDate ? `Next Billing Date: ${new Date(billingDate).toLocaleDateString()}` : null;
 
-                                                    if (sub.status === 'non-renewing') {
+                                                    // Build Paystack-hosted renewal link for this subscription's plan
+                                                    const renewUrl = program.paystack_plan_code
+                                                        ? `https://paystack.com/pay/${program.paystack_plan_code}`
+                                                        : null;
+
+                                                    if (sub.status === 'past_due') {
                                                         return (
-                                                            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center mt-1">
-                                                                <p className="text-xs font-semibold text-amber-700">Cancellation Scheduled</p>
-                                                                <p className="text-[10px] text-amber-600 mt-0.5">
-                                                                    Access continues until {billingDate ? new Date(billingDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'end of billing period'}.
-                                                                </p>
+                                                            <div className="space-y-2 mt-1">
+                                                                <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-center">
+                                                                    <p className="text-xs font-semibold text-red-700">Payment Failed</p>
+                                                                    <p className="text-[10px] text-red-600 mt-0.5">
+                                                                        Your last payment could not be processed. Renew to restore access.
+                                                                    </p>
+                                                                </div>
+                                                                {renewUrl ? (
+                                                                    <a
+                                                                        href={`${renewUrl}?email=${encodeURIComponent(user?.email || '')}`}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="flex items-center justify-center w-full py-2 px-4 rounded-full bg-black text-white text-xs font-semibold hover:bg-zinc-800 transition-colors"
+                                                                    >
+                                                                        🔄 Renew Subscription
+                                                                    </a>
+                                                                ) : (
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        className="w-full rounded-full text-xs border-red-200 text-red-700"
+                                                                        onClick={() => router.push('/')}
+                                                                    >
+                                                                        🔄 Re-subscribe
+                                                                    </Button>
+                                                                )}
                                                             </div>
                                                         );
                                                     }
+
+                                                    if (sub.status === 'non-renewing') {
+                                                        return (
+                                                            <div className="space-y-2 mt-1">
+                                                                <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
+                                                                    <p className="text-xs font-semibold text-amber-700">Cancellation Scheduled</p>
+                                                                    <p className="text-[10px] text-amber-600 mt-0.5">
+                                                                        Access continues until {billingDate ? new Date(billingDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'end of billing period'}.
+                                                                    </p>
+                                                                </div>
+                                                                {renewUrl && (
+                                                                    <a
+                                                                        href={`${renewUrl}?email=${encodeURIComponent(user?.email || '')}`}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="flex items-center justify-center w-full py-2 px-4 rounded-full bg-black text-white text-xs font-semibold hover:bg-zinc-800 transition-colors"
+                                                                    >
+                                                                        🔄 Renew Subscription
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    }
+
                                                     if (sub.status === 'active') {
                                                         return (
                                                             <div className="space-y-2 mt-1">

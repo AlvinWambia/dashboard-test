@@ -6,7 +6,6 @@ import { AdminEmailTemplate } from "@/components/emails/AdminEmailTemplate";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 // Initialize Resend lazily to prevent module evaluation errors if the key is missing
-// ... (rest of imports/init)
 let resend;
 try {
   if (process.env.RESEND_API_KEY) {
@@ -16,6 +15,29 @@ try {
   console.error("Resend initialization failed:", e);
 }
 
+const FROM_EMAIL = "myFit <info@myfitraining.com>";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "info@myfitraining.com";
+
+// ─── Helper: send email via Resend ──────────────────────────────────────────
+async function sendEmail({ to, subject, htmlContent }) {
+  if (!resend) {
+    console.warn("Resend not initialized — skipping email to:", to);
+    return;
+  }
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject,
+      react: AdminEmailTemplate({ subject, htmlContent }),
+    });
+    console.log(`Email sent → ${to} | Subject: ${subject}`);
+  } catch (err) {
+    console.error("Email send failed:", err);
+  }
+}
+
+// ─── Webhook Handler ─────────────────────────────────────────────────────────
 export async function POST(req) {
   // Rate limit: Max 100 webhook requests per minute per IP
   const rateLimitError = checkRateLimit(req, {
@@ -31,6 +53,7 @@ export async function POST(req) {
   if (!process.env.RESEND_API_KEY) {
     console.error("WEBHOOK ERROR: RESEND_API_KEY is missing in environment variables.");
   }
+
   try {
     const rawBody = await req.text();
     const signature = req.headers.get("x-paystack-signature");
@@ -61,153 +84,319 @@ export async function POST(req) {
     const data = body.data;
 
     console.log("Webhook Event:", event);
-    const reference = data.reference;
-    const orderIdFromMetadata = data.metadata?.orderId;
-    const orderIdFromReference = reference?.includes('_') ? reference.split('_')[0] : reference;
-    const orderId = orderIdFromMetadata || orderIdFromReference;
 
-    console.log("Extracted orderId:", orderId, "(from reference:", reference, ")");
-
-    // 2. Handle the successful charge event
+    // ── charge.success ────────────────────────────────────────────────────
     if (event === "charge.success") {
       const customerEmail = data.customer.email;
-      const amountPaid = data.amount / 100; // Paystack sends amount in cents/subunits
+      const amountPaid = data.amount / 100;
+      const reference = data.reference;
+      const currency = data.currency || "KES";
+      const orderIdFromMetadata = data.metadata?.orderId;
+
+      console.log("Extracted orderId from metadata:", orderIdFromMetadata, "(from reference:", reference, ")");
 
       const supabase = createAdminClient();
 
-      // 3. Fetch order details to get user_id, program_id, program_name, and status
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .select("id, status, user_id, program_id, program_name")
-        .eq("id", orderId)
-        .single();
+      if (orderIdFromMetadata) {
+        // ── One-time order payment ─────────────────────────────────────────
+        const { data: order, error: orderError } = await supabase
+          .from("orders")
+          .select("id, status, user_id, program_id, program_name")
+          .eq("id", orderIdFromMetadata)
+          .single();
 
-      if (orderError || !order) {
-        console.error("Error fetching order:", orderError);
-        return new Response("Order not found", { status: 404 });
-      }
+        if (orderError || !order) {
+          console.error("Error fetching order:", orderError);
+          return new Response("Order not found", { status: 404 });
+        }
 
-      // Idempotency check: if order is already paid, return 200 immediately
-      if (order.status === "paid") {
-        console.log(`Order ${orderId} is already marked as paid. Returning 200 OK (idempotent).`);
-        return NextResponse.json({ received: true, message: "Order already processed" }, { status: 200 });
-      }
+        // Idempotency check
+        if (order.status === "paid") {
+          console.log(`Order ${orderIdFromMetadata} already paid — returning 200 (idempotent).`);
+          return NextResponse.json({ received: true, message: "Order already processed" }, { status: 200 });
+        }
 
-      // 4. Update the order status in Supabase
-      const { error: updateError } = await supabase
-        .from("orders")
-        .update({ status: "paid" })
-        .eq("id", orderId);
+        // Update order status
+        const { error: updateError } = await supabase
+          .from("orders")
+          .update({ status: "paid" })
+          .eq("id", orderIdFromMetadata);
 
-      if (updateError) {
-        console.error("Error updating order:", updateError);
-        return new Response("Error updating order", { status: 500 });
-      }
+        if (updateError) {
+          console.error("Error updating order:", updateError);
+          return new Response("Error updating order", { status: 500 });
+        }
 
-      // 5. Insert into payments table
-      const { error: paymentError } = await supabase
-        .from("payments")
-        .insert({
-          order_id: orderId,
-          user_id: order.user_id,
-          provider: "Paystack",
-          provider_payment_id: reference,
-          amount: amountPaid,
-          currency: data.currency || "KES",
-          status: "success"
-        });
+        // Insert into payments table
+        const { error: paymentError } = await supabase
+          .from("payments")
+          .insert({
+            order_id: orderIdFromMetadata,
+            user_id: order.user_id,
+            provider: "Paystack",
+            provider_payment_id: reference,
+            amount: amountPaid,
+            currency,
+            status: "success",
+          });
 
-      if (paymentError) {
-        console.error("Error creating payment record:", paymentError);
-      }
+        if (paymentError) {
+          console.error("Error creating payment record:", paymentError);
+        }
 
-      // 6. Grant program access via client_programs and auto-approve to prevent bottleneck
-      const { error: accessError } = await supabase
-        .from("client_programs")
-        .insert({
-          client_id: order.user_id,
-          program_id: order.program_id,
-          status: "active",
-          review_status: "approved"
-        });
+        // Grant program access
+        const { error: accessError } = await supabase
+          .from("client_programs")
+          .insert({
+            client_id: order.user_id,
+            program_id: order.program_id,
+            status: "active",
+            review_status: "approved",
+          });
 
-      if (accessError) {
-        console.error("Error granting program access:", accessError);
-      }
+        if (accessError) {
+          console.error("Error granting program access:", accessError);
+        }
 
-      // 7. Send the Welcome & Receipt Email via Resend
-      if (resend) {
         const programName = order.program_name || "your program";
-        const emailSubject = `Welcome to ${programName}!`;
-        const emailHtml = `
-          <p>Hi there,</p>
-          <p>Thank you for purchasing <strong>${programName}</strong>! We've successfully received your payment of ${data.currency || "KES"} ${amountPaid.toFixed(2)}.</p>
-          <p>We are thrilled to have you on board. Our team is already getting everything ready for you, and the administrator will contact you as soon as possible with the next steps.</p>
-          <p>In the meantime, feel free to explore your dashboard.</p>
-          <p>Best regards,<br/>The myFit Team</p>
-        `;
 
-        await resend.emails.send({
-          from: "myFit <info@myfitraining.com>", // Replace with your verified domain
+        // Customer: welcome + receipt email
+        await sendEmail({
           to: customerEmail,
-          subject: emailSubject,
-          react: AdminEmailTemplate({ subject: emailSubject, htmlContent: emailHtml }),
+          subject: `Welcome to ${programName}! 🎉`,
+          htmlContent: `
+            <p>Hi there,</p>
+            <p>Thank you for purchasing <strong>${programName}</strong>! We've successfully received your payment of <strong>${currency} ${amountPaid.toFixed(2)}</strong>.</p>
+            <p>We are thrilled to have you on board. Our team is already getting everything ready for you, and the administrator will contact you as soon as possible with the next steps.</p>
+            <p>In the meantime, feel free to <a href="${process.env.NEXT_PUBLIC_SITE_URL}/profile">explore your dashboard</a>.</p>
+            <p>Best regards,<br/>The myFit Team</p>
+          `,
         });
 
-        console.log("Welcome email sent via Resend.");
+        // Admin: new payment alert
+        await sendEmail({
+          to: ADMIN_EMAIL,
+          subject: `💳 New Payment — ${programName}`,
+          htmlContent: `
+            <p><strong>New payment received!</strong></p>
+            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+              <tr><td style="padding:6px 0;color:#888;">Customer</td><td style="padding:6px 0;font-weight:600;">${customerEmail}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;">Program</td><td style="padding:6px 0;font-weight:600;">${programName}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;">Amount</td><td style="padding:6px 0;font-weight:600;">${currency} ${amountPaid.toFixed(2)}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;">Reference</td><td style="padding:6px 0;font-family:monospace;">${reference}</td></tr>
+              <tr><td style="padding:6px 0;color:#888;">Order ID</td><td style="padding:6px 0;font-family:monospace;">${orderIdFromMetadata}</td></tr>
+            </table>
+            <p style="margin-top:16px;"><a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/members" style="background:#000;color:#fff;padding:10px 20px;border-radius:20px;text-decoration:none;font-weight:600;">View in Admin →</a></p>
+          `,
+        });
+
+        console.log(`One-time payment processed for Order ${orderIdFromMetadata}.`);
       } else {
-        console.warn("Resend client not initialized, skipping emails.");
+        // ── Subscription renewal charge (M-Pesa re-prompt / card auto-debit) ──
+        // No orderId in metadata means this is a recurring subscription payment.
+        console.log(`Subscription renewal charge detected for ${customerEmail}`);
+
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", customerEmail)
+          .maybeSingle();
+
+        if (userProfile) {
+          // Reactivate any past_due or expired program access
+          const { error: reactivateError } = await supabase
+            .from("client_programs")
+            .update({ status: "active" })
+            .eq("client_id", userProfile.id)
+            .in("status", ["past_due", "expired"]);
+
+          if (reactivateError) {
+            console.error("Error reactivating client_programs:", reactivateError);
+          } else {
+            console.log(`Reactivated program access for ${customerEmail}`);
+          }
+
+          // Update subscription next_billing_date when plan_code is present
+          if (data.plan?.plan_code && data.paid_at) {
+            const paidAt = new Date(data.paid_at);
+            const nextBillingDate = new Date(paidAt.setMonth(paidAt.getMonth() + 1)).toISOString();
+            await supabase
+              .from("subscriptions")
+              .update({ status: "active", next_billing_date: nextBillingDate, updated_at: new Date().toISOString() })
+              .eq("client_id", userProfile.id)
+              .eq("plan_code", data.plan.plan_code);
+          }
+
+          // Customer: renewal receipt
+          await sendEmail({
+            to: customerEmail,
+            subject: "Your myFit subscription has been renewed ✅",
+            htmlContent: `
+              <p>Hi there,</p>
+              <p>Your myFit subscription has been successfully renewed. Your payment of <strong>${currency} ${amountPaid.toFixed(2)}</strong> was received — your access continues uninterrupted.</p>
+              <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/profile">View your dashboard →</a></p>
+              <p>Best regards,<br/>The myFit Team</p>
+            `,
+          });
+        } else {
+          console.warn(`No profile found for renewal email: ${customerEmail}`);
+        }
       }
 
-      console.log(`Payment successful for Order ${orderId}. Emails sent and database updated.`);
+    // ── subscription.create ───────────────────────────────────────────────
     } else if (event === "subscription.create") {
       const supabase = createAdminClient();
       const customerEmail = data.customer.email;
-      
-      // Find the user by email (or order metadata if available)
+
       const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', customerEmail)
-        .single();
-        
+        .from("profiles")
+        .select("id")
+        .eq("email", customerEmail)
+        .maybeSingle();
+
       if (userProfile) {
         await supabase.from("subscriptions").insert({
           client_id: userProfile.id,
           paystack_subscription_code: data.subscription_code,
-          plan_code: data.plan.plan_code,
-          status: 'active',
-          next_billing_date: data.next_payment_date
+          plan_code: data.plan?.plan_code || null,
+          status: "active",
+          next_billing_date: data.next_payment_date || null,
         });
         console.log(`Subscription created for ${customerEmail}`);
       }
+
+    // ── subscription.disable ──────────────────────────────────────────────
     } else if (event === "subscription.disable") {
       const supabase = createAdminClient();
       await supabase
         .from("subscriptions")
-        .update({ status: 'non-renewing' })
-        .eq('paystack_subscription_code', data.subscription_code);
+        .update({ status: "non-renewing", updated_at: new Date().toISOString() })
+        .eq("paystack_subscription_code", data.subscription_code);
       console.log(`Subscription ${data.subscription_code} disabled.`);
+
+    // ── invoice.update (recurring charge success / upcoming charge notice) ─
+    } else if (event === "invoice.update") {
+      const supabase = createAdminClient();
+      const subscriptionCode = data.subscription?.subscription_code || data.subscription_code;
+      const nextPaymentDate = data.next_payment_date || null;
+      const customerEmail = data.customer?.email;
+      const amountPaid = (data.amount || 0) / 100;
+      const currency = data.currency || "KES";
+
+      console.log(`invoice.update for subscription ${subscriptionCode}`);
+
+      if (subscriptionCode) {
+        // Update next_billing_date and ensure status is active
+        const { data: updatedSub } = await supabase
+          .from("subscriptions")
+          .update({
+            status: "active",
+            next_billing_date: nextPaymentDate,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("paystack_subscription_code", subscriptionCode)
+          .select("client_id")
+          .maybeSingle();
+
+        console.log(`Updated next_billing_date to ${nextPaymentDate} for subscription ${subscriptionCode}`);
+
+        // Safety net: reactivate access if it was suspended
+        if (updatedSub?.client_id) {
+          await supabase
+            .from("client_programs")
+            .update({ status: "active" })
+            .eq("client_id", updatedSub.client_id)
+            .in("status", ["past_due", "expired"]);
+        }
+      }
+
+      // Recurring payment receipt / upcoming billing notice to customer
+      if (customerEmail) {
+        const formattedDate = nextPaymentDate
+          ? new Date(nextPaymentDate).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })
+          : "next month";
+
+        const subject = amountPaid > 0
+          ? "Your myFit subscription payment was processed ✅"
+          : `Upcoming myFit billing on ${formattedDate}`;
+
+        const htmlContent = amountPaid > 0
+          ? `
+            <p>Hi there,</p>
+            <p>Your monthly myFit subscription payment of <strong>${currency} ${amountPaid.toFixed(2)}</strong> has been successfully processed.</p>
+            <p><strong>Next billing date:</strong> ${formattedDate}</p>
+            <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/profile">View your dashboard →</a></p>
+            <p>Best regards,<br/>The myFit Team</p>
+          `
+          : `
+            <p>Hi there,</p>
+            <p>Just a reminder that your myFit subscription will be renewed on <strong>${formattedDate}</strong>.</p>
+            <p>No action is needed — your payment method will be charged automatically.</p>
+            <p>If you wish to make changes, visit your <a href="${process.env.NEXT_PUBLIC_SITE_URL}/profile">dashboard</a>.</p>
+            <p>Best regards,<br/>The myFit Team</p>
+          `;
+
+        await sendEmail({ to: customerEmail, subject, htmlContent });
+      }
+
+    // ── invoice.payment_failed ────────────────────────────────────────────
     } else if (event === "invoice.payment_failed") {
       const supabase = createAdminClient();
+      const subscriptionCode = data.subscription?.subscription_code;
+      const customerEmail = data.customer?.email;
+      const amountAttempted = (data.amount || 0) / 100;
+      const currency = data.currency || "KES";
+
       // Mark subscription as past_due
       const { data: sub } = await supabase
         .from("subscriptions")
-        .update({ status: 'past_due' })
-        .eq('paystack_subscription_code', data.subscription.subscription_code)
-        .select('client_id')
-        .single();
-        
-      if (sub && sub.client_id) {
-        // Find their active client_programs to revoke access (assuming 1 active program per client for now, or match plan)
-        // Ideally we map plan_code to program_id, but revoking all 'active' for safety if failed
+        .update({ status: "past_due", updated_at: new Date().toISOString() })
+        .eq("paystack_subscription_code", subscriptionCode)
+        .select("client_id")
+        .maybeSingle();
+
+      if (sub?.client_id) {
+        // Revoke program access
         await supabase
           .from("client_programs")
-          .update({ status: 'expired' })
-          .eq('client_id', sub.client_id)
-          .eq('status', 'active');
+          .update({ status: "expired" })
+          .eq("client_id", sub.client_id)
+          .eq("status", "active");
+
         console.log(`Access revoked for client ${sub.client_id} due to payment failure.`);
       }
+
+      // Customer: payment failed email with renewal CTA
+      if (customerEmail) {
+        await sendEmail({
+          to: customerEmail,
+          subject: "Action required — myFit payment failed ⚠️",
+          htmlContent: `
+            <p>Hi there,</p>
+            <p>We were unable to process your myFit subscription payment of <strong>${currency} ${amountAttempted.toFixed(2)}</strong>.</p>
+            <p>Your access has been temporarily suspended. To restore it, please renew your subscription from your dashboard.</p>
+            <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/profile" style="background:#000;color:#fff;padding:10px 20px;border-radius:20px;text-decoration:none;font-weight:600;">Renew Subscription →</a></p>
+            <p>If you have any questions, reply to this email and we'll help you out.</p>
+            <p>Best regards,<br/>The myFit Team</p>
+          `,
+        });
+      }
+
+      // Admin: payment failure alert
+      await sendEmail({
+        to: ADMIN_EMAIL,
+        subject: `⚠️ Payment Failed — ${customerEmail || "Unknown customer"}`,
+        htmlContent: `
+          <p><strong>A subscription payment has failed.</strong></p>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <tr><td style="padding:6px 0;color:#888;">Customer</td><td style="padding:6px 0;font-weight:600;">${customerEmail || "N/A"}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;">Amount Attempted</td><td style="padding:6px 0;font-weight:600;">${currency} ${amountAttempted.toFixed(2)}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;">Subscription</td><td style="padding:6px 0;font-family:monospace;">${subscriptionCode || "N/A"}</td></tr>
+          </table>
+          <p style="color:#dc2626;font-size:13px;">Access has been revoked. The customer has been notified to renew.</p>
+          <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/members" style="background:#dc2626;color:#fff;padding:10px 20px;border-radius:20px;text-decoration:none;font-weight:600;">View in Admin →</a></p>
+        `,
+      });
     }
 
     return NextResponse.json({ received: true }, { status: 200 });

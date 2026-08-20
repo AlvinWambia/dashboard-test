@@ -120,12 +120,12 @@ export default async function ProfilePage() {
 
         reviews = reviewsData || [];
 
-        // 6. Fetch their active subscriptions for cancellation UX
+        // 6. Fetch their subscriptions (active, non-renewing, and past_due for renewal UX)
         const { data: subscriptionsData } = await supabase
             .from('subscriptions')
             .select('*')
             .eq('client_id', user.id)
-            .in('status', ['active', 'non-renewing']);
+            .in('status', ['active', 'non-renewing', 'past_due']);
 
         subscriptions = subscriptionsData || [];
 

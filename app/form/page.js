@@ -156,12 +156,16 @@ function IntakeForm() {
                 try {
                     const formData = methods.getValues();
 
-                    // Get current user session (if exists)
+                    // Verify the user is still authenticated before submitting
                     const supabase = createClient();
-                    const { data: { user } } = await supabase.auth.getUser();
+                    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+                    if (authError || !user) {
+                        throw new Error("Your session has expired. Please refresh the page and log in again.");
+                    }
 
                     const { error } = await supabase.from('client_intake_forms').insert({
-                        user_id: user?.id || null,
+                        user_id: user.id,
                         order_id: orderId || null,
                         full_name: formData.fullName,
                         email: formData.email,
@@ -179,25 +183,37 @@ function IntakeForm() {
                         medical_conditions: formData.medicalConditions,
                     });
 
-                    if (error) throw error;
+                    if (error) {
+                        // Log the full Supabase error so it is visible in DevTools Console
+                        console.error("Supabase insert error:", {
+                            message: error.message,
+                            details: error.details,
+                            hint: error.hint,
+                            code: error.code,
+                        });
+                        throw error;
+                    }
 
                     toast.success("Intake Form Submitted", {
                         description: "Your registration details have been saved."
                     });
 
-                    setIsSubmitting(false);
-
+                    // Do NOT reset isSubmitting here — keep the button disabled
+                    // during navigation so the user cannot double-submit.
                     if (orderId) {
                         router.push(`/checkout/${orderId}`);
                     } else {
                         router.push('/?form_submitted=true');
                     }
                 } catch (error) {
-                    console.error("Error submitting form:", error);
-                    toast.error("Submission Failed", {
-                        description: "There was an error submitting your form. Please try again."
-                    });
-                } finally {
+                    // Surface the real error message so it is actionable
+                    const description =
+                        error?.message ||
+                        error?.details ||
+                        "There was an error submitting your form. Please try again.";
+                    console.error("Form submission failed:", error);
+                    toast.error("Submission Failed", { description });
+                    // Only re-enable the button on failure
                     setIsSubmitting(false);
                 }
             } else if (currentStep < totalSteps) {
