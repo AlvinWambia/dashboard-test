@@ -6,6 +6,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { BuyNowButton } from "@/components/BuyNowButton";
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "framer-motion";
+import { signOutAction } from "@/app/actions/auth";
 
 
 import { Input } from "@/components/ui/input";
@@ -576,9 +577,14 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={async () => {
                                             const supabase = createClient();
-                                            await supabase.auth.signOut();
+                                            supabase.auth.signOut().catch(console.error);
+                                            await signOutAction();
+                                            if (typeof window !== "undefined") {
+                                                window.localStorage.clear();
+                                                window.sessionStorage.clear();
+                                            }
                                             setUserProfile(null);
-                                            router.push('/');
+                                            window.location.href = '/';
                                         }}>Log out</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -606,9 +612,14 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={async () => {
                                             const supabase = createClient();
-                                            await supabase.auth.signOut();
+                                            supabase.auth.signOut().catch(console.error);
+                                            await signOutAction();
+                                            if (typeof window !== "undefined") {
+                                                window.localStorage.clear();
+                                                window.sessionStorage.clear();
+                                            }
                                             setUserProfile(null);
-                                            router.push('/');
+                                            window.location.href = '/';
                                         }}>Log out</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>

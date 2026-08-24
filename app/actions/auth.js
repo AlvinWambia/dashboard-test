@@ -25,17 +25,30 @@ export async function loginWithCookieAction(formData) {
 
 export async function signOutAction() {
     try {
-        const supabase = await createClient()
-        await supabase.auth.signOut()
+        const supabase = await createClient();
+        // Wrap in a 3-second timeout to prevent server action from hanging indefinitely
+        // if the Supabase auth server is unresponsive or the session is corrupted.
+        await Promise.race([
+            supabase.auth.signOut(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("SignOut timeout")), 3000))
+        ]);
     } catch (e) {
-        console.error('Server sign out error:', e)
+        console.error('Server sign out error:', e);
     }
 
     try {
-        const cookieStore = await cookies()
-        cookieStore.delete('last_login_type')
-        cookieStore.delete('auth_verified')
+        const cookieStore = await cookies();
+        cookieStore.delete('last_login_type');
+        cookieStore.delete('auth_verified');
+        
+        // Force delete any Supabase cookies just in case the signOut call hung and failed to clear them
+        const allCookies = cookieStore.getAll();
+        allCookies.forEach(cookie => {
+            if (cookie.name.startsWith('sb-')) {
+                cookieStore.delete(cookie.name);
+            }
+        });
     } catch (e) {
-        console.error('Error clearing cookies:', e)
+        console.error('Error clearing cookies:', e);
     }
 }

@@ -9,6 +9,7 @@ import { User, MapPin, Layers, Users, Bookmark, ClipboardList, Check } from "luc
 import { createClient } from "@/supabase/client";
 import { toast } from "sonner";
 import { checkAvailability } from "@/app/actions/calendar";
+import { submitIntakeForm } from "@/app/actions/submitIntakeForm";
 
 // 1. Validation Schema
 const formSchema = z.object({
@@ -161,78 +162,29 @@ function IntakeForm() {
                     const formData = methods.getValues();
                     console.log("Form data:", formData);
 
-                    console.log("Creating Supabase client...");
-                    const supabase = createClient();
-                    
-                    console.log("Checking stored user session...");
-                    if (!userId) {
-                        throw new Error("Your session has expired. Please refresh the page and log in again.");
-                    }
-                    console.log("User fetched:", userId);
+                    console.log("Calling server action...");
+                    const result = await submitIntakeForm(formData, orderId);
 
-                    console.log("Preparing data for insert...");
-                    const insertData = {
-                        user_id: userId,
-                        order_id: orderId || null,
-                        full_name: formData.fullName,
-                        email: formData.email,
-                        phone_number: formData.phoneNumber,
-                        birth_date: formData.birthDate,
-                        gender: formData.gender,
-                        current_weight: formData.currentWeight,
-                        height: formData.height,
-                        training_level: formData.trainingLevel,
-                        activity_level: formData.activityLevel,
-                        goal: formData.goal,
-                        target_weight: formData.goal === 'lose-weight' ? (formData.targetWeight || null) : null,
-                        goal_description: formData.goalDescription,
-                        injuries: formData.injuries,
-                        medical_conditions: formData.medicalConditions,
-                    };
-                    console.log("Insert data:", insertData);
-
-                    console.log("Sending insert request to Supabase...");
-                    const { error } = await supabase.from('client_intake_forms').insert(insertData);
-                    console.log("Insert response received. Error:", error);
-
-                    if (error) {
-                        console.error("Supabase insert error:", {
-                            message: error.message,
-                            details: error.details,
-                            hint: error.hint,
-                            code: error.code,
-                        });
-                        throw error;
+                    // If we get here (no redirect), check for errors
+                    if (result?.error) {
+                        throw new Error(result.error);
                     }
 
-                    console.log("Showing success toast...");
+                    // The server action redirects on success, so we normally
+                    // won't reach here. But just in case:
+                    console.log("Submission successful.");
                     toast.success("Intake Form Submitted", {
                         description: "Your registration details have been saved."
                     });
-
-                    console.log("Redirecting...");
-                    if (orderId) {
-                        window.location.href = `/checkout/${orderId}`;
-                    } else {
-                        window.location.href = '/?form_submitted=true';
-                    }
-                    console.log("Redirection triggered.");
                 } catch (error) {
-                    // Surface the real error message safely
+                    // Next.js redirect() throws a special NEXT_REDIRECT error — let it propagate
+                    if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+                        throw error;
+                    }
                     console.error("Form submission failed:", error);
-                    let description = "There was an error submitting your form. Please try again.";
-                    if (error) {
-                        if (typeof error.message === 'string') description = error.message;
-                        else if (typeof error.details === 'string') description = error.details;
-                        else if (typeof error === 'string') description = error;
-                    }
-                    try {
-                        toast.error("Submission Failed", { description });
-                    } catch (toastErr) {
-                        console.error("Failed to show toast:", toastErr);
-                    }
+                    const description = error?.message || "There was an error submitting your form. Please try again.";
+                    toast.error("Submission Failed", { description });
                 } finally {
-                    // ALWAYS reset button state so it doesn't get stuck if navigation or anything else fails
                     setIsSubmitting(false);
                 }
             } else if (currentStep < totalSteps) {

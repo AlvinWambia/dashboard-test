@@ -22,31 +22,29 @@ export function SignOutButton({ variant = "ghost", className, showText = false, 
 
         setIsSigningOut(true);
         try {
-            // 1. Sign out on client side
-            await supabase.auth.signOut();
-        } catch (err) {
-            console.error("Error in client signOut:", err);
-        }
+            // 1. Fire-and-forget client-side sign out to avoid network hangs
+            // We do not await this because Supabase client auth requests can sometimes hang indefinitely.
+            supabase.auth.signOut().catch(console.error);
 
-        try {
-            // 2. Sign out on server side (clears server cookies & session)
-            await signOutAction();
-        } catch (err) {
-            console.error("Error in server signOutAction:", err);
-        }
-
-        // 3. Clear local & session storage
-        try {
+            // 2. Clear local & session storage
             if (typeof window !== "undefined") {
                 window.localStorage.clear();
                 window.sessionStorage.clear();
             }
-        } catch (err) {
-            console.error("Error clearing browser storage:", err);
-        }
 
-        // 4. Redirect to login page with clean state
-        window.location.href = "/auth/login";
+            // 3. Sign out on server side (clears auth cookies). This is the source of truth.
+            await signOutAction();
+
+            // 4. Navigate — AFTER server cookies are cleared so middleware won't bounce back
+            window.location.href = "/auth/login";
+        } catch (err) {
+            console.error("Sign out error:", err);
+            // Fallback forced logout if everything else fails
+            if (typeof window !== "undefined") {
+                window.location.href = "/auth/login";
+            }
+            setIsSigningOut(false);
+        }
     };
 
     if (showText) {
