@@ -1100,7 +1100,14 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
                                                                 </span>
                                                             </div>
                                                         )}
-                                                        {program.service_type === 'downloadable' || !program.service_type ? (
+                                                        {isProgramOwned(program._id || program.id) ? (
+                                                            <Link href={`/profile`} className="ml-auto">
+                                                                <Button className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700 px-6 py-4 text-sm font-bold transition-all active:scale-95 shadow-md hover:shadow-lg">
+                                                                    Owned
+                                                                    <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
+                                                                </Button>
+                                                            </Link>
+                                                        ) : program.service_type === 'downloadable' || !program.service_type ? (
                                                             <div className="ml-auto min-w-[140px]">
                                                                 <BuyNowButton product={program} />
                                                             </div>
