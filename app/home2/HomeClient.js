@@ -494,7 +494,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
         if (signedIn) {
             // The onAuthStateChange listener above already sets userProfile.
             // We only need to show the toast and clean up the URL param.
-            toast.success("Welcome back! 👋", { description: "You have successfully signed in." });
+            toast.success("Welcome! 👋", { description: "You have successfully signed in." });
             router.replace('/', { scroll: false });
         } else if (formSubmitted) {
             toast.success("Form submitted", { description: "Payment Successful and your intake form has been successfully submitted." });
