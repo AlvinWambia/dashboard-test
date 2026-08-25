@@ -239,6 +239,13 @@ export default function ClientDetailView({ client, initialNotes, paymentHistory 
                                   <span className="text-xs text-gray-400 truncate max-w-[140px]">{payment.program_title}</span>
                                 )}
                               </span>
+                            ) : payment.type === 'one-time' ? (
+                              <span className="inline-flex flex-col gap-0.5">
+                                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 w-fit">One-Time Program</span>
+                                {payment.program_title && (
+                                  <span className="text-xs text-gray-400 truncate max-w-[140px]">{payment.program_title}</span>
+                                )}
+                              </span>
                             ) : (
                               <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-50 text-purple-700">Subscription</span>
                             )}

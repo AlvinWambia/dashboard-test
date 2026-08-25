@@ -84,15 +84,22 @@ export default async function ClientProfilePage({ params }) {
     client.subscription = subscription;
   }
 
-  // Fetch payment history from two sources in parallel:
-  // 1. payment_history — subscription / one-time program payments recorded by webhook
-  // 2. bookings — consultation payments (stored with consultation_payment_ref)
-  const [{ data: payments }, { data: consultationBookings }] = await Promise.all([
+  // Fetch payment history from three sources in parallel:
+  // 1. payment_history — subscription payments recorded by webhook
+  // 2. payments — one-time program payments recorded by webhook
+  // 3. bookings — consultation payments (stored with consultation_payment_ref)
+  const [{ data: paymentsHistory }, { data: oneTimePayments }, { data: consultationBookings }] = await Promise.all([
     supabase
       .from('payment_history')
       .select('*')
       .eq('client_id', targetId)
       .order('paid_at', { ascending: false }),
+
+    userId ? supabase
+      .from('payments')
+      .select('*, orders(program_name)')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false }) : { data: [] },
 
     supabase
       .from('bookings')
@@ -113,7 +120,7 @@ export default async function ClientProfilePage({ params }) {
   ]);
 
   // Normalise consultation bookings into the same shape as payment_history rows
-  const consultationPayments = (consultationBookings || []).map((b) => ({
+  const consultationPaymentsList = (consultationBookings || []).map((b) => ({
     id: `booking_${b.id}`,
     client_id: targetId,
     amount: b.programs?.consultation_fee ?? 0,
@@ -125,10 +132,23 @@ export default async function ClientProfilePage({ params }) {
     program_title: b.programs?.title || 'Consultation',
   }));
 
+  const oneTimePaymentsList = (oneTimePayments || []).map((p) => ({
+    id: `payment_${p.id}`,
+    client_id: p.user_id,
+    amount: p.amount,
+    currency: p.currency || 'KES',
+    status: p.status,
+    reference: p.provider_payment_id || `PAY-${p.id}`,
+    paid_at: p.created_at,
+    type: 'one-time',
+    program_title: p.orders?.program_name || 'Program Purchase',
+  }));
+
   // Merge and sort all payments newest-first
   const allPayments = [
-    ...(payments || []).map((p) => ({ ...p, type: p.type || 'subscription' })),
-    ...consultationPayments,
+    ...(paymentsHistory || []).map((p) => ({ ...p, type: p.type || 'subscription' })),
+    ...oneTimePaymentsList,
+    ...consultationPaymentsList,
   ].sort((a, b) => new Date(b.paid_at) - new Date(a.paid_at));
 
   return (
