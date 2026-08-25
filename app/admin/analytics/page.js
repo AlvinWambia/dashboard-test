@@ -1,8 +1,6 @@
-import { Plus, Import } from 'lucide-react';
 import { createClient } from "@/supabase/server";
 import { createAdminClient } from "@/supabase/server";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import Dashboard from "@/components/admin/analytics";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import React from 'react';
@@ -205,28 +203,15 @@ export default async function DashboardPage() {
         <div className="p-4 md:p-8 bg-white min-h-screen">
             <AdminHeader title="Analytics" profile={profile} user={user} />
 
-            {/* Hero Section */}
-            <div className="bg-gray-50 rounded-3xl p-5 border border-gray-100 mb-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold">Analytics</h1>
-                        <p className="text-gray-500 text-sm">Welcome back, Admin! Here is what's happening today.</p>
-                    </div>
-                    <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-                        <Button className="bg-black text-white hover:bg-white hover:text-black hover:border hover:border-black rounded-xl h-10">
-                            <Plus className="mr-2" size={18} /> Create Content
-                        </Button>
-                        <Button variant="outline" className="bg-white rounded-xl h-10">
-                            <Import className="mr-2" size={18} /> Import Data
-                        </Button>
-                    </div>
+            {/* Dashboard Content */}
+            <div className="bg-gray-50 rounded-3xl p-5 border border-gray-100 mt-6">
+                <div className="mb-6">
+                    <h1 className="text-xl font-bold text-gray-900">Analytics Overview</h1>
+                    <p className="text-gray-400 text-sm mt-0.5">Here&apos;s what&apos;s happening in the last 30 days.</p>
                 </div>
-
-                {/* Grid Content */}
-                <div className="">
-                    <Dashboard data={analyticsData} />
-                </div>
+                <Dashboard data={analyticsData} />
             </div>
         </div>
     );
+
 }

@@ -27,15 +27,37 @@ export async function POST(req) {
     }
 
     // 2. Fetch subscription from DB (match either paystack_subscription_code or id)
-    const { data: sub } = await supabase
+    // We query by paystack_subscription_code first, then fall back to UUID id.
+    // We cannot use .or() with both because passing a non-UUID string into id.eq
+    // causes a Postgres cast error, returning null and silently blocking cancellation.
+    let sub = null;
+
+    // Try matching by paystack_subscription_code first
+    const { data: subByCode } = await supabase
       .from("subscriptions")
       .select('*')
-      .or(`paystack_subscription_code.eq.${subscription_id},id.eq.${subscription_id}`)
+      .eq('paystack_subscription_code', subscription_id)
       .eq('client_id', user.id)
       .maybeSingle();
 
+    if (subByCode) {
+      sub = subByCode;
+    } else {
+      // Only attempt UUID lookup if the value looks like a UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(subscription_id)) {
+        const { data: subById } = await supabase
+          .from("subscriptions")
+          .select('*')
+          .eq('id', subscription_id)
+          .eq('client_id', user.id)
+          .maybeSingle();
+        sub = subById;
+      }
+    }
+
     if (!sub) {
-       return NextResponse.json({ error: "Subscription not found or unauthorized" }, { status: 404 });
+      return NextResponse.json({ error: "Subscription not found or unauthorized" }, { status: 404 });
     }
 
     const paystackCode = sub.paystack_subscription_code || subscription_id;

@@ -2,8 +2,7 @@
 
 import React from 'react';
 import {
-    Users, Eye, LogOut, Percent,
-    TrendingUp, TrendingDown
+    Percent, ArrowUpRight, ArrowDownRight, ShoppingCart, DollarSign, Trophy
 } from 'lucide-react';
 import {
     Chart as ChartJS,
@@ -15,16 +14,6 @@ import {
     Tooltip,
     Filler,
 } from 'chart.js';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectSeparator,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import { Line } from 'react-chartjs-2';
 
 // Register ChartJS components
@@ -45,177 +34,170 @@ const Dashboard = ({ data }) => {
         revenueTrend = []
     } = data || {};
 
-    // Prepare chart data from revenueTrend
     const chartData = {
         labels: revenueTrend.map(t => t.date),
         datasets: [{
             data: revenueTrend.map(t => t.revenue),
-            borderColor: '#000000',
-            borderWidth: 3,
+            borderColor: '#6366f1',
+            borderWidth: 4,
             fill: true,
-            backgroundColor: 'rgba(0, 0, 0, 0.02)',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
             tension: 0.4,
-            pointRadius: 4,
-            pointBackgroundColor: '#000000',
+            pointRadius: 0,
+            pointHoverRadius: 6,
         }]
     };
 
     return (
-        <div className="p-0 bg-transparent min-h-screen text-slate-900">
-            {/* Top Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
-                <StatCard
-                    title="Total Revenue"
-                    value={`KES ${totalRevenue.toLocaleString()}`}
-                    change={revenueChange}
-                    icon={<TrendingUp size={20} />}
-                />
-                <StatCard
-                    title="Total Orders"
-                    value={totalOrders.toString()}
-                    change={ordersChange}
-                    icon={<Users size={20} />}
-                />
-                <StatCard
-                    title="Avg Order Value"
-                    value={`KES ${avgOrderValue.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    })}`}
-                    change={avgOrderValueChange}
-                    icon={<Percent size={20} />}
-                />
+        <div className="space-y-6 text-slate-900">
+            {/* Stat Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <StatCard title="Total Revenue" value={`KES ${totalRevenue.toLocaleString()}`} change={revenueChange} icon={<DollarSign size={20} />} />
+                <StatCard title="Total Orders" value={totalOrders.toLocaleString()} change={ordersChange} icon={<ShoppingCart size={20} />} />
+                <StatCard title="Avg Order Value" value={`KES ${avgOrderValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} change={avgOrderValueChange} icon={<Percent size={20} />} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Revenue Overview */}
-                <div className="lg:col-span-2 bg-white p-5 lg:p-8 rounded-3xl border border-gray-100 shadow-sm">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+
+                {/* Revenue Trend — 3/5 width */}
+                <div className="lg:col-span-3 bg-white p-5 lg:p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="flex items-start justify-between mb-1">
                         <div>
-                            <h3 className="text-gray-500 font-medium text-sm lg:text-base">Revenue overview</h3>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="text-2xl lg:text-3xl font-bold">KES {totalRevenue.toLocaleString()}</span>
-                            </div>
+                            <h3 className="text-sm font-semibold text-gray-900">Revenue Trend</h3>
+                            <p className="text-2xl font-bold text-gray-900 mt-1">KES {totalRevenue.toLocaleString()}</p>
                         </div>
-                        <div className="text-xs font-semibold text-gray-400 bg-gray-50 px-3 py-1 rounded-full uppercase tracking-wider">Last 7 Days</div>
+                        <span className="text-[10px] font-semibold text-gray-400 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full uppercase tracking-wider mt-1">
+                            Last 7 days
+                        </span>
                     </div>
-                    <div className="h-[250px] lg:h-[300px]">
+                    <div className="h-[220px] lg:h-[260px] mt-5">
                         <Line data={chartData} options={lineOptions} />
                     </div>
                 </div>
 
-                {/* Program Leaderboard */}
-                <div className="bg-white p-5 lg:p-8 rounded-3xl border border-gray-100 shadow-sm">
-                    <h3 className="text-gray-500 font-medium mb-6 text-sm lg:text-base">Program Performance</h3>
-                    <div className="space-y-6">
-                        {programStats.length > 0 ? programStats.slice(0, 5).map((program, idx) => (
-                            <div key={idx} className="flex flex-col gap-2">
-                                <div className="flex justify-between text-[11px] lg:text-xs font-bold text-gray-800 uppercase tracking-tight">
-                                    <span className="truncate max-w-[150px]">{program.name}</span>
-                                    <span>{program.count} sales</span>
+                {/* Program Performance — 2/5 width */}
+                <ProgramPerformance programStats={programStats} totalRevenue={totalRevenue} />
+            </div>
+        </div>
+    );
+};
+
+// Rank color palette for top 5
+const RANK_PALETTE = [
+    { bar: '#111827', badge: 'bg-gray-900 text-white',    border: 'border-gray-900' },
+    { bar: '#374151', badge: 'bg-gray-700 text-white',    border: 'border-gray-700' },
+    { bar: '#6B7280', badge: 'bg-gray-500 text-white',    border: 'border-gray-400' },
+    { bar: '#9CA3AF', badge: 'bg-gray-400 text-white',    border: 'border-gray-300' },
+    { bar: '#D1D5DB', badge: 'bg-gray-200 text-gray-600', border: 'border-gray-200' },
+];
+
+const ProgramPerformance = ({ programStats, totalRevenue }) => {
+    const top5 = programStats.slice(0, 5);
+    const maxRevenue = top5[0]?.revenue || 1;
+
+    return (
+        <div className="lg:col-span-2 bg-white p-5 lg:p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-5">
+                <div>
+                    <h3 className="text-sm font-semibold text-gray-900">Program Performance</h3>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                        Top {top5.length} programs · last 30 days
+                    </p>
+                </div>
+                <div className="w-8 h-8 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 shrink-0">
+                    <Trophy size={15} />
+                </div>
+            </div>
+
+            {top5.length > 0 ? (
+                <div className="flex flex-col gap-4 flex-1">
+                    {top5.map((program, idx) => {
+                        const palette = RANK_PALETTE[idx] || RANK_PALETTE[RANK_PALETTE.length - 1];
+                        // Bar width relative to #1 program (not total) for clear visual differentiation
+                        const barPct = Math.round((program.revenue / maxRevenue) * 100);
+                        const revPct = totalRevenue > 0
+                            ? ((program.revenue / totalRevenue) * 100).toFixed(1)
+                            : '0.0';
+
+                        return (
+                            <div key={idx} className="flex flex-col gap-1.5">
+                                {/* Name row */}
+                                <div className="flex items-center gap-2">
+                                    <span className={`shrink-0 w-[22px] h-[22px] rounded-full flex items-center justify-center text-[9px] font-bold border ${palette.badge} ${palette.border}`}>
+                                        {idx + 1}
+                                    </span>
+                                    <span className="flex-1 text-[13px] font-semibold text-gray-800 truncate" title={program.name}>
+                                        {program.name}
+                                    </span>
+                                    <span className="shrink-0 text-[10px] font-bold text-gray-500 tabular-nums">
+                                        {revPct}%
+                                    </span>
                                 </div>
-                                <div className="w-full bg-gray-50 rounded-full h-1.5 lg:h-2">
+
+                                {/* Progress bar */}
+                                <div className="w-full bg-gray-100 rounded-full h-[7px] overflow-hidden">
                                     <div
-                                        className="bg-black h-full rounded-full transition-all duration-500"
-                                        style={{ width: `${(program.revenue / totalRevenue) * 100}%` }}
-                                    ></div>
+                                        className="h-full rounded-full transition-all duration-700"
+                                        style={{ width: `${barPct}%`, backgroundColor: palette.bar }}
+                                    />
                                 </div>
-                                <div className="text-[9px] lg:text-[10px] text-gray-400 font-semibold">
-                                    KES {program.revenue.toLocaleString()} REVENUE
+
+                                {/* Revenue + sales */}
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold text-gray-600">
+                                        KES {program.revenue.toLocaleString()}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400">
+                                        {program.count} sale{program.count !== 1 ? 's' : ''}
+                                    </span>
                                 </div>
                             </div>
-                        )) : (
-                            <p className="text-gray-400 text-sm">No sales data yet.</p>
-                        )}
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center flex-1 py-8 gap-3 text-center">
+                    <div className="w-11 h-11 bg-gray-50 rounded-2xl flex items-center justify-center">
+                        <Trophy size={20} className="text-gray-300" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-gray-600">No sales yet</p>
+                        <p className="text-xs text-gray-400 mt-1 leading-snug">
+                            Program rankings will appear<br />once sales come in.
+                        </p>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
 
-// --- Subcomponents ---
-
-const StatCard = ({ title, value, change, icon }) => {
-    const trend = change >= 0 ? 'up' : 'down';
-    const formattedChange = `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
-
-    return (
-        <div className="bg-white p-5 lg:p-6 rounded-3xl border border-gray-100 shadow-sm transition-transform hover:scale-[1.02]">
-            <div className="bg-gray-50 w-10 h-10 rounded-xl flex items-center justify-center text-black mb-4">
-                {icon}
-            </div>
-            <p className="text-gray-500 text-xs lg:text-sm mb-1 font-medium">{title}</p>
-            <h2 className="text-xl lg:text-2xl font-bold mb-2">{value}</h2>
-            <p className={`text-[10px] lg:text-xs font-bold ${trend === 'up' ? 'text-green-500' : 'text-red-400'}`}>
-                {trend === 'up' ? '↑' : '↓'} {formattedChange} <span className="text-gray-400 font-normal">from last 30 days</span>
-            </p>
-        </div>
-    );
-};
-
-const Heatmap = () => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const hours = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm'];
-
-    // Dummy intensity logic
-    const getIntensity = (h, d) => {
-        if ((h === 3 && d >= 3) || (h === 4 && d === 4)) return 'bg-indigo-500'; // 3000+
-        if (h >= 2 && h <= 5 && d >= 2) return 'bg-indigo-300'; // 1000-2000
-        return 'bg-indigo-50'; // <1000
-    };
-
-    return (
-        <div className="mt-4">
-            <div className="flex justify-end gap-3 mb-4 text-[10px] text-gray-400">
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-indigo-500" /> 3,000+</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-indigo-300" /> 1,000-2,000</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-indigo-50" /> &lt;1,000</div>
-            </div>
-            <div className="grid grid-cols-[30px_1fr] gap-2">
-                <div className="flex flex-col justify-between text-[10px] text-gray-400 py-1">
-                    {hours.map(h => <span key={h}>{h}</span>)}
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                    {Array.from({ length: 49 }).map((_, i) => (
-                        <div key={i} className={`h-6 rounded-sm ${getIntensity(Math.floor(i / 7), i % 7)}`} />
-                    ))}
-                    {days.map(d => <span key={d} className="text-[10px] text-gray-400 text-center mt-1">{d}</span>)}
-                </div>
+const StatCard = ({ title, value, change, icon }) => (
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
+        <div className="flex justify-between items-start mb-4">
+            <div className="p-2 bg-gray-50 rounded-lg text-gray-600">{icon}</div>
+            <div className={`flex items-center text-xs font-bold px-2 py-1 rounded-full ${change >= 0 ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50'}`}>
+                {change >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                {Math.abs(change).toFixed(1)}%
             </div>
         </div>
-    );
-};
-
-// --- Chart Config ---
+        <div>
+            <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">{title}</p>
+            <h2 className="text-2xl font-bold mt-1 text-gray-900">{value}</h2>
+        </div>
+    </div>
+);
 
 const lineOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', padding: 12, cornerRadius: 8 } },
     scales: {
-        x: { grid: { display: false }, border: { display: false } },
-        y: {
-            min: 0,
-            ticks: {
-                callback: (v) => v === 0 ? '0' : (v >= 1000 ? (v / 1000 + 'k') : v)
-            },
-            border: { display: false }
-        }
-    },
-    elements: { line: { tension: 0.4 } }
-};
-
-const lineData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    datasets: [{
-        data: [0, 4200, 4800, 2800, 6000, 6200, 4500, 5800],
-        borderColor: '#6366f1',
-        borderWidth: 3,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointBackgroundColor: '#6366f1',
-    }]
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { grid: { color: '#f1f5f9' }, border: { dash: [4, 4] }, ticks: { font: { size: 11 } } }
+    }
 };
 
 export default Dashboard;

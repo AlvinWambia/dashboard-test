@@ -110,6 +110,8 @@ export default async function ProfilePage() {
                     review_status: access.review_status,
                 };
             }));
+            // Filter out any null entries (e.g. access rows with no linked program)
+            purchasedPrograms = purchasedPrograms.filter(Boolean);
         }
 
         // 5. Fetch their existing reviews
