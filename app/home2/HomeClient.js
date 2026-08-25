@@ -23,7 +23,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import daImage from "@/components/images/da.png"
-import pele from "@/components/images/pelebg.png"
+import pele from "@/components/images/websitepic3.jpeg"
 import workout from "@/components/images/workout.jpeg"
 import nutrition from "@/components/images/nutrition.jpeg"
 import wellness from "@/components/images/wellness.jpeg"
@@ -32,6 +32,8 @@ import loungewear from "@/components/images/loungewearmyfit.png"
 import workout2 from "@/components/images/woroutmyfit.png"
 import communicationImage from "@/components/images/communication.png"
 import groupTraining from "@/components/images/websitepic2.jpeg"
+import groupTraining2 from "@/components/images/websitepic7.jpg"
+
 import dmbImage from "@/components/images/dmb.png"
 import trcImage from "@/components/images/trc.png"
 import nutritionImage from "@/components/images/nutrition1.png"
@@ -300,7 +302,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
             title: "The Vision Behind MyFit",
             description: "Started with a simple goal: making elite fitness coaching accessible to all women. Using a community driven path , We don't just provide workouts; we provide a system of support that empowers you to take control of your health and well-being every single day.",
             badge: "Our Story",
-            image: groupTraining.src,
+            image: groupTraining2.src,
             buttonText: "More About MyFit",
             link: "/about/myfit"
         },
