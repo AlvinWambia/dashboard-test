@@ -61,10 +61,7 @@ export default function AboutPelesia() {
             <span className="text-4xl md:text-5xl font-bold mb-2">100%</span>
             <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Commitment</span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-4xl md:text-5xl font-bold mb-2">3+</span>
-            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Certifications</span>
-          </div>
+
         </div>
       </div>
     </div>

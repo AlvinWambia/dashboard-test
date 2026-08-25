@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import daImage from "@/components/images/da.png"
+import daImage from "@/components/images/loginpic.jpeg"
 import githubImage from "@/components/images/github.jpg"
 import appleImage from "@/components/images/apple.jpg"
 import { ArrowUpIcon, Eye, EyeOff } from "lucide-react"
@@ -196,22 +196,17 @@ export default function SignupPage() {
                         src={daImage.src}
                         alt="Testimonial background"
                         fill
-                        className="object-cover brightness-[0.7]"
+                        className="object-cover "
                     />
-                    <div className="absolute top-10 left-10 right-10 text-white">
-                        <Button variant="outline">Homepage</Button>
-                        <Button variant="outline" size="icon" aria-label="Submit">
-                            <ArrowUpIcon />
-                        </Button>
-                    </div>
+
                     <div className="absolute bottom-10 left-10 right-10 text-white">
                         <blockquote className="space-y-2">
                             <p className="text-3xl font-medium leading-tight">
-                                &ldquo;Simply the tools that my team and I need.&rdquo;
+                                &ldquo;Simply the tools that you need.&rdquo;
                             </p>
                             <footer className="text-sm">
-                                <div className="font-semibold">Alvin Wambia</div>
-                                <div className="text-white/80">Software Developer</div>
+                                <div className="font-semibold">Pelesia Wambia</div>
+                                <div className="text-white/80">Fitness Trainer</div>
                             </footer>
                         </blockquote>
                     </div>

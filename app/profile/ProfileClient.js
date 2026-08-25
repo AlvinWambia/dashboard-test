@@ -302,13 +302,7 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                                         </div>
                                                     ) : (
                                                         <>
-                                                            {program.has_dashboard_access && (
-                                                                <Link href={`/profile/programs/${program.id}`}>
-                                                                    <Button className="w-full rounded-full bg-black text-white hover:bg-slate-800 transition-colors">
-                                                                        Access Program
-                                                                    </Button>
-                                                                </Link>
-                                                            )}
+
 
                                                             {/* Render signed URL digital download links */}
                                                             {program.has_digital_downloads && program.assets && program.assets.length > 0 && (
@@ -544,10 +538,10 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
                                             <p className="text-xs text-slate-500 font-mono mt-0.5">Ref: {b.consultation_payment_ref || b.id.slice(0, 8)}</p>
                                         </div>
                                         <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${b.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                b.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                    b.status === 'needs_followup' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
-                                                        b.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-100' :
-                                                            'bg-amber-50 text-amber-700 border-amber-100'
+                                            b.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                b.status === 'needs_followup' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                                    b.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-100' :
+                                                        'bg-amber-50 text-amber-700 border-amber-100'
                                             }`}>
                                             {b.status.toUpperCase().replace('_', ' ')}
                                         </span>

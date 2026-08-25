@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import daImage from "@/components/images/da.png"
+import daImage from "@/components/images/loginpic.jpeg"
 import { ArrowUpIcon, ArrowLeft } from "lucide-react"
 import { useState } from "react";
 import { createClient } from "@/supabase/client";
@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
         setMessage(null);
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: getURL('/auth/update-password'),
+            redirectTo: getURL('/auth/updatePassword'),
         });
 
         if (error) {
@@ -46,23 +46,18 @@ export default function ForgotPasswordPage() {
                         src={daImage.src}
                         alt="Testimonial background"
                         fill
-                        className="object-cover brightness-[0.7]"
+                        className="object-cover"
                     />
 
-                    <div className="absolute top-4 left-4 sm:top-10 sm:left-10 flex items-center gap-4">
-                        <Button variant="outline">Homepage</Button>
-                        <Button variant="outline" size="icon" aria-label="Back to top">
-                            <ArrowUpIcon className="h-4 w-4" />
-                        </Button>
-                    </div>
+
                     <div className="absolute bottom-10 left-10 right-10 text-white">
                         <blockquote className="space-y-2">
                             <p className="text-2xl font-medium leading-tight">
                                 &ldquo;Simply the tools that my team and I need.&rdquo;
                             </p>
                             <footer className="text-sm pb-5">
-                                <div className="font-semibold">Alvin Wambia</div>
-                                <div className="text-white/80">Software Developer</div>
+                                <div className="font-semibold">Pelesia Wambia</div>
+                                <div className="text-white/80">Fitness Trainer</div>
                             </footer>
                         </blockquote>
                     </div>

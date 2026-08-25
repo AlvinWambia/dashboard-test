@@ -210,7 +210,7 @@ export default function NutritionClient({ initialRecipes, initialMeals, dbConnec
       <nav className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between border-b border-white/5">
         <button
           onClick={() => router.push("/")}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group"
+          className="flex items-center gap-2 text-sm text-gray-800 hover:text-gray-400 transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
           <span>Back to Home</span>

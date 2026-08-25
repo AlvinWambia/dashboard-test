@@ -5,6 +5,10 @@ import Dashboard from "@/components/admin/analytics";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import React from 'react';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 export default async function DashboardPage() {
     const supabase = await createClient();
 
@@ -46,29 +50,49 @@ export default async function DashboardPage() {
     const previousPeriodEnd = new Date(currentPeriodStart);
 
     // --- Parallel fetches for both periods ---
-    // Sources:
-    //   payment_history → subscription / one-time program payments (written by Paystack webhook)
-    //   bookings        → consultation payments (consultation_paid=true)
+    // Revenue sources:
+    //   payment_history  → subscription recurring payments (written by Paystack webhook)
+    //   orders           → one-time program purchases (status='paid')
+    //   bookings         → initial consultation payments (consultation_paid=true, consultation_round=1 or null)
+    //   bookings         → follow-up consultation payments (consultation_paid=true, consultation_round>1)
     const [
         { data: currentPayHist },
-        { data: currentBookings },
-        { data: previousPayHist },
-        { data: previousBookings },
         { data: currentOrders },
+        { data: currentInitialBookings },
+        { data: currentFollowupBookings },
+        { data: previousPayHist },
         { data: previousOrders },
+        { data: previousInitialBookings },
+        { data: previousFollowupBookings },
     ] = await Promise.all([
-        // Current period — payment_history
+        // Current period — payment_history (subscription renewals)
         adminSupabase
             .from('payment_history')
             .select('amount, created_at')
             .eq('status', 'success')
             .gte('created_at', currentPeriodStart.toISOString()),
 
-        // Current period — consultation bookings
+        // Current period — one-time program purchases
+        adminSupabase
+            .from('orders')
+            .select('program_name, price, created_at')
+            .eq('status', 'paid')
+            .gte('created_at', currentPeriodStart.toISOString()),
+
+        // Current period — initial consultation bookings (round 1 or unset)
         adminSupabase
             .from('bookings')
-            .select('created_at, programs ( consultation_fee, title )')
+            .select('created_at, consultation_round, programs ( consultation_fee, followup_fee, title )')
             .eq('consultation_paid', true)
+            .or('consultation_round.eq.1,consultation_round.is.null')
+            .gte('created_at', currentPeriodStart.toISOString()),
+
+        // Current period — follow-up consultation bookings (round > 1)
+        adminSupabase
+            .from('bookings')
+            .select('created_at, consultation_round, programs ( consultation_fee, followup_fee, title )')
+            .eq('consultation_paid', true)
+            .gt('consultation_round', 1)
             .gte('created_at', currentPeriodStart.toISOString()),
 
         // Previous period — payment_history
@@ -79,49 +103,72 @@ export default async function DashboardPage() {
             .gte('created_at', previousPeriodStart.toISOString())
             .lt('created_at', previousPeriodEnd.toISOString()),
 
-        // Previous period — consultation bookings
+        // Previous period — one-time program purchases
+        adminSupabase
+            .from('orders')
+            .select('id, price')
+            .eq('status', 'paid')
+            .gte('created_at', previousPeriodStart.toISOString())
+            .lt('created_at', previousPeriodEnd.toISOString()),
+
+        // Previous period — initial consultation bookings
         adminSupabase
             .from('bookings')
             .select('programs ( consultation_fee )')
             .eq('consultation_paid', true)
+            .or('consultation_round.eq.1,consultation_round.is.null')
             .gte('created_at', previousPeriodStart.toISOString())
             .lt('created_at', previousPeriodEnd.toISOString()),
 
-        // Current period — orders (for program performance leaderboard)
+        // Previous period — follow-up consultation bookings
         adminSupabase
-            .from('orders')
-            .select('program_name, price, created_at')
-            .eq('status', 'paid')
-            .gte('created_at', currentPeriodStart.toISOString()),
-
-        // Previous period — orders count
-        adminSupabase
-            .from('orders')
-            .select('id')
-            .eq('status', 'paid')
+            .from('bookings')
+            .select('programs ( followup_fee, consultation_fee )')
+            .eq('consultation_paid', true)
+            .gt('consultation_round', 1)
             .gte('created_at', previousPeriodStart.toISOString())
             .lt('created_at', previousPeriodEnd.toISOString()),
     ]);
 
-    // --- Merge payment sources ---
+    // --- Helpers: resolve the correct fee per booking type ---
+    // Initial consultations use consultation_fee; follow-ups use followup_fee (falling back to consultation_fee)
+    const getInitialFee = (b) => b.programs?.consultation_fee ?? 0;
+    const getFollowupFee = (b) => b.programs?.followup_fee ?? b.programs?.consultation_fee ?? 0;
 
-    // Build unified current-period payment list (amount + created_at)
+    // --- Build unified current-period payment list (amount + created_at) ---
     const currentPayments = [
+        // Subscription renewals from payment_history
         ...(currentPayHist || []),
-        ...(currentBookings || []).map((b) => ({
-            amount: b.programs?.consultation_fee ?? 0,
+        // One-time program purchases from orders
+        ...(currentOrders || []).map((o) => ({
+            amount: o.price || 0,
+            created_at: o.created_at,
+        })),
+        // Initial consultation bookings
+        ...(currentInitialBookings || []).map((b) => ({
+            amount: getInitialFee(b),
+            created_at: b.created_at,
+        })),
+        // Follow-up consultation bookings (use followup_fee, not consultation_fee)
+        ...(currentFollowupBookings || []).map((b) => ({
+            amount: getFollowupFee(b),
             created_at: b.created_at,
         })),
     ];
 
-    // Previous period total
+    // --- Previous period total revenue ---
     const previousPaymentsAmount =
         (previousPayHist || []).reduce((acc, p) => acc + (p.amount || 0), 0) +
-        (previousBookings || []).reduce((acc, b) => acc + (b.programs?.consultation_fee ?? 0), 0);
+        (previousOrders || []).reduce((acc, o) => acc + (o.price || 0), 0) +
+        (previousInitialBookings || []).reduce((acc, b) => acc + getInitialFee(b), 0) +
+        (previousFollowupBookings || []).reduce((acc, b) => acc + getFollowupFee(b), 0);
 
-    // --- Merge order counts (orders + consultation bookings) ---
-    const currentOrderCount = (currentOrders?.length || 0) + (currentBookings?.length || 0);
-    const previousOrderCount = (previousOrders?.length || 0) + (previousBookings?.length || 0);
+    // --- Merge order counts (purchases + all consultations) ---
+    const allCurrentBookings = [...(currentInitialBookings || []), ...(currentFollowupBookings || [])];
+    const allPreviousBookings = [...(previousInitialBookings || []), ...(previousFollowupBookings || [])];
+
+    const currentOrderCount = (currentOrders?.length || 0) + allCurrentBookings.length;
+    const previousOrderCount = (previousOrders?.length || 0) + allPreviousBookings.length;
 
     // --- Current period stats ---
     const totalRevenue = currentPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
@@ -142,10 +189,10 @@ export default async function DashboardPage() {
     const ordersChange = calculateChange(totalOrders, previousTotalOrders);
     const avgOrderValueChange = calculateChange(avgOrderValue, previousAvgOrderValue);
 
-    // --- Program Performance leaderboard (orders + consultation bookings) ---
+    // --- Program Performance leaderboard ---
     const programStatsMap = {};
 
-    // From orders table
+    // From one-time orders
     (currentOrders || []).forEach(order => {
         const name = order.program_name || 'Unknown';
         if (!programStatsMap[name]) programStatsMap[name] = { name, revenue: 0, count: 0 };
@@ -153,11 +200,19 @@ export default async function DashboardPage() {
         programStatsMap[name].count += 1;
     });
 
-    // From consultation bookings
-    (currentBookings || []).forEach(booking => {
+    // From initial consultation bookings
+    (currentInitialBookings || []).forEach(booking => {
         const name = booking.programs?.title || 'Consultation';
         if (!programStatsMap[name]) programStatsMap[name] = { name, revenue: 0, count: 0 };
-        programStatsMap[name].revenue += (booking.programs?.consultation_fee ?? 0);
+        programStatsMap[name].revenue += getInitialFee(booking);
+        programStatsMap[name].count += 1;
+    });
+
+    // From follow-up consultation bookings
+    (currentFollowupBookings || []).forEach(booking => {
+        const name = booking.programs?.title || 'Consultation';
+        if (!programStatsMap[name]) programStatsMap[name] = { name, revenue: 0, count: 0 };
+        programStatsMap[name].revenue += getFollowupFee(booking);
         programStatsMap[name].count += 1;
     });
 

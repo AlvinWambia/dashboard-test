@@ -31,14 +31,14 @@ import nutrition2 from "@/components/images/nutritionmyfit.png"
 import loungewear from "@/components/images/loungewearmyfit.png"
 import workout2 from "@/components/images/woroutmyfit.png"
 import communicationImage from "@/components/images/communication.png"
-import groupTraining from "@/components/images/grouptraining.jpg"
+import groupTraining from "@/components/images/websitepic2.jpeg"
 import dmbImage from "@/components/images/dmb.png"
 import trcImage from "@/components/images/trc.png"
 import nutritionImage from "@/components/images/nutrition1.png"
 import fatImage from "@/components/images/fat1.png"
 import fat2Image from "@/components/images/fat2.png"
 import group from "@/components/images/group.jpg"
-import train2 from "@/components/images/train2.jpg"
+import train2 from "@/components/images/websitepic.jpg"
 import personal2 from "@/components/images/personal2.jpg"
 import group2 from "@/components/images/group2.jpg"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -698,7 +698,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
                                 </div>
                             </ScrollReveal>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-3 gap-2 sm:gap-4">
                                 {[
                                     { title: "💪Workout Program", bg: workout, delay: 0.1, description: "Personal Training", href: "#programs" },
                                     { title: "🧘Wellness", bg: wellness, delay: 0.2, description: "Personal Therapy", href: "/wellness" },
@@ -707,7 +707,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
                                     <ScrollReveal key={i} delay={card.delay} direction="up">
                                         <Card
                                             onClick={() => card.href && router.push(card.href)}
-                                            className="border-none p-6 rounded-[2rem] relative flex flex-col items-center justify-center text-center aspect-square group overflow-hidden cursor-pointer"
+                                            className="border-none p-3 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] relative flex flex-col items-center justify-center text-center aspect-square group overflow-hidden cursor-pointer"
                                         >
                                             {/* Background Image */}
                                             <img
@@ -720,10 +720,10 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
 
                                             <motion.div
                                                 whileHover={{ scale: 1.1, rotate: 5 }}
-                                                className="absolute top-4 right-4 z-10"
+                                                className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10"
                                             >
-                                                <Button size="icon" variant="secondary" className="rounded-full w-8 h-8 bg-white/90 backdrop-blur-sm">
-                                                    <ArrowUpRight className="w-4 h-4" />
+                                                <Button size="icon" variant="secondary" className="rounded-full w-6 h-6 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm">
+                                                    <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
                                                 </Button>
                                             </motion.div>
 
@@ -735,7 +735,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
 
                             {/* Bottom Left: Stretching Image Card */}
                             <ScrollReveal delay={0.4}>
-                                <div className="relative rounded-[3rem] overflow-hidden h-[300px] bg-gray-200 group">
+                                <div className="relative rounded-[2rem] sm:rounded-[3rem] overflow-hidden h-[180px] sm:h-[300px] bg-gray-200 group">
                                     <ParallaxImage
                                         src={train2.src}
                                         alt="Training"
@@ -759,7 +759,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
 
                         {/* Right Column: Hero Image & Stats */}
                         <div className="col-span-12 lg:col-span-6 self-stretch mt-6 lg:mt-0">
-                            <div className="bg-slate-100/50 rounded-[4rem] h-full relative overflow-hidden flex items-center justify-center">
+                            <div className="bg-slate-100/50 rounded-[4rem] h-full max-h-[280px] sm:max-h-[380px] lg:max-h-none relative overflow-hidden flex items-center justify-center">
                                 <img
                                     src={groupTraining.src || groupTraining}
                                     alt="Athlete Jumping"
@@ -769,9 +769,9 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
                                 {/* Bottom Right White Card */}
                                 <motion.div
                                     whileHover={{ scale: 1.05 }}
-                                    className="absolute bottom-6 right-6 bg-white p-3 px-6 rounded-[3rem] shadow-xl z-30 border border-white/20 transition-all font-medium"
+                                    className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 bg-white p-2 px-4 sm:p-3 sm:px-6 rounded-[3rem] shadow-xl z-30 border border-white/20 transition-all font-medium"
                                 >
-                                    <p className="text-black text-sm">MyFit Training Program</p>
+                                    <p className="text-black text-xs sm:text-sm">MyFit Training Program</p>
                                 </motion.div>
                             </div>
                         </div>
@@ -1073,6 +1073,11 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
                                                                         ) : (
                                                                             <Button
                                                                                 onClick={() => {
+                                                                                    if (!userProfile) {
+                                                                                        toast.error("Authentication Required", { description: "Please sign in or create an account to book a consultation." });
+                                                                                        router.push('/auth/login');
+                                                                                        return;
+                                                                                    }
                                                                                     setBookingInFlight(prev => ({ ...prev, [programId]: true }));
                                                                                     setBookingModalProps({ program, mode: 'initial' });
                                                                                 }}

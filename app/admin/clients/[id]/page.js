@@ -95,10 +95,15 @@ export default async function ClientProfilePage({ params }) {
       .eq('client_id', targetId)
       .order('paid_at', { ascending: false }),
 
-    userId ? supabase
+    (userId || clientData.order_id) ? supabase
       .from('payments')
       .select('*, orders(program_name)')
-      .eq('user_id', userId)
+      .or(
+        [
+          userId ? `user_id.eq.${userId}` : null,
+          clientData.order_id ? `order_id.eq.${clientData.order_id}` : null
+        ].filter(Boolean).join(',')
+      )
       .order('created_at', { ascending: false }) : { data: [] },
 
     supabase

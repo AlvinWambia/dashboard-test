@@ -11,10 +11,10 @@ export async function POST(req) {
   if (rateLimitError) return rateLimitError;
 
   try {
-    const supabase = await createClient();
+    const supabaseAuth = await createClient();
     
     // 1. Verify Authentication
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseAuth.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -28,7 +28,7 @@ export async function POST(req) {
 
     // 2. Delete the client_program record for this user
     // We only delete the user's specific access to this program
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseAuth
       .from("client_programs")
       .delete()
       .eq('client_id', user.id)

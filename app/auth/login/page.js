@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import daImage from "@/components/images/da.png"
+import daImage from "@/components/images/loginpic.jpeg"
 import githubImage from "@/components/images/github.jpg"
 import appleImage from "@/components/images/apple.jpg"
 import googleImage from "@/components/images/google1.jpg"
@@ -86,19 +86,14 @@ export default function LoginPage() {
                         src={daImage.src}
                         alt="Testimonial background"
                         fill
-                        className="object-cover brightness-[0.7]"
+                        className="object-cover"
                     />
 
-                    <div className="absolute top-4 left-4 sm:top-10 sm:left-10 flex items-center gap-4">
-                        <Button variant="outline">Homepage</Button>
-                        <Button variant="outline" size="icon" aria-label="Back to top">
-                            <ArrowUpIcon className="h-4 w-4" />
-                        </Button>
-                    </div>
+
                     <div className="absolute bottom-10 left-10 right-10 text-white">
                         <blockquote className="space-y-2">
                             <p className="text-2xl font-medium leading-tight">
-                                &ldquo;Simply the tools that my team and I need.&rdquo;
+                                &ldquo;Simply the fitness tools that you need.&rdquo;
                             </p>
                             <footer className="text-sm pb-5">
                                 <div className="font-semibold">Pelesia Wambia</div>
@@ -115,7 +110,7 @@ export default function LoginPage() {
                         {/* Logo & Header */}
                         <div className="flex flex-col space-y-2 text-center">
                             <div className="flex items-center justify-center font-bold text-2xl mb-4">
-                                <span className="mr-2">⠿</span> myFitPal
+                                <span className="mr-2">⠿</span> myFit
                             </div>
                             <h1 className="text-3xl font-bold tracking-tight">Welcome back to myFit</h1>
                             <p className="text-sm text-muted-foreground">
@@ -140,7 +135,7 @@ export default function LoginPage() {
                             <div className="grid gap-2">
                                 <div className="flex items-center justify-between">
                                     <Label htmlFor="password">Password</Label>
-                                    <Link href="/auth/updatePassword" className="text-sm font-medium text-blue-600 hover:underline">
+                                    <Link href="/auth/forgotPassword" className="text-sm font-medium text-blue-600 hover:underline">
                                         Forgot password?
                                     </Link>
                                 </div>
