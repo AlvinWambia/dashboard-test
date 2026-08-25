@@ -11,7 +11,7 @@ const PaystackButton = dynamic(() => import("./PaystackButton"), {
   ssr: false,
 });
 
-export default function CheckoutClient({ email, amount, orderId }) {
+export default function CheckoutClient({ email, amount, orderId, planCode }) {
   const router = useRouter();
   const paymentCompletedRef = useRef(false);
 
@@ -83,6 +83,7 @@ export default function CheckoutClient({ email, amount, orderId }) {
         email={email}
         amount={safeAmount}
         metadata={{ orderId }}
+        planCode={planCode}
         onSuccess={handleSuccess}
         onClose={handleClose}
       />

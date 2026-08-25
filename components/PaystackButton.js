@@ -3,7 +3,7 @@
 import React from "react";
 import { PaystackButton as PaystackButtonComponent } from "react-paystack";
 
-const PaystackButton = ({ email, amount, currency = "KES", metadata, onSuccess, onClose }) => {
+const PaystackButton = ({ email, amount, currency = "KES", metadata, planCode, onSuccess, onClose }) => {
   const displayAmount = typeof amount === 'number' ? amount : 0;
 
   const formattedAmount = displayAmount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -12,6 +12,7 @@ const PaystackButton = ({ email, amount, currency = "KES", metadata, onSuccess, 
   const componentProps = {
     email: email || "customer@example.com",
     amount: Math.round(displayAmount * 100),
+    ...(planCode ? { plan: planCode } : {}),
     metadata: {
       ...metadata,
       custom_filters: {

@@ -31,6 +31,16 @@ export default async function CheckoutPage({ params }) {
         notFound();
     }
 
+    let planCode = null;
+    if (order && order.program_id) {
+        const { data: programData } = await supabase
+            .from('programs')
+            .select('paystack_plan_code')
+            .eq('id', order.program_id)
+            .single();
+        planCode = programData?.paystack_plan_code || null;
+    }
+
     const formattedPrice = (typeof order.price === 'number' ? order.price : parseFloat(order.price) || 0)
         .toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -141,6 +151,7 @@ export default async function CheckoutPage({ params }) {
                             email={user?.email || "customer@example.com"} 
                             amount={order.price} 
                             orderId={order.id}
+                            planCode={planCode}
                         />
                     </div>
                 </div>
