@@ -31,6 +31,11 @@ export default async function CheckoutPage({ params }) {
         notFound();
     }
 
+    // Redirect if already paid to prevent duplicate payments
+    if (order.status === 'paid' || order.status === 'success') {
+        redirect('/profile');
+    }
+
     let planCode = null;
     if (order && order.program_id) {
         const { data: programData } = await supabase

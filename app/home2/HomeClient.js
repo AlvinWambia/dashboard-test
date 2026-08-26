@@ -119,7 +119,7 @@ function FadeInSection({ children }) {
     )
 }
 
-function ParallaxImage({ src, alt, className, speed = 0.5, objectFit = "cover" }) {
+function ParallaxImage({ src, alt, className, imgClassName, speed = 0.5, objectFit = "cover" }) {
     const ref = React.useRef(null)
     const { scrollYProgress } = useScroll({
         target: ref,
@@ -138,7 +138,7 @@ function ParallaxImage({ src, alt, className, speed = 0.5, objectFit = "cover" }
                 src={resolvedSrc}
                 alt={alt}
                 style={{ y: springY, scale: 1.1 }}
-                className={`absolute inset-0 w-full h-full ${objectFit === "cover" ? "object-cover" : "object-contain"}`}
+                className={`absolute inset-0 w-full h-full ${imgClassName || (objectFit === "cover" ? "object-cover" : "object-contain")}`}
             />
         </div>
     )
@@ -1137,6 +1137,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
                                                             alt={program.title || program.name || 'Program Image'}
                                                             className="w-full h-full"
                                                             speed={0.2}
+                                                            imgClassName="object-contain lg:object-cover"
                                                         />
                                                     )}
                                                     <div className="absolute inset-0 transition-colors group-hover:bg-transparent" />

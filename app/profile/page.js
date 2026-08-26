@@ -151,6 +151,15 @@ export default async function ProfilePage() {
 
         var userBookings = bookingsData || [];
 
+        // 8. Fetch paid orders (to cover webhook lag)
+        const { data: paidOrdersData } = await supabase
+            .from('orders')
+            .select('program_id')
+            .eq('user_id', user.id)
+            .in('status', ['paid', 'success']);
+            
+        var paidOrders = paidOrdersData || [];
+
     } catch (err) {
         console.error("ProfilePage data fetch error:", err);
         fetchError = err.message || "Failed to load profile data";
@@ -164,6 +173,7 @@ export default async function ProfilePage() {
             reviews={reviews} 
             subscriptions={subscriptions}
             userBookings={userBookings || []}
+            paidOrders={paidOrders || []}
             fetchError={fetchError}
         />
     );

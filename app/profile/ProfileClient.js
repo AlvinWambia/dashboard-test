@@ -13,7 +13,7 @@ import dynamic from "next/dynamic";
 
 const BookingModal = dynamic(() => import("@/components/BookingModal"), { ssr: false });
 
-export default function ProfileClient({ profile, user, purchasedPrograms = [], reviews = [], subscriptions = [], userBookings = [], fetchError = null }) {
+export default function ProfileClient({ profile, user, purchasedPrograms = [], reviews = [], subscriptions = [], userBookings = [], paidOrders = [], fetchError = null }) {
     const router = useRouter();
     const [isReviewOpen, setIsReviewOpen] = useState(false);
     const [isCancelOpen, setIsCancelOpen] = useState(false);
@@ -114,7 +114,8 @@ export default function ProfileClient({ profile, user, purchasedPrograms = [], r
         const hasActiveSub = subscriptions?.some(
             (sub) => sub.program_id === programId && (sub.status === 'active' || sub.status === 'non-renewing')
         );
-        return isDirectlyPurchased || hasActiveSub;
+        const isPaidOrder = paidOrders?.some((order) => order.program_id === programId);
+        return isDirectlyPurchased || hasActiveSub || isPaidOrder;
     };
 
     // Helper: find a subscription for a given program
