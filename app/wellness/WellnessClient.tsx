@@ -45,7 +45,7 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
   const router = useRouter();
 
   const [posts] = useState(
-    initialPosts && initialPosts.length > 0 ? initialPosts : DEFAULT_POSTS
+    initialPosts || []
   );
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -309,11 +309,10 @@ export default function WellnessClient({ initialAffirmation, initialPosts, dbCon
           </div>
         </div>
 
-        {/* Posts Grid */}
         {filteredPosts.length === 0 ? (
           <div className="text-center py-20 bg-gray-50 border border-gray-100 rounded-3xl">
             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-800">No articles found</h3>
+            <h3 className="text-lg font-semibold text-slate-800">No posts yet</h3>
             <p className="text-gray-500 text-sm mt-2">Try searching for something else or adjusting your filters.</p>
           </div>
         ) : (

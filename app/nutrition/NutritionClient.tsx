@@ -165,10 +165,10 @@ export default function NutritionClient({ initialRecipes, initialMeals, dbConnec
 
   // Combine live data with default premium mock fallbacks
   const [recipes, setRecipes] = useState(
-    initialRecipes && initialRecipes.length > 0 ? initialRecipes : DEFAULT_RECIPES
+    initialRecipes || []
   );
   const [meals, setMeals] = useState(
-    initialMeals && initialMeals.length > 0 ? initialMeals : DEFAULT_MEALS
+    initialMeals || []
   );
 
   // States
@@ -349,8 +349,16 @@ export default function NutritionClient({ initialRecipes, initialMeals, dbConnec
           <p className="text-gray-500 text-sm mt-2">Tap/click the card stack to cycle through my daily food diary or browse the calendar below.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-16">
-          {/* Left Side: Overlapping Stack (Cyclical Carousel) */}
+        {meals.length === 0 ? (
+          <div className="text-center py-20 bg-slate-50 border border-slate-100 rounded-[2rem]">
+            <Apple className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-800">No daily meals yet</h3>
+            <p className="text-slate-500 text-sm mt-2">Check back later for updates on what I ate.</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-16">
+              {/* Left Side: Overlapping Stack (Cyclical Carousel) */}
           <div className="col-span-12 lg:col-span-5 flex justify-center items-center h-[290px] sm:h-[340px] relative">
             <div
               onClick={() => {
@@ -575,6 +583,8 @@ export default function NutritionClient({ initialRecipes, initialMeals, dbConnec
             </div>
           );
         })()}
+          </>
+        )}
       </section>
 
       {/* RECIPE HUB */}
@@ -620,8 +630,8 @@ export default function NutritionClient({ initialRecipes, initialMeals, dbConnec
         {filteredRecipes.length === 0 ? (
           <div className="text-center py-20 bg-slate-50 border border-slate-100 rounded-[2rem]">
             <Apple className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-800">No recipes found</h3>
-            <p className="text-slate-500 text-sm mt-2">Try searching something else or adjust category filters.</p>
+            <h3 className="text-lg font-semibold text-slate-800">No recipes yet</h3>
+            <p className="text-slate-500 text-sm mt-2">Check back later for new recipes.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

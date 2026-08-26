@@ -12,28 +12,28 @@ const mockReviews = [
     type: "dark",
     rating: 4,
     quote: "\"myFit has really helped me reach my goals. The programs have been quite the guide.",
-    author: "Margaret Wanjiru",
+    author: "Margaret ",
     role: "Weight Loss Program",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150"
+    avatar: "https://ui-avatars.com/api/?name=Margaret&background=random"
   },
   {
     id: 2,
     type: "light",
     rating: 4,
     quote: "\"myfit's ability to help you create an actionable fitness journey is truly impressive.\"",
-    author: "Alex Mosirimani",
+    author: "Celine",
     role: "Personal Training Program",
-    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150"
+    avatar: "https://ui-avatars.com/api/?name=Celine&background=random"
   },
   {
     id: 3,
     type: "image",
     rating: 4,
     quote: "\"The nutrition programs are perfect to the T! The results have been nothing short of amazing.",
-    author: "Jenny Magugi",
+    author: "Jane",
     role: "Nutrition Program",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150",
-    bgImage: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=800&h=1200", 
+    avatar: "https://ui-avatars.com/api/?name=Jane&background=random",
+    bgImage: "",
     stats: [
       { value: "32%", label: "lead generation" },
       { value: "32%", label: "lead generation" }
@@ -43,19 +43,19 @@ const mockReviews = [
     id: 4,
     type: "light",
     rating: 4,
-    quote: "\"I have always struggled to stay consistent with my fitness journey, but myFit has made it easier than ever before. The community is so supportive, and the workout plans are tailored to my needs. \"",
-    author: "Abel Rotich",
+    quote: "\"I have always struggled to stay consistent with my fitness journey, but myFit has made it easier than ever before. Pele is so supportive, and the workout plans are tailored to my needs. \"",
+    author: "Agnes",
     role: "Fat Loss Program",
-    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150"
+    avatar: "https://ui-avatars.com/api/?name=Agnes&background=random"
   },
   {
     id: 5,
     type: "dark",
     rating: 4,
     quote: "\"With myFit, I've achieved sustainable weight loss and feel more energetic than ever before. The personalized guidance and supportive community have been instrumental in my transformation.\"",
-    author: "David Kamau",
+    author: "Joyce",
     role: "Fat Loss Program",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150"
+    avatar: "https://ui-avatars.com/api/?name=Joyce&background=random"
   }
 ];
 
@@ -291,7 +291,7 @@ const HorizontalScrollCarousel = ({ dbReviews }) => {
               );
             })
           ) : (
-             <p className="text-gray-500 italic pl-8">No reviews yet. Check back soon!</p>
+            <p className="text-gray-500 italic pl-8">No reviews yet. Check back soon!</p>
           )}
         </motion.div>
 
