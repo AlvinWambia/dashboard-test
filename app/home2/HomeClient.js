@@ -1137,7 +1137,7 @@ export default function HomeClient({ initialProfile, initialUserBookings = [], p
                                                             alt={program.title || program.name || 'Program Image'}
                                                             className="w-full h-full"
                                                             speed={0.2}
-                                                            imgClassName="object-cover lg:object-cover"
+                                                            imgClassName="object-contain lg:object-cover"
                                                         />
                                                     )}
                                                     <div className="absolute inset-0 transition-colors group-hover:bg-transparent" />
