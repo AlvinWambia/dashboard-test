@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/supabase/client";
+import { uploadImageAction } from "./actions";
 
 // ─── Reusable Image Upload Picker ────────────────────────────────────────────
 function ImageUploadPicker({
@@ -18,7 +19,7 @@ function ImageUploadPicker({
   onChange: (url: string) => void;
   bucket?: string;
 }) {
-  const supabase = createClient();
+  // const supabase = createClient();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -33,20 +34,19 @@ function ImageUploadPicker({
       const ext = file.name.split(".").pop();
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${ext}`;
 
-      const { data, error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("bucket", bucket);
+      formData.append("fileName", fileName);
 
-      if (uploadError) throw uploadError;
+      const publicUrl = await uploadImageAction(formData);
 
-      const { data: urlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path);
-
-      onChange(urlData.publicUrl);
+      onChange(publicUrl);
     } catch (err: any) {
       console.error("Image upload error:", err);
-      setError("Upload failed. Please try again.");
+      const errorMessage = err.message || "Upload failed. Please try again.";
+      setError(errorMessage);
+      alert(`Upload Failed: ${errorMessage}`);
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";

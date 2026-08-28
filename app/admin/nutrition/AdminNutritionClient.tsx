@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/supabase/client";
+import { uploadImageAction } from "./actions";
 
 // ─── Reusable Image Upload Picker ────────────────────────────────────────────
 function ImageUploadPicker({
@@ -21,7 +22,7 @@ function ImageUploadPicker({
   bucket?: string;
   label?: string;
 }) {
-  const supabase = createClient();
+  // const supabase = createClient(); // Unused, we use server action
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -36,20 +37,19 @@ function ImageUploadPicker({
       const ext = file.name.split(".").pop();
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${ext}`;
 
-      const { data, error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("bucket", bucket);
+      formData.append("fileName", fileName);
 
-      if (uploadError) throw uploadError;
+      const publicUrl = await uploadImageAction(formData);
 
-      const { data: urlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path);
-
-      onChange(urlData.publicUrl);
+      onChange(publicUrl);
     } catch (err: any) {
       console.error("Image upload error:", err);
-      setError("Upload failed. Please try again.");
+      const errorMessage = err.message || "Upload failed. Please try again.";
+      setError(errorMessage);
+      alert(`Upload Failed: ${errorMessage}`);
     } finally {
       setUploading(false);
       // Reset so the same file can be re-selected
@@ -148,6 +148,7 @@ export default function AdminNutritionClient() {
   const [uploading, setUploading] = useState(false);
   const [notification, setNotification] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isDbError, setIsDbError] = useState(false);
 
   // Load database lists
   const fetchAdminData = async () => {
@@ -211,8 +212,17 @@ export default function AdminNutritionClient() {
   const handleMealSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
-    if (!mealForm.image_url || !mealForm.description) {
-      setErrorMessage("Please upload a meal photo and add a description.");
+    setIsDbError(false);
+    if (!mealForm.image_url && !mealForm.description) {
+      setErrorMessage("Please upload a meal photo and fill in the description before submitting.");
+      return;
+    }
+    if (!mealForm.image_url) {
+      setErrorMessage("Please upload a meal photo before submitting.");
+      return;
+    }
+    if (!mealForm.description) {
+      setErrorMessage("Please add a description before submitting.");
       return;
     }
     setUploading(true);
@@ -249,6 +259,7 @@ export default function AdminNutritionClient() {
       });
     } catch (err: any) {
       console.error("Error inserting meal:", err);
+      setIsDbError(true);
       setErrorMessage(err.message || "Failed to save to database. Check if Supabase tables are created.");
     } finally {
       setUploading(false);
@@ -259,6 +270,7 @@ export default function AdminNutritionClient() {
   const handleRecipeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
+    setIsDbError(false);
     if (!recipeForm.title || !recipeForm.ingredients || !recipeForm.instructions) {
       setErrorMessage("Please fill in the recipe title, ingredients, and instructions.");
       return;
@@ -310,6 +322,7 @@ export default function AdminNutritionClient() {
       });
     } catch (err: any) {
       console.error("Error inserting recipe:", err);
+      setIsDbError(true);
       setErrorMessage(err.message || "Failed to save to database. Check if Supabase tables are created.");
     } finally {
       setUploading(false);
@@ -361,11 +374,24 @@ export default function AdminNutritionClient() {
       {errorMessage && (
         <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold text-sm">Database Action Failed</p>
+          <div className="flex-1">
+            <p className="font-semibold text-sm">
+              {isDbError ? "Database Action Failed" : "Missing Required Fields"}
+            </p>
             <p className="text-xs text-red-600 mt-1">{errorMessage}</p>
-            <p className="text-[10px] text-gray-500 mt-2">Make sure you have run the migration query from `supabase/nutrition_schema.sql` in your Supabase SQL Editor.</p>
+            {isDbError && (
+              <p className="text-[10px] text-gray-500 mt-2">
+                Make sure you have run the migration query from `supabase/nutrition_schema.sql` in your Supabase SQL Editor.
+              </p>
+            )}
           </div>
+          <button
+            onClick={() => { setErrorMessage(""); setIsDbError(false); }}
+            className="text-red-400 hover:text-red-600 flex-shrink-0"
+            aria-label="Dismiss error"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
