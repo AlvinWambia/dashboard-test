@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/supabase/client";
-import { uploadImageAction } from "./actions";
+import { uploadImageAction, createMealAction, createRecipeAction } from "./actions";
 
 // ─── Reusable Image Upload Picker ────────────────────────────────────────────
 function ImageUploadPicker({
@@ -240,12 +240,7 @@ export default function AdminNutritionClient() {
     };
 
     try {
-      const { data, error } = await supabase
-        .from("daily_meals")
-        .insert([newMeal])
-        .select();
-
-      if (error) throw error;
+      const data = await createMealAction(newMeal);
 
       if (data) setRecentMeals([data[0], ...recentMeals]);
       setNotification("Meal photo shared successfully!");
@@ -298,12 +293,7 @@ export default function AdminNutritionClient() {
     };
 
     try {
-      const { data, error } = await supabase
-        .from("recipes")
-        .insert([newRecipe])
-        .select();
-
-      if (error) throw error;
+      const data = await createRecipeAction(newRecipe);
 
       if (data) setRecentRecipes([data[0], ...recentRecipes]);
       setNotification("Recipe posted successfully!");

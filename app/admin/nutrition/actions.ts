@@ -27,3 +27,21 @@ export async function uploadImageAction(formData: FormData) {
 
   return urlData.publicUrl;
 }
+
+export async function createMealAction(mealData: any) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.from("daily_meals").insert([mealData]).select();
+  if (error) {
+    throw new Error(error.message || "Failed to create meal");
+  }
+  return data;
+}
+
+export async function createRecipeAction(recipeData: any) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.from("recipes").insert([recipeData]).select();
+  if (error) {
+    throw new Error(error.message || "Failed to create recipe");
+  }
+  return data;
+}
